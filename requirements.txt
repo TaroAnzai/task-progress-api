@@ -10,3 +10,6 @@ APScheduler==3.11.0
 Flask-APScheduler==1.13.1
 gunicorn==23.0.0
 cryptography
+celery
+redis
+google-generativeai
