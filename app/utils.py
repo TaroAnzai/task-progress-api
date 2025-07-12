@@ -120,27 +120,30 @@ def access_level_sufficient(user_level, required_level):
     return priority.get(user_level, 0) >= priority.get(required_level, 0)
 
 def check_access_scope(user, organization_id, required_level='view'):
-    """Return True if ``user`` can access resources in ``organization_id``.
+    """Return True if ``user`` has ``required_level`` access for ``organization_id``.
 
-    The function evaluates high level roles stored in ``AccessScope`` and the
-    user's own organization.  Users with the ``system_admin`` role are granted
-    access to all organisations.  Users with the ``org_admin`` role may access
-    their organisation and all of its descendants.  If none of these roles are
-    present, access is allowed only when ``organization_id`` matches the user's
-    own organisation.
+    Superusers and ``system_admin`` roles bypass all checks. ``org_admin`` roles
+    are treated as having ``full`` access to their organisation and its
+    descendants.  For regular scopes, the role stored in ``AccessScope`` is
+    compared against ``required_level`` using :func:`access_level_sufficient`.
     """
 
-    # system wide administrators always have access
-    if any(scope.role == 'system_admin' for scope in user.access_scopes):
+    if getattr(user, 'is_superuser', False):
         return True
 
-    # organisation administrators can access descendant organisations
-    if any(scope.role == 'org_admin' for scope in user.access_scopes):
-        all_orgs = Organization.query.all()
-        descendant_orgs = get_descendant_organizations(user.organization_id, all_orgs)
-        descendant_ids = [org.id for org in descendant_orgs]
-        if organization_id in descendant_ids:
+    for scope in user.access_scopes:
+        if scope.role == 'system_admin':
             return True
 
-    # fallback: user can access their own organisation
-    return user.organization_id == organization_id
+        if scope.role == 'org_admin':
+            all_orgs = Organization.query.all()
+            descendant_orgs = get_descendant_organizations(scope.organization_id or user.organization_id, all_orgs)
+            descendant_ids = [org.id for org in descendant_orgs]
+            if organization_id in descendant_ids:
+                return access_level_sufficient('full', required_level)
+
+        if scope.organization_id == organization_id:
+            if access_level_sufficient(scope.role, required_level):
+                return True
+
+    return False
