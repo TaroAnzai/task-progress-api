@@ -108,15 +108,21 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_org=False):
+        user_dict = {
             'id': self.id,
             'wp_user_id': self.wp_user_id,
             'name': self.name,
             'email': self.email,
-            'organization_id': self.organization_id,
-            'organization_name': self.organization.name if self.organization else None
         }
+
+        if include_org:
+            user_dict.update({
+                'organization_id': self.organization_id,
+                'organization_name': self.organization.name if self.organization else None
+            })
+
+        return user_dict
 
 
 # アクセススコープ
