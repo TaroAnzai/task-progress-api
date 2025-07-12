@@ -1,4 +1,4 @@
-# progress/ai/ai_tasks.py
+# app/ai/ai_tasks.py
 from celery_app import celery
 from app.ai.gemini_client import GeminiAISuggestionClient
 
