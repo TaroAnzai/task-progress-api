@@ -98,6 +98,7 @@ class User(db.Model, UserMixin):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=True)
+    is_superuser = db.Column(db.Boolean, default=False)
 
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     organization = db.relationship('Organization', backref='users')
@@ -114,6 +115,7 @@ class User(db.Model, UserMixin):
             'wp_user_id': self.wp_user_id,
             'name': self.name,
             'email': self.email,
+            'is_superuser': self.is_superuser,
         }
 
         if include_org:

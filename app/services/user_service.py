@@ -3,9 +3,15 @@
 from flask import current_app, jsonify
 from sqlalchemy.orm import joinedload
 from ..models import db, User, Organization
-from ..utils import get_all_child_organizations, get_descendant_organizations
+from ..utils import (
+    get_all_child_organizations,
+    get_descendant_organizations,
+    check_access_scope,
+)
 
-def create_user(data):
+def create_user(data, current_user):
+    if not check_access_scope(current_user, data.get('organization_id'), 'full'):
+        return {'error': '権限がありません'}, 403
     wp_user_id = data.get('wp_user_id')
     name = data.get('name')
     email = data.get('email')
@@ -30,16 +36,23 @@ def create_user(data):
 
     return {'message': 'ユーザーを登録しました', 'user': user.to_dict(include_org=True)}, 201
 
-def get_user_by_id(user_id):
+def get_user_by_id(user_id, current_user):
     user = User.query.get(user_id)
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
+
+    if not check_access_scope(current_user, user.organization_id, 'full'):
+        return {'error': '権限がありません'}, 403
+
     return user.to_dict(include_org=True), 200
 
-def update_user(user_id, data):
+def update_user(user_id, data, current_user):
     user = User.query.get(user_id)
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
+
+    if not check_access_scope(current_user, user.organization_id, 'full'):
+        return {'error': '権限がありません'}, 403
 
     if 'name' in data:
         user.name = data['name']
@@ -53,10 +66,13 @@ def update_user(user_id, data):
     db.session.commit()
     return user.to_dict(include_org=True), 200
 
-def delete_user(user_id):
+def delete_user(user_id, current_user):
     user = User.query.get(user_id)
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
+
+    if not check_access_scope(current_user, user.organization_id, 'full'):
+        return {'error': '権限がありません'}, 403
 
     from ..models import AccessScope
     try:
@@ -73,6 +89,9 @@ def get_users(requesting_user_id, organization_id=None):
     requester = User.query.get(requesting_user_id)
     if not requester:
         return []
+
+    if not check_access_scope(requester, organization_id or requester.organization_id, 'full'):
+        return {'error': '権限がありません'}, 403
 
     all_orgs = Organization.query.all()
     base_org_id = organization_id or requester.organization_id
@@ -92,19 +111,30 @@ def get_users(requesting_user_id, organization_id=None):
 
     return [u.to_dict(include_org=True) for u in users], 200
 
-def get_user_by_email(email):
+def get_user_by_email(email, current_user):
     user = User.query.filter_by(email=email).first()
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
+
+    if not check_access_scope(current_user, user.organization_id, 'full'):
+        return {'error': '権限がありません'}, 403
+
     return user.to_dict(include_org=True), 200
 
-def get_user_by_wp_user_id(wp_user_id):
+def get_user_by_wp_user_id(wp_user_id, current_user):
     user = User.query.filter_by(wp_user_id=wp_user_id).first()
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
+
+    if not check_access_scope(current_user, user.organization_id, 'full'):
+        return {'error': '権限がありません'}, 403
+
     return user.to_dict(include_org=True), 200
 
-def get_users_by_org_tree(org_id):
+def get_users_by_org_tree(org_id, current_user):
+    if not check_access_scope(current_user, org_id, 'full'):
+        return {'error': '権限がありません'}, 403
+
     try:
         org_ids = get_all_child_organizations(org_id)
         users = User.query.filter(User.organization_id.in_(org_ids)).all()
