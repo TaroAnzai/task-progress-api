@@ -112,8 +112,8 @@ class TaskDataExporter:
             )
             .order_by(
                 UserTaskOrder.display_order.is_(None),
-                UserTaskOrder.display_order.asc().nulls_last(),
-                Task.display_order.asc().nulls_last()
+                UserTaskOrder.display_order.asc().nullslast(),
+                Task.display_order.asc().nullslast()
             )
             .all()
         )
