@@ -1,6 +1,9 @@
 from flask import jsonify
 from app.models import db, Task, User, Organization, TaskAccessUser, TaskAccessOrganization
-from app.utils import check_task_access
+from app.utils import check_task_access, access_level_sufficient
+
+# Access levels in order of increasing permission
+ACCESS_LEVELS = ['view', 'edit', 'full', 'owner']
 
 def update_access_level(task_id, data, user):
     task = Task.query.get_or_404(task_id)
@@ -45,16 +48,18 @@ def update_access_level(task_id, data, user):
     return jsonify({'message': 'アクセス設定を更新しました'})
 
 def get_task_users(task_id):
-    # edit以上のaccess_levelを持つユーザーを返す
+    # "edit" 以上のアクセスレベルを持つユーザーを返す
+    allowed_levels = [lvl for lvl in ACCESS_LEVELS if access_level_sufficient(lvl, 'edit')]
+
     access_user_ids = db.session.query(TaskAccessUser.user_id).filter(
         TaskAccessUser.task_id == task_id,
-        TaskAccessUser.access_level >= 2
+        TaskAccessUser.access_level.in_(allowed_levels)
     ).all()
     access_user_ids = [uid for (uid,) in access_user_ids]
 
     access_org_ids = db.session.query(TaskAccessOrganization.organization_id).filter(
         TaskAccessOrganization.task_id == task_id,
-        TaskAccessOrganization.access_level >= 2
+        TaskAccessOrganization.access_level.in_(allowed_levels)
     ).all()
     access_org_ids = [oid for (oid,) in access_org_ids]
 
