@@ -6,8 +6,8 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declared_attr
 from datetime import datetime, date
 import sqlite3
+from app import db
 
-db = SQLAlchemy()
 
 # SQLite: enforce foreign key constraint
 @event.listens_for(Engine, "connect")
@@ -97,7 +97,7 @@ class User(db.Model, UserMixin):
     wp_user_id = db.Column(db.Integer, unique=True, nullable=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=True)
+    password_hash = db.Column(db.String(255), nullable=True)
     is_superuser = db.Column(db.Boolean, default=False)
 
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
