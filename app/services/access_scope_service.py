@@ -3,7 +3,7 @@
 from ..models import db, User, AccessScope, Organization
 
 def get_user_scopes(user_id):
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
 
@@ -17,7 +17,7 @@ def get_user_scopes(user_id):
     return scopes, 200
 
 def add_access_scope_to_user(user_id, data):
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
 
@@ -41,7 +41,7 @@ def add_access_scope_to_user(user_id, data):
     return {'message': 'アクセススコープを追加しました'}, 201
 
 def delete_access_scope(scope_id):
-    scope = AccessScope.query.get(scope_id)
+    scope = db.session.get(AccessScope, scope_id)
     if not scope:
         return {'error': 'スコープが見つかりません'}, 404
 

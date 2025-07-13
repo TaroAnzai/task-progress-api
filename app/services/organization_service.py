@@ -16,7 +16,7 @@ def create_organization(name, org_code, company_id, parent_id=None):
 
     level = 1
     if parent_id:
-        parent = Organization.query.get(parent_id)
+        parent = db.session.get(Organization, parent_id)
         if not parent:
             raise ValueError("指定された親組織が存在しません。")
         level = parent.level + 1
@@ -34,7 +34,7 @@ def create_organization(name, org_code, company_id, parent_id=None):
 
 
 def get_organization_by_id(org_id):
-    org = Organization.query.get(org_id)
+    org = db.session.get(Organization, org_id)
     return org if org else None
 
 
@@ -46,7 +46,7 @@ def get_organizations(company_id=None):
 
 
 def update_organization(org_id, name=None, parent_id=None):
-    org = Organization.query.get(org_id)
+    org = db.session.get(Organization, org_id)
     if not org:
         return None
 
@@ -55,7 +55,7 @@ def update_organization(org_id, name=None, parent_id=None):
 
     if parent_id != org.parent_id:
         if parent_id:
-            parent = Organization.query.get(parent_id)
+            parent = db.session.get(Organization, parent_id)
             if not parent:
                 raise ValueError("指定された親組織が存在しません。")
             org.level = parent.level + 1
@@ -68,7 +68,7 @@ def update_organization(org_id, name=None, parent_id=None):
 
 
 def delete_organization(org_id):
-    org = Organization.query.get(org_id)
+    org = db.session.get(Organization, org_id)
     if not org:
         return False, "組織が存在しません。"
 

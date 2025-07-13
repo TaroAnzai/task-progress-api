@@ -25,12 +25,12 @@ def get_all_companies():
 
 # Read: IDで取得（論理削除除く）
 def get_company_by_id(company_id):
-    return Company.query.get(company_id)
+    return db.session.get(Company, company_id)
 
 
 # Read: 削除済も含めて取得
 def get_company_by_id_with_deleted(company_id):
-    return Company.query.with_deleted().get(company_id)
+    return db.session.get(Company, company_id)
 
 
 # Update

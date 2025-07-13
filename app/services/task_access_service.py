@@ -71,8 +71,8 @@ def get_task_users(task_id):
     total_user_ids = list(set(access_user_ids + org_user_ids))
 
     users = db.session.query(User).filter(User.id.in_(total_user_ids)).all()
-    task = Task.query.get(task_id)
-    creator = User.query.get(task.created_by) if task else None
+    task = db.session.get(Task, task_id)
+    creator = db.session.get(User, task.created_by) if task else None
 
     result = [{"id": u.id, "name": u.name, "email": u.email} for u in users]
     if creator and creator.id not in [u["id"] for u in result]:
