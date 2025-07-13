@@ -1,10 +1,9 @@
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from app.models import db, Company
 
 # Create
 def create_company(name):
-    existing = Company.query.filter_by(name=name).first()
+    existing = Company.query.filter_by(name=name, is_deleted=False).first()
     if existing:
         raise ValueError("Company with the same name already exists.")
 
@@ -20,12 +19,12 @@ def create_company(name):
 
 # Read: 全件取得（論理削除除く）
 def get_all_companies():
-    return Company.query.all()
+    return Company.query.filter_by(is_deleted=False).all()
 
 
 # Read: IDで取得（論理削除除く）
 def get_company_by_id(company_id):
-    return db.session.get(Company, company_id)
+    return Company.query.filter_by(id=company_id, is_deleted=False).first()
 
 
 # Read: 削除済も含めて取得

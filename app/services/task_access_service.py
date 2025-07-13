@@ -2,11 +2,21 @@ from flask import jsonify
 from app.models import db, Task, User, Organization, TaskAccessUser, TaskAccessOrganization
 from app.utils import check_task_access, access_level_sufficient
 
+
+def get_task_by_id(task_id):
+    return Task.query.filter_by(id=task_id, is_deleted=False).first()
+
+
+def get_task_by_id_with_deleted(task_id):
+    return db.session.get(Task, task_id)
+
 # Access levels in order of increasing permission
 ACCESS_LEVELS = ['view', 'edit', 'full', 'owner']
 
 def update_access_level(task_id, data, user):
-    task = Task.query.get_or_404(task_id)
+    task = get_task_by_id(task_id)
+    if not task:
+        return jsonify({'error': 'タスクが見つかりません'}), 404
     if not check_task_access(user, task, 'full'):
         return jsonify({'error': 'スコープ権限を変更する権限がありません'}), 403
 
@@ -71,7 +81,7 @@ def get_task_users(task_id):
     total_user_ids = list(set(access_user_ids + org_user_ids))
 
     users = db.session.query(User).filter(User.id.in_(total_user_ids)).all()
-    task = db.session.get(Task, task_id)
+    task = get_task_by_id_with_deleted(task_id)
     creator = db.session.get(User, task.created_by) if task else None
 
     result = [{"id": u.id, "name": u.name, "email": u.email} for u in users]

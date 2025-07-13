@@ -5,6 +5,22 @@ from app.models import db, Objective, Task, Status
 from app.utils import check_access_scope
 
 
+def get_task_by_id(task_id):
+    return Task.query.filter_by(id=task_id, is_deleted=False).first()
+
+
+def get_task_by_id_with_deleted(task_id):
+    return db.session.get(Task, task_id)
+
+
+def get_objective_by_id(objective_id):
+    return Objective.query.filter_by(id=objective_id, is_deleted=False).first()
+
+
+def get_objective_by_id_with_deleted(objective_id):
+    return db.session.get(Objective, objective_id)
+
+
 def create_objective(data, user):
     title = data.get('title')
     task_id = data.get('task_id')
@@ -12,7 +28,9 @@ def create_objective(data, user):
     if not title or not task_id:
         return {'error': 'タイトル・タスクIDは必須です'}, 400
 
-    task = Task.query.get_or_404(task_id)
+    task = get_task_by_id(task_id)
+    if not task:
+        return {'error': 'タスクが見つかりません'}, 404
     if not check_access_scope(user, task.organization_id, 'edit'):
         return {'error': 'このタスクにオブジェクティブを追加する権限がありません'}, 403
 
@@ -46,8 +64,12 @@ def create_objective(data, user):
 
 
 def update_objective(objective_id, data, user):
-    objective = Objective.query.get_or_404(objective_id)
-    task = Task.query.get_or_404(objective.task_id)
+    objective = get_objective_by_id(objective_id)
+    if not objective:
+        return {'error': 'オブジェクティブが見つかりません'}, 404
+    task = get_task_by_id(objective.task_id)
+    if not task:
+        return {'error': 'タスクが見つかりません'}, 404
 
     if not check_access_scope(user, task.organization_id, 'edit'):
         return {'error': '編集権限がありません'}, 403
@@ -68,7 +90,9 @@ def update_objective(objective_id, data, user):
 
 
 def get_objectives_for_task(task_id, user):
-    task = Task.query.get_or_404(task_id)
+    task = get_task_by_id(task_id)
+    if not task:
+        return {'error': 'タスクが見つかりません'}, 404
     if not check_access_scope(user, task.organization_id, 'view'):
         return {'error': '閲覧権限がありません'}, 403
 
@@ -89,11 +113,13 @@ def get_objectives_for_task(task_id, user):
 
 
 def get_objective(objective_id, user):
-    objective = Objective.query.filter_by(id=objective_id, is_deleted=False).first()
+    objective = get_objective_by_id(objective_id)
     if not objective:
         return {'error': 'オブジェクティブが見つかりません'}, 404
 
-    task = Task.query.get_or_404(objective.task_id)
+    task = get_task_by_id(objective.task_id)
+    if not task:
+        return {'error': 'タスクが見つかりません'}, 404
     if not check_access_scope(user, task.organization_id, 'view'):
         return {'error': '閲覧権限がありません'}, 403
 
@@ -108,8 +134,12 @@ def get_objective(objective_id, user):
 
 
 def delete_objective(objective_id, user):
-    objective = Objective.query.get_or_404(objective_id)
-    task = Task.query.get_or_404(objective.task_id)
+    objective = get_objective_by_id(objective_id)
+    if not objective:
+        return {'error': 'オブジェクティブが見つかりません'}, 404
+    task = get_task_by_id(objective.task_id)
+    if not task:
+        return {'error': 'タスクが見つかりません'}, 404
 
     if not check_access_scope(user, task.organization_id, 'edit'):
         return {'error': '削除権限がありません'}, 403

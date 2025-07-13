@@ -4,9 +4,37 @@ from app.models import db, Objective, Task, ProgressUpdate, Status, User
 from app.utils import check_access_scope
 
 
+def get_task_by_id(task_id):
+    return Task.query.filter_by(id=task_id, is_deleted=False).first()
+
+
+def get_task_by_id_with_deleted(task_id):
+    return db.session.get(Task, task_id)
+
+
+def get_objective_by_id(objective_id):
+    return Objective.query.filter_by(id=objective_id, is_deleted=False).first()
+
+
+def get_objective_by_id_with_deleted(objective_id):
+    return db.session.get(Objective, objective_id)
+
+
+def get_progress_by_id(progress_id):
+    return ProgressUpdate.query.filter_by(id=progress_id, is_deleted=False).first()
+
+
+def get_progress_by_id_with_deleted(progress_id):
+    return db.session.get(ProgressUpdate, progress_id)
+
+
 def add_progress(objective_id, data, user):
-    objective = Objective.query.get_or_404(objective_id)
-    task = Task.query.get_or_404(objective.task_id)
+    objective = get_objective_by_id(objective_id)
+    if not objective:
+        return {'error': 'オブジェクティブが見つかりません'}, 404
+    task = get_task_by_id(objective.task_id)
+    if not task:
+        return {'error': 'タスクが見つかりません'}, 404
 
     if not (check_access_scope(user, task.organization_id, 'edit') or user.id == objective.assigned_user_id):
         return {'error': '進捗追加の権限がありません'}, 403
@@ -24,8 +52,12 @@ def add_progress(objective_id, data, user):
 
 
 def get_progress_list(objective_id, user):
-    objective = Objective.query.get_or_404(objective_id)
-    task = Task.query.get_or_404(objective.task_id)
+    objective = get_objective_by_id(objective_id)
+    if not objective:
+        return {'error': 'オブジェクティブが見つかりません'}, 404
+    task = get_task_by_id(objective.task_id)
+    if not task:
+        return {'error': 'タスクが見つかりません'}, 404
 
     if not check_access_scope(user, task.organization_id, 'view'):
         return {'error': '閲覧権限がありません'}, 403
@@ -43,8 +75,12 @@ def get_progress_list(objective_id, user):
 
 
 def get_latest_progress(objective_id, user):
-    objective = Objective.query.get_or_404(objective_id)
-    task = Task.query.get_or_404(objective.task_id)
+    objective = get_objective_by_id(objective_id)
+    if not objective:
+        return {'error': 'オブジェクティブが見つかりません'}, 404
+    task = get_task_by_id(objective.task_id)
+    if not task:
+        return {'error': 'タスクが見つかりません'}, 404
 
     if not check_access_scope(user, task.organization_id, 'view'):
         return {'error': '閲覧権限がありません'}, 403
@@ -76,9 +112,15 @@ def get_latest_progress(objective_id, user):
 
 
 def delete_progress(progress_id, user):
-    progress = ProgressUpdate.query.get_or_404(progress_id)
-    objective = Objective.query.get_or_404(progress.objective_id)
-    task = Task.query.get_or_404(objective.task_id)
+    progress = get_progress_by_id(progress_id)
+    if not progress:
+        return {'error': '進捗が見つかりません'}, 404
+    objective = get_objective_by_id_with_deleted(progress.objective_id)
+    if not objective or objective.is_deleted:
+        return {'error': 'オブジェクティブが見つかりません'}, 404
+    task = get_task_by_id_with_deleted(objective.task_id)
+    if not task or task.is_deleted:
+        return {'error': 'タスクが見つかりません'}, 404
 
     if not check_access_scope(user, task.organization_id, 'full'):
         return {'error': '削除権限がありません'}, 403

@@ -19,40 +19,18 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 
 
 # 論理削除対応
-class SoftDeleteQuery(db.Query):
-    _with_deleted = False
-
-    def with_deleted(self):
-        self._with_deleted = True
-        return self
-
-    def __iter__(self):
-        if self._with_deleted:
-            return super().__iter__()
-        return super(SoftDeleteQuery, self.filter_by(is_deleted=False)).__iter__()
-
-    def get(self, ident):
-        entity = self._only_full_mapper_zero("get").entity
-        obj = db.session.get(entity, ident)
-        if self._with_deleted:
-            return obj
-        if obj is not None and getattr(obj, "is_deleted", False):
-            return None
-        return obj
-
-
 class SoftDeleteMixin:
+    """Mixin providing an ``is_deleted`` flag and helper methods."""
+
     is_deleted = Column(Boolean, default=False, nullable=False, server_default='0')
 
     def soft_delete(self):
+        """Mark the instance as logically deleted."""
         self.is_deleted = True
 
     def restore(self):
+        """Restore a logically deleted instance."""
         self.is_deleted = False
-
-    @declared_attr
-    def query_class(cls):
-        return SoftDeleteQuery
 
 
 # 会社
