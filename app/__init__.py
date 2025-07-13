@@ -1,13 +1,10 @@
 # app/__init__.py
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, jsonify
 from flask_migrate import Migrate
 from config import Config
 from dotenv import load_dotenv
+from app.extensions import db, login_manager
 
-
-
-db = SQLAlchemy()
 migrate = Migrate()
 
 def create_app(config_class=Config):
@@ -18,6 +15,9 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     migrate.init_app(app, db)
+    login_manager.init_app(app)
+
+    from app.auth import auth_bp
 
     # モデル登録
     from . import models
