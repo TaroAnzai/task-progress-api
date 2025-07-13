@@ -1,46 +1,54 @@
-import pytest
-from app import create_app, db
-from flask import Flask
-from dotenv import load_dotenv
-from app.extensions import db
-from app.models import User, Organization
-from werkzeug.security import generate_password_hash
+# tests/conftest.py
 
-@pytest.fixture
+import os
+import pytest
+from app import create_app, db as _db
+from app.models import User
+from config import Config as BaseConfig
+
+
+DB_FILE = "test.db"
+
+
+class TestConfig(BaseConfig):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = f"sqlite:///{DB_FILE}"
+    WTF_CSRF_ENABLED = False
+    SECRET_KEY = "test"
+
+
+@pytest.fixture(scope='session')
 def app():
-    load_dotenv()
-    app = create_app()
-    app.config.update({
-        "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
-        "SQLALCHEMY_TRACK_MODIFICATIONS": False,
-        "WTF_CSRF_ENABLED": False,  # フォーム使ってる場合
-    })
+    app = create_app(TestConfig)
 
     with app.app_context():
-        db.create_all()
+        _db.create_all()
         yield app
-        db.session.remove()
-        db.drop_all()
+        _db.drop_all()
 
-@pytest.fixture
+        # ✅ テスト完了後に test.db を削除
+        if os.path.exists(DB_FILE):
+            os.remove(DB_FILE)
+
+
+@pytest.fixture(scope='session')
 def client(app):
     return app.test_client()
 
 
+@pytest.fixture(scope='session')
+def superuser(client):
+    """スーパーユーザーを作成"""
+    user = User(name="Admin", email="admin@example.com", is_superuser=True)
+    user.set_password("adminpass")
+    _db.session.add(user)
+    _db.session.commit()
+    return user
+
 
 @pytest.fixture
-def superuser(app):
-    with app.app_context():
-        # スーパーユーザーを作成（organization_id=None, is_superuser=True）
-        user = User(
-            name="Admin Test User",
-            email="admin@example.com",
-            password_hash=generate_password_hash("adminpass"),
-            is_superuser=True,
-            organization_id=None  # 明示的にnullを指定
-        )
-        db.session.add(user)
-        db.session.commit()
-
-        return user
+def login_superuser(client, superuser):
+    """ログイン状態にする"""
+    with client.session_transaction() as sess:
+        sess['_user_id'] = str(superuser.id)
+    return superuser
