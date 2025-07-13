@@ -13,6 +13,7 @@ It is dedicated to managing task progress data for internal systems.
 - Scheduled tasks using APScheduler (optional)
 - `.env` based configuration
 - Modular project structure (blueprints)
+- Export tasks as Excel or YAML
 
 ---
 
@@ -26,6 +27,7 @@ It is dedicated to managing task progress data for internal systems.
 - Gunicorn (for production)
 - APScheduler (optional)
 - Redis + Celery (optional)
+- Pandas, OpenPyXL & PyYAML (export features)
 
 ---
 
