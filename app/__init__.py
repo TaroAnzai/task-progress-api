@@ -1,11 +1,8 @@
 # app/__init__.py
 from flask import Flask, jsonify
-from flask_migrate import Migrate
 from config import Config
 from dotenv import load_dotenv
-from app.extensions import db, login_manager
-
-migrate = Migrate()
+from app.extensions import db, login_manager, migrate
 
 def create_app(config_class=Config):
     load_dotenv()
