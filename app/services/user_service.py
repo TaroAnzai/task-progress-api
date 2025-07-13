@@ -26,7 +26,7 @@ def create_user(data, current_user):
     if User.query.filter_by(email=email).first():
         return {'error': 'このメールアドレスは既に使用されています'}, 400
 
-    org = Organization.query.get(org_id)
+    org = db.session.get(Organization, org_id)
     if not org:
         return {'error': '指定された組織IDが存在しません'}, 400
 
@@ -37,7 +37,7 @@ def create_user(data, current_user):
     return {'message': 'ユーザーを登録しました', 'user': user.to_dict(include_org=True)}, 201
 
 def get_user_by_id(user_id, current_user):
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
 
@@ -47,7 +47,7 @@ def get_user_by_id(user_id, current_user):
     return user.to_dict(include_org=True), 200
 
 def update_user(user_id, data, current_user):
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
 
@@ -67,7 +67,7 @@ def update_user(user_id, data, current_user):
     return user.to_dict(include_org=True), 200
 
 def delete_user(user_id, current_user):
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
 
@@ -86,7 +86,7 @@ def delete_user(user_id, current_user):
         return {'error': '削除に失敗しました', 'details': str(e)}, 500
 
 def get_users(requesting_user_id, organization_id=None):
-    requester = User.query.get(requesting_user_id)
+    requester = db.session.get(User, requesting_user_id)
     if not requester:
         return []
 
@@ -95,7 +95,7 @@ def get_users(requesting_user_id, organization_id=None):
 
     all_orgs = Organization.query.all()
     base_org_id = organization_id or requester.organization_id
-    base_org = Organization.query.get(base_org_id)
+    base_org = db.session.get(Organization, base_org_id)
     if not base_org:
         return {'error': '組織が見つかりません'}, 404
 
