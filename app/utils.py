@@ -147,3 +147,8 @@ def check_access_scope(user, organization_id, required_level='view'):
                 return True
 
     return False
+
+def require_superuser(user):
+    if not getattr(user, 'is_superuser', False):
+        from flask import abort
+        abort(403, description="This action requires superuser privileges.")

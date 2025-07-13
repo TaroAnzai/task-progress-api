@@ -32,14 +32,13 @@ def client(app):
 @pytest.fixture
 def superuser(app):
     with app.app_context():
-
-        # スーパーユーザーを作成
+        # スーパーユーザーを作成（organization_id=None, is_superuser=True）
         user = User(
-            name="Test Admin",
+            name="Admin Test User",
             email="admin@example.com",
             password_hash=generate_password_hash("adminpass"),
-            organization_id=,
-            role=true
+            is_superuser=True,
+            organization_id=None  # 明示的にnullを指定
         )
         db.session.add(user)
         db.session.commit()
