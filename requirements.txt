@@ -13,3 +13,6 @@ cryptography
 celery
 redis
 google-generativeai
+pandas
+openpyxl
+PyYAML
