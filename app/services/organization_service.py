@@ -10,16 +10,24 @@ def can_create_root_organization(company_id):
     return existing is None
 
 
-def create_organization(name, org_code, company_id, parent_id=None):
-    if Organization.query.filter_by(company_id=company_id, org_code=org_code).first():
-        raise ValueError("同一会社内でこの org_code は既に使用されています。")
-
-    level = 1
+def create_organization(name, org_code, company_id=None, parent_id=None):
     if parent_id:
         parent = db.session.get(Organization, parent_id)
         if not parent:
             raise ValueError("指定された親組織が存在しません。")
+        if company_id and company_id != parent.company_id:
+            raise ValueError("指定されたcompany_idと親組織のcompany_idが一致しません。")
+        company_id = parent.company_id
         level = parent.level + 1
+    else:
+        if not company_id:
+            raise ValueError("ルート組織にはcompany_idが必須です。")
+        level = 1
+
+    # org_codeの重複チェック（同一会社内）
+    existing = Organization.query.filter_by(company_id=company_id, org_code=org_code).first()
+    if existing:
+        raise ValueError("同一会社内でこの org_code は既に使用されています。")
 
     org = Organization(
         name=name,
@@ -31,6 +39,7 @@ def create_organization(name, org_code, company_id, parent_id=None):
     db.session.add(org)
     db.session.commit()
     return org
+
 
 
 def get_organization_by_id(org_id):

@@ -46,7 +46,7 @@ def superuser(client):
     return user
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def login_superuser(client, superuser):
     """ログイン状態にする"""
     with client.session_transaction() as sess:
