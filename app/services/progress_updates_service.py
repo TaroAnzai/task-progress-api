@@ -34,10 +34,10 @@ def get_progress_list(objective_id, user):
     return [
         {
             'id': p.id,
-            'status': Status.query.get(p.status_id).name,
+            'status': db.session.get(Status, p.status_id).name,
             'detail': p.detail,
             'report_date': p.report_date.strftime('%Y-%m-%d'),
-            'updated_by': User.query.get(p.updated_by).name
+            'updated_by': db.session.get(User, p.updated_by).name
         } for p in progress_list
     ], 200
 
@@ -64,8 +64,8 @@ def get_latest_progress(objective_id, user):
             'updated_by': '-'
         }, 200
 
-    status = Status.query.get(progress.status_id)
-    user_name = User.query.get(progress.updated_by).name
+    status = db.session.get(Status, progress.status_id)
+    user_name = db.session.get(User, progress.updated_by).name
 
     return {
         'status': status.name if status else '-',
