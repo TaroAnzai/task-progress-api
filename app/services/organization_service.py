@@ -30,19 +30,19 @@ def create_organization(name, org_code, company_id, parent_id=None):
     )
     db.session.add(org)
     db.session.commit()
-    return org.to_dict()
+    return org
 
 
 def get_organization_by_id(org_id):
     org = Organization.query.get(org_id)
-    return org.to_dict() if org else None
+    return org if org else None
 
 
 def get_organizations(company_id=None):
     query = Organization.query
     if company_id:
         query = query.filter_by(company_id=company_id)
-    return [org.to_dict() for org in query.all()]
+    return [org for org in query.all()]
 
 
 def update_organization(org_id, name=None, parent_id=None):
@@ -64,7 +64,7 @@ def update_organization(org_id, name=None, parent_id=None):
         org.parent_id = parent_id
 
     db.session.commit()
-    return org.to_dict()
+    return org
 
 
 def delete_organization(org_id):
@@ -111,6 +111,6 @@ def get_organization_tree(company_id=None):
 
 def get_children(parent_id):
     """
-    指定された親組織IDに属する子組織をリストで返す
+    指定された親組織IDに属する子組織を返す（モデルオブジェクト）
     """
-    return [org.to_dict() for org in Organization.query.filter_by(parent_id=parent_id).all()]
+    return Organization.query.filter_by(parent_id=parent_id).all()
