@@ -116,7 +116,12 @@ def test_get_organization_tree(client, login_superuser, root_org_data):
     assert isinstance(res.get_json(), list)
 
 def test_get_children(client, login_superuser, root_org_data):
-    child = Organization(name="子組織", org_code="child", parent_id=root_org.id, company_id=root_org_data['company_id'])
+    child = Organization(
+        name="子組織",
+        org_code="child",
+        parent_id=root_org_data['id'],
+        company_id=root_org_data['company_id']
+    )
     db.session.add(child)
     db.session.commit()
 
