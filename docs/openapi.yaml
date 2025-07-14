@@ -1,0 +1,1192 @@
+openapi: 3.0.0
+info:
+  title: Task Progress API
+  version: "1.0.0"
+  description: |
+    Flask 製バックエンド API の概要仕様。
+    主なエンドポイントをまとめた簡易 OpenAPI ドキュメントです。
+servers:
+  - url: http://localhost:5000
+paths:
+  /ping:
+    get:
+      summary: 動作確認用
+      responses:
+        '200':
+          description: Pong を返す
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /login:
+    post:
+      summary: メールアドレスによるログイン
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /login/by-id:
+    post:
+      summary: WordPress ID でログイン
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                wp_user_id:
+                  type: integer
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /logout:
+    post:
+      summary: ログアウト
+      responses:
+        '200':
+          description: ログアウト完了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /current_user:
+    get:
+      summary: 現在のユーザー取得
+      responses:
+        '200':
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users:
+    post:
+      summary: ユーザー作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    get:
+      summary: ユーザー一覧取得
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: integer
+        - in: query
+          name: organization_id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ユーザーリスト
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+  /users/{user_id}:
+    get:
+      summary: ユーザー詳細
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      summary: ユーザー更新
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '200':
+          description: 更新後のユーザー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      summary: ユーザー削除
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 削除完了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /users/by-email:
+    get:
+      summary: メールアドレスでユーザー取得
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users/id-lookup:
+    get:
+      summary: WordPress ID でユーザー取得
+      parameters:
+        - in: query
+          name: wp_user_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users/by-org-tree/{org_id}:
+    get:
+      summary: 組織ツリー配下のユーザー取得
+      parameters:
+        - in: path
+          name: org_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ユーザー一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+  /companies:
+    get:
+      summary: 会社一覧
+      responses:
+        '200':
+          description: 会社配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Company'
+    post:
+      summary: 会社作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyInput'
+      responses:
+        '201':
+          description: 作成された会社
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+  /companies/{company_id}:
+    get:
+      summary: 会社詳細
+      parameters:
+        - in: path
+          name: company_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 会社情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+    put:
+      summary: 会社名更新
+      parameters:
+        - in: path
+          name: company_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyInput'
+      responses:
+        '200':
+          description: 更新後の会社
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+    delete:
+      summary: 会社論理削除
+      parameters:
+        - in: path
+          name: company_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 削除メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /companies/restore/{company_id}:
+    post:
+      summary: 会社復元
+      parameters:
+        - in: path
+          name: company_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 復元メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /companies/permanent/{company_id}:
+    delete:
+      summary: 会社物理削除
+      parameters:
+        - in: path
+          name: company_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 削除メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /organizations:
+    post:
+      summary: 組織作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationInput'
+      responses:
+        '201':
+          description: 作成された組織
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+    get:
+      summary: 組織一覧
+      parameters:
+        - in: query
+          name: company_id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 組織配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+  /organizations/{org_id}:
+    get:
+      summary: 組織詳細
+      parameters:
+        - in: path
+          name: org_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 組織情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+    put:
+      summary: 組織更新
+      parameters:
+        - in: path
+          name: org_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUpdate'
+      responses:
+        '200':
+          description: 更新後の組織
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+    delete:
+      summary: 組織削除
+      parameters:
+        - in: path
+          name: org_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 削除メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /organizations/tree:
+    get:
+      summary: 組織ツリー取得
+      parameters:
+        - in: query
+          name: company_id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ツリー構造
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrganizationTree'
+  /organizations/children:
+    get:
+      summary: 子組織一覧
+      parameters:
+        - in: query
+          name: parent_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 子組織配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+  /tasks:
+    post:
+      summary: タスク作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '201':
+          description: 作成メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+    get:
+      summary: タスク一覧
+      responses:
+        '200':
+          description: タスク配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+  /tasks/{task_id}:
+    put:
+      summary: タスク更新
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '200':
+          description: 更新メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+    delete:
+      summary: タスク削除
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 削除メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /tasks/{task_id}/objectives/order:
+    post:
+      summary: オブジェクティブ並び順更新
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: 更新メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /tasks/{task_id}/scope/access_levels:
+    put:
+      summary: タスクのアクセスレベル設定
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_access:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TaskUserAccess'
+                organization_access:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TaskOrgAccess'
+      responses:
+        '200':
+          description: 更新メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /tasks/{task_id}/scope/users:
+    get:
+      summary: アクセス可能ユーザー一覧
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ユーザー配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+  /tasks/{task_id}/scope/access_users:
+    get:
+      summary: 個別ユーザー設定一覧
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 設定一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserAccessInfo'
+  /tasks/{task_id}/scope/access_organizations:
+    get:
+      summary: 組織アクセス設定一覧
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 設定一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrgAccessInfo'
+  /task_order/{user_id}:
+    get:
+      summary: タスク並び順取得
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 並び順リスト
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    task_id:
+                      type: integer
+                    title:
+                      type: string
+    post:
+      summary: タスク並び順保存
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: 保存メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /objectives:
+    post:
+      summary: オブジェクティブ作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObjectiveInput'
+      responses:
+        '201':
+          description: 作成メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /objectives/{objective_id}:
+    get:
+      summary: オブジェクティブ詳細
+      parameters:
+        - in: path
+          name: objective_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: オブジェクティブ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Objective'
+    put:
+      summary: オブジェクティブ更新
+      parameters:
+        - in: path
+          name: objective_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObjectiveInput'
+      responses:
+        '200':
+          description: 更新メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+    delete:
+      summary: オブジェクティブ削除
+      parameters:
+        - in: path
+          name: objective_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 削除メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /tasks/{task_id}/objectives:
+    get:
+      summary: タスクのオブジェクティブ一覧
+      parameters:
+        - in: path
+          name: task_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: オブジェクティブ配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Objective'
+  /statuses:
+    get:
+      summary: ステータス一覧
+      responses:
+        '200':
+          description: ステータス配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Status'
+  /objectives/{objective_id}/progress:
+    post:
+      summary: 進捗追加
+      parameters:
+        - in: path
+          name: objective_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgressInput'
+      responses:
+        '201':
+          description: 追加メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+    get:
+      summary: 進捗一覧取得
+      parameters:
+        - in: path
+          name: objective_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 進捗配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Progress'
+  /objectives/{objective_id}/latest-progress:
+    get:
+      summary: 最新進捗取得
+      parameters:
+        - in: path
+          name: objective_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 最新進捗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Progress'
+  /progress/{progress_id}:
+    delete:
+      summary: 進捗削除
+      parameters:
+        - in: path
+          name: progress_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 削除メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /access-scopes/{scope_id}:
+    delete:
+      summary: アクセススコープ削除
+      parameters:
+        - in: path
+          name: scope_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 削除メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /users/{user_id}/access-scopes:
+    get:
+      summary: ユーザーのアクセススコープ取得
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: スコープ一覧
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessScope'
+    post:
+      summary: アクセススコープ追加
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessScopeInput'
+      responses:
+        '201':
+          description: 追加メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+  /ai/suggest:
+    post:
+      summary: AI 提案タスク実行
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                task_info:
+                  type: object
+                mode:
+                  type: string
+      responses:
+        '202':
+          description: ジョブID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+  /ai/result/{job_id}:
+    get:
+      summary: AI 処理結果取得
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 処理結果
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas:
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        wp_user_id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+        email:
+          type: string
+        is_superuser:
+          type: boolean
+        organization_id:
+          type: integer
+          nullable: true
+        organization_name:
+          type: string
+          nullable: true
+    UserInput:
+      type: object
+      properties:
+        wp_user_id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        organization_id:
+          type: integer
+    Company:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    CompanyInput:
+      type: object
+      properties:
+        name:
+          type: string
+    Organization:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        org_code:
+          type: string
+        company_id:
+          type: integer
+        parent_id:
+          type: integer
+          nullable: true
+        level:
+          type: integer
+    OrganizationInput:
+      type: object
+      properties:
+        name:
+          type: string
+        org_code:
+          type: string
+        company_id:
+          type: integer
+          nullable: true
+        parent_id:
+          type: integer
+          nullable: true
+    OrganizationUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        parent_id:
+          type: integer
+          nullable: true
+    OrganizationTree:
+      allOf:
+        - $ref: '#/components/schemas/Organization'
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrganizationTree'
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        status_id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        assigned_user_id:
+          type: integer
+          nullable: true
+        created_by:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        display_order:
+          type: integer
+        organization_id:
+          type: integer
+    TaskInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date
+        status_id:
+          type: integer
+        display_order:
+          type: integer
+    TaskUserAccess:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        access_level:
+          type: string
+    TaskOrgAccess:
+      type: object
+      properties:
+        organization_id:
+          type: integer
+        access_level:
+          type: string
+    UserAccessInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        access_level:
+          type: string
+    OrgAccessInfo:
+      type: object
+      properties:
+        organization_id:
+          type: integer
+        name:
+          type: string
+        access_level:
+          type: string
+    Objective:
+      type: object
+      properties:
+        id:
+          type: integer
+        task_id:
+          type: integer
+        title:
+          type: string
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        assigned_user_id:
+          type: integer
+          nullable: true
+        status_id:
+          type: integer
+        display_order:
+          type: integer
+    ObjectiveInput:
+      type: object
+      properties:
+        task_id:
+          type: integer
+        title:
+          type: string
+        due_date:
+          type: string
+          format: date
+        assigned_user_id:
+          type: integer
+        status_id:
+          type: integer
+    Status:
+      type: object
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+    Progress:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        detail:
+          type: string
+        report_date:
+          type: string
+          format: date
+        updated_by:
+          type: string
+    ProgressInput:
+      type: object
+      properties:
+        status_id:
+          type: integer
+        detail:
+          type: string
+        report_date:
+          type: string
+          format: date
+    AccessScope:
+      type: object
+      properties:
+        id:
+          type: integer
+        organization_id:
+          type: integer
+        role:
+          type: string
+    AccessScopeInput:
+      type: object
+      properties:
+        organization_id:
+          type: integer
+        role:
+          type: string
