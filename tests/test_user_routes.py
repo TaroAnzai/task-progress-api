@@ -36,7 +36,7 @@ def assert_error_response(response, expected_status: int, expected_message: str 
 @pytest.fixture(scope='module')
 def test_company(client, login_superuser):
     """テスト用会社を作成"""
-    data = {'name': 'Test Company'}
+    data = {'name': 'Test Company user'}
     res = client.post("/companies/", json=data)
     assert res.status_code == 201
     return res.get_json()
