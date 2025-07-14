@@ -1,6 +1,7 @@
 # services/user_service.py
 
 from flask import current_app, jsonify
+import re
 from sqlalchemy.orm import joinedload
 from ..models import db, User, Organization
 from ..utils import (
@@ -9,16 +10,30 @@ from ..utils import (
     check_access_scope,
 )
 
+import re
+
+def is_valid_email(email):
+    # シンプルな正規表現（RFC全準拠ではなく一般的な形式の検出）
+    return re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email)
+
 def create_user(data, current_user):
     if not check_access_scope(current_user, data.get('organization_id'), 'full'):
         return {'error': '権限がありません'}, 403
+
     wp_user_id = data.get('wp_user_id')
     name = data.get('name')
     email = data.get('email')
     org_id = data.get('organization_id')
+    password = data.get('password')
 
     if not name or not email or not org_id:
         return {'error': 'name、email、organization_idは必須です'}, 400
+
+    if not password:
+        return {'error': 'password は必須です'}, 400
+
+    if not is_valid_email(email):
+        return {'error': '無効なメールアドレス形式です'}, 400
 
     if wp_user_id and User.query.filter_by(wp_user_id=wp_user_id).first():
         return {'error': 'この wp_user_id は既に使用されています'}, 400
@@ -31,10 +46,13 @@ def create_user(data, current_user):
         return {'error': '指定された組織IDが存在しません'}, 400
 
     user = User(wp_user_id=wp_user_id, name=name, email=email, organization_id=org_id)
+    user.set_password(password)
     db.session.add(user)
     db.session.commit()
 
     return {'message': 'ユーザーを登録しました', 'user': user.to_dict(include_org=True)}, 201
+
+
 
 def get_user_by_id(user_id, current_user):
     user = db.session.get(User, user_id)

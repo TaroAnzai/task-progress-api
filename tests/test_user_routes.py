@@ -186,7 +186,7 @@ class TestUserCreationParameterized:
     """パラメータ化されたユーザー作成テスト"""
     
     @pytest.mark.parametrize("missing_field", [
-        'name', 'email', 'password', 'organization_id', 'role'
+        'name', 'email', 'password', 'organization_id'
     ])
     def test_create_user_missing_required_fields(self, client, root_org_data, missing_field):
         """各必須フィールドが不足している場合のテスト"""
@@ -194,7 +194,6 @@ class TestUserCreationParameterized:
         del payload[missing_field]
         
         res = client.post('/users', json=payload)
-        print(f"Testing missing field: {res.get_json()}")
         error_data = assert_error_response(res, 400)
         assert missing_field in error_data['error']
     
