@@ -3,6 +3,7 @@ from flask import jsonify
 from datetime import datetime
 from app.models import db, Objective, Task, Status
 from app.utils import check_access_scope
+from app.constants import TaskAccessLevelEnum
 
 
 def get_task_by_id(task_id):
@@ -31,7 +32,7 @@ def create_objective(data, user):
     task = get_task_by_id(task_id)
     if not task:
         return {'error': 'タスクが見つかりません'}, 404
-    if not check_access_scope(user, task.organization_id, 'edit'):
+    if not check_access_scope(user, task.organization_id, TaskAccessLevelEnum.EDIT):
         return {'error': 'このタスクにオブジェクティブを追加する権限がありません'}, 403
 
     due_date = None
@@ -71,7 +72,7 @@ def update_objective(objective_id, data, user):
     if not task:
         return {'error': 'タスクが見つかりません'}, 404
 
-    if not check_access_scope(user, task.organization_id, 'edit'):
+    if not check_access_scope(user, task.organization_id, TaskAccessLevelEnum.EDIT):
         return {'error': '編集権限がありません'}, 403
 
     objective.title = data.get('title', objective.title)
@@ -93,7 +94,7 @@ def get_objectives_for_task(task_id, user):
     task = get_task_by_id(task_id)
     if not task:
         return {'error': 'タスクが見つかりません'}, 404
-    if not check_access_scope(user, task.organization_id, 'view'):
+    if not check_access_scope(user, task.organization_id, TaskAccessLevelEnum.VIEW):
         return {'error': '閲覧権限がありません'}, 403
 
     objectives = Objective.query.filter_by(task_id=task_id, is_deleted=False) \
@@ -120,7 +121,7 @@ def get_objective(objective_id, user):
     task = get_task_by_id(objective.task_id)
     if not task:
         return {'error': 'タスクが見つかりません'}, 404
-    if not check_access_scope(user, task.organization_id, 'view'):
+    if not check_access_scope(user, task.organization_id, TaskAccessLevelEnum.VIEW):
         return {'error': '閲覧権限がありません'}, 403
 
     return {
@@ -141,7 +142,7 @@ def delete_objective(objective_id, user):
     if not task:
         return {'error': 'タスクが見つかりません'}, 404
 
-    if not check_access_scope(user, task.organization_id, 'edit'):
+    if not check_access_scope(user, task.organization_id, TaskAccessLevelEnum.EDIT):
         return {'error': '削除権限がありません'}, 403
 
     objective.soft_delete()

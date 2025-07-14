@@ -1,6 +1,7 @@
 # app/services/access_scope_service.py
 
 from ..models import db, User, AccessScope, Organization
+from ..constants import OrgRoleEnum
 
 def get_user_scopes(user_id):
     user = db.session.get(User, user_id)
@@ -11,7 +12,7 @@ def get_user_scopes(user_id):
         {
             'id': scope.id,
             'organization_id': scope.organization_id,
-            'role': scope.role
+            'role': scope.role.value
         } for scope in user.access_scopes
     ]
     return scopes, 200
@@ -29,13 +30,18 @@ def add_access_scope_to_user(user_id, data):
 
     existing_scope = AccessScope.query.filter_by(user_id=user.id, organization_id=org_id).first()
     if existing_scope:
-        if existing_scope.role != role:
-            existing_scope.role = role
+        if existing_scope.role != OrgRoleEnum(role):
+            existing_scope.role = OrgRoleEnum(role)
             db.session.commit()
             return {'message': 'アクセススコープを更新しました'}, 200
         return {'message': 'すでにこのアクセススコープは登録されています'}, 200
 
-    new_scope = AccessScope(user_id=user.id, organization_id=org_id, role=role)
+    try:
+        role_enum = OrgRoleEnum(role)
+    except ValueError:
+        return {'error': '無効な role です'}, 400
+
+    new_scope = AccessScope(user_id=user.id, organization_id=org_id, role=role_enum)
     db.session.add(new_scope)
     db.session.commit()
     return {'message': 'アクセススコープを追加しました'}, 201

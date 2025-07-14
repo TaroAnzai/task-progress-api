@@ -7,6 +7,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from datetime import datetime, date
 import sqlite3
 from app import db
+from .constants import OrgRoleEnum, TaskAccessLevelEnum
 
 
 # SQLite: enforce foreign key constraint
@@ -114,7 +115,7 @@ class AccessScope(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=False)
-    role = db.Column(db.String(50), nullable=False)
+    role = db.Column(db.Enum(OrgRoleEnum), nullable=False)
 
     user = db.relationship('User', backref='access_scopes')
     organization = db.relationship('Organization', backref='access_scopes')
@@ -124,7 +125,7 @@ class AccessScope(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'organization_id': self.organization_id,
-            'role': self.role
+            'role': self.role.value
         }
 
 
@@ -222,7 +223,7 @@ class TaskAccessUser(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
-    access_level = db.Column(db.String(50), nullable=False, default='view')
+    access_level = db.Column(db.Enum(TaskAccessLevelEnum), nullable=False, default=TaskAccessLevelEnum.VIEW)
 
     task = db.relationship('Task', backref='user_access')
     user = db.relationship('User', backref='task_access')
@@ -232,7 +233,7 @@ class TaskAccessUser(db.Model):
             'id': self.id,
             'task_id': self.task_id,
             'user_id': self.user_id,
-            'access_level': self.access_level
+            'access_level': self.access_level.value
         }
 
 
@@ -242,7 +243,7 @@ class TaskAccessOrganization(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=False)
-    access_level = db.Column(db.String(50), nullable=False, default='view')
+    access_level = db.Column(db.Enum(TaskAccessLevelEnum), nullable=False, default=TaskAccessLevelEnum.VIEW)
 
     task = db.relationship('Task', backref='org_access')
     organization = db.relationship('Organization', backref='task_access')
@@ -252,7 +253,7 @@ class TaskAccessOrganization(db.Model):
             'id': self.id,
             'task_id': self.task_id,
             'organization_id': self.organization_id,
-            'access_level': self.access_level
+            'access_level': self.access_level.value
         }
 
 

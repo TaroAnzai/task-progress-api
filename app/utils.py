@@ -1,6 +1,12 @@
 # utils.py
 
 from .models import db, TaskAccessUser, TaskAccessOrganization, Organization
+from .constants import (
+    TaskAccessLevelEnum,
+    OrgRoleEnum,
+    TASK_ACCESS_PRIORITY,
+    ORG_ROLE_PRIORITY,
+)
 
 def get_all_child_organizations(org_id):
     """
@@ -51,10 +57,10 @@ def can_view_task(user, task):
     if task.created_by == user.id:
         return True
 
-    if any(s.role == 'system_admin' for s in user.access_scopes):
+    if any(s.role == OrgRoleEnum.SYSTEM_ADMIN for s in user.access_scopes):
         return True
 
-    if any(s.role == 'org_admin' for s in user.access_scopes):
+    if any(s.role == OrgRoleEnum.ORG_ADMIN for s in user.access_scopes):
         all_orgs = Organization.query.all()
         descendant_orgs = get_descendant_organizations(user.organization_id, all_orgs)
         descendant_ids = [org.id for org in descendant_orgs]
@@ -76,10 +82,10 @@ def can_edit_task(user, task):
     if task.created_by == user.id:
         return True
 
-    if any(s.role == 'system_admin' for s in user.access_scopes):
+    if any(s.role == OrgRoleEnum.SYSTEM_ADMIN for s in user.access_scopes):
         return True
 
-    if any(s.role == 'org_admin' for s in user.access_scopes):
+    if any(s.role == OrgRoleEnum.ORG_ADMIN for s in user.access_scopes):
         all_orgs = Organization.query.all()
         descendant_orgs = get_descendant_organizations(user.organization_id, all_orgs)
         descendant_ids = [org.id for org in descendant_orgs]
@@ -108,18 +114,18 @@ def check_task_access(user, task, required_level):
     return False
 
 def access_level_sufficient(user_level, required_level):
-    """
-    アクセスレベルの優先順位を比較して十分かどうかを判定
-    """
-    priority = {
-        'view': 1,
-        'edit': 2,
-        'full': 3,
-        'owner': 4
-    }
-    return priority.get(user_level, 0) >= priority.get(required_level, 0)
+    """Return ``True`` if ``user_level`` satisfies ``required_level``."""
+    if not isinstance(user_level, TaskAccessLevelEnum):
+        user_level = TaskAccessLevelEnum(user_level)
+    if not isinstance(required_level, TaskAccessLevelEnum):
+        required_level = TaskAccessLevelEnum(required_level)
 
-def check_access_scope(user, organization_id, required_level='view'):
+    return (
+        TASK_ACCESS_PRIORITY.get(user_level, 0)
+        >= TASK_ACCESS_PRIORITY.get(required_level, 0)
+    )
+
+def check_access_scope(user, organization_id, required_level=TaskAccessLevelEnum.VIEW):
     """Return True if ``user`` has ``required_level`` access for ``organization_id``.
 
     Superusers and ``system_admin`` roles bypass all checks. ``org_admin`` roles
@@ -132,15 +138,15 @@ def check_access_scope(user, organization_id, required_level='view'):
         return True
 
     for scope in user.access_scopes:
-        if scope.role == 'system_admin':
+        if scope.role == OrgRoleEnum.SYSTEM_ADMIN:
             return True
 
-        if scope.role == 'org_admin':
+        if scope.role == OrgRoleEnum.ORG_ADMIN:
             all_orgs = Organization.query.all()
             descendant_orgs = get_descendant_organizations(scope.organization_id or user.organization_id, all_orgs)
             descendant_ids = [org.id for org in descendant_orgs]
             if organization_id in descendant_ids:
-                return access_level_sufficient('full', required_level)
+                return access_level_sufficient(TaskAccessLevelEnum.FULL, required_level)
 
         if scope.organization_id == organization_id:
             if access_level_sufficient(scope.role, required_level):
@@ -152,3 +158,4 @@ def require_superuser(user):
     if not getattr(user, 'is_superuser', False):
         from flask import abort
         abort(403, description="This action requires superuser privileges.")
+

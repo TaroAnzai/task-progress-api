@@ -2,6 +2,7 @@
 from datetime import datetime
 from app.models import db, Objective, Task, ProgressUpdate, Status, User
 from app.utils import check_access_scope
+from app.constants import TaskAccessLevelEnum
 
 
 def get_task_by_id(task_id):
@@ -36,7 +37,7 @@ def add_progress(objective_id, data, user):
     if not task:
         return {'error': 'タスクが見つかりません'}, 404
 
-    if not (check_access_scope(user, task.organization_id, 'edit') or user.id == objective.assigned_user_id):
+    if not (check_access_scope(user, task.organization_id, TaskAccessLevelEnum.EDIT) or user.id == objective.assigned_user_id):
         return {'error': '進捗追加の権限がありません'}, 403
 
     progress = ProgressUpdate(
@@ -59,7 +60,7 @@ def get_progress_list(objective_id, user):
     if not task:
         return {'error': 'タスクが見つかりません'}, 404
 
-    if not check_access_scope(user, task.organization_id, 'view'):
+    if not check_access_scope(user, task.organization_id, TaskAccessLevelEnum.VIEW):
         return {'error': '閲覧権限がありません'}, 403
 
     progress_list = ProgressUpdate.query.filter_by(objective_id=objective_id, is_deleted=False).all()
@@ -82,7 +83,7 @@ def get_latest_progress(objective_id, user):
     if not task:
         return {'error': 'タスクが見つかりません'}, 404
 
-    if not check_access_scope(user, task.organization_id, 'view'):
+    if not check_access_scope(user, task.organization_id, TaskAccessLevelEnum.VIEW):
         return {'error': '閲覧権限がありません'}, 403
 
     progress = (
@@ -122,7 +123,7 @@ def delete_progress(progress_id, user):
     if not task or task.is_deleted:
         return {'error': 'タスクが見つかりません'}, 404
 
-    if not check_access_scope(user, task.organization_id, 'full'):
+    if not check_access_scope(user, task.organization_id, TaskAccessLevelEnum.FULL):
         return {'error': '削除権限がありません'}, 403
 
     progress.soft_delete()

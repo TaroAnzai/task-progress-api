@@ -9,6 +9,7 @@ from ..utils import (
     get_descendant_organizations,
     check_access_scope,
 )
+from ..constants import TaskAccessLevelEnum
 
 import re
 
@@ -17,7 +18,7 @@ def is_valid_email(email):
     return re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email)
 
 def create_user(data, current_user):
-    if not check_access_scope(current_user, data.get('organization_id'), 'full'):
+    if not check_access_scope(current_user, data.get('organization_id'), TaskAccessLevelEnum.FULL):
         return {'error': '権限がありません'}, 403
 
     wp_user_id = data.get('wp_user_id')
@@ -59,7 +60,7 @@ def get_user_by_id(user_id, current_user):
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
 
-    if not check_access_scope(current_user, user.organization_id, 'full'):
+    if not check_access_scope(current_user, user.organization_id, TaskAccessLevelEnum.FULL):
         return {'error': '権限がありません'}, 403
 
     return user.to_dict(include_org=True), 200
@@ -69,7 +70,7 @@ def update_user(user_id, data, current_user):
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
 
-    if not check_access_scope(current_user, user.organization_id, 'full'):
+    if not check_access_scope(current_user, user.organization_id, TaskAccessLevelEnum.FULL):
         return {'error': '権限がありません'}, 403
 
     if 'name' in data:
@@ -89,7 +90,7 @@ def delete_user(user_id, current_user):
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
 
-    if not check_access_scope(current_user, user.organization_id, 'full'):
+    if not check_access_scope(current_user, user.organization_id, TaskAccessLevelEnum.FULL):
         return {'error': '権限がありません'}, 403
 
     from ..models import AccessScope
@@ -108,7 +109,7 @@ def get_users(requesting_user_id, organization_id=None):
     if not requester:
         return []
 
-    if not check_access_scope(requester, organization_id or requester.organization_id, 'full'):
+    if not check_access_scope(requester, organization_id or requester.organization_id, TaskAccessLevelEnum.FULL):
         return {'error': '権限がありません'}, 403
 
     all_orgs = Organization.query.all()
@@ -134,7 +135,7 @@ def get_user_by_email(email, current_user):
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
 
-    if not check_access_scope(current_user, user.organization_id, 'full'):
+    if not check_access_scope(current_user, user.organization_id, TaskAccessLevelEnum.FULL):
         return {'error': '権限がありません'}, 403
 
     return user.to_dict(include_org=True), 200
@@ -144,13 +145,13 @@ def get_user_by_wp_user_id(wp_user_id, current_user):
     if not user:
         return {'error': 'ユーザーが見つかりません'}, 404
 
-    if not check_access_scope(current_user, user.organization_id, 'full'):
+    if not check_access_scope(current_user, user.organization_id, TaskAccessLevelEnum.FULL):
         return {'error': '権限がありません'}, 403
 
     return user.to_dict(include_org=True), 200
 
 def get_users_by_org_tree(org_id, current_user):
-    if not check_access_scope(current_user, org_id, 'full'):
+    if not check_access_scope(current_user, org_id, TaskAccessLevelEnum.FULL):
         return {'error': '権限がありません'}, 403
 
     try:
