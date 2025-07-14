@@ -2,6 +2,7 @@ from flask import jsonify, current_app
 from datetime import datetime
 from app.models import db, Task, Objective, UserTaskOrder, TaskAccessUser, TaskAccessOrganization
 from app.utils import check_task_access
+from app.constants import TaskAccessLevelEnum
 from sqlalchemy import and_, or_
 
 
@@ -47,7 +48,7 @@ def update_task(task_id, data, user):
     task = get_task_by_id(task_id)
     if not task:
         return jsonify({'error': 'タスクが見つかりません'}), 404
-    if not check_task_access(user, task, 'full'):
+    if not check_task_access(user, task, TaskAccessLevelEnum.FULL):
         return jsonify({'error': 'このタスクを編集する権限がありません'}), 403
 
     if 'status_id' in data:
@@ -71,7 +72,7 @@ def delete_task(task_id, user):
     task = get_task_by_id(task_id)
     if not task:
         return jsonify({'error': 'タスクが見つかりません'}), 404
-    if not check_task_access(user, task, 'full'):
+    if not check_task_access(user, task, TaskAccessLevelEnum.FULL):
         return jsonify({'error': 'このタスクを削除する権限がありません'}), 403
 
     orders = UserTaskOrder.query.filter_by(task_id=task_id).all()
@@ -100,12 +101,22 @@ def get_tasks(user):
         Task.id.in_(
             db.session.query(TaskAccessUser.task_id)
             .filter(TaskAccessUser.user_id == user_id)
-            .filter(TaskAccessUser.access_level.in_(['view', 'edit', 'full']))
+            .filter(TaskAccessUser.access_level.in_([
+                TaskAccessLevelEnum.VIEW,
+                TaskAccessLevelEnum.EDIT,
+                TaskAccessLevelEnum.FULL,
+            ]))
         ),
         Task.id.in_(
             db.session.query(TaskAccessOrganization.task_id)
             .filter(TaskAccessOrganization.organization_id == org_id)
-            .filter(TaskAccessOrganization.access_level.in_(['view', 'edit', 'full']))
+            .filter(
+                TaskAccessOrganization.access_level.in_([
+                    TaskAccessLevelEnum.VIEW,
+                    TaskAccessLevelEnum.EDIT,
+                    TaskAccessLevelEnum.FULL,
+                ])
+            )
         )
     ]
 
@@ -135,13 +146,13 @@ def get_tasks(user):
         task_dict['display_order'] = user_order if user_order is not None else task.display_order
 
         if task.created_by == user_id:
-            task_dict['user_access_level'] = 'full'
+            task_dict['user_access_level'] = TaskAccessLevelEnum.FULL.value
         elif (entry := TaskAccessUser.query.filter_by(task_id=task.id, user_id=user_id).first()):
-            task_dict['user_access_level'] = entry.access_level
+            task_dict['user_access_level'] = entry.access_level.value
         elif (entry := TaskAccessOrganization.query.filter_by(task_id=task.id, organization_id=org_id).first()):
-            task_dict['user_access_level'] = entry.access_level
+            task_dict['user_access_level'] = entry.access_level.value
         else:
-            task_dict['user_access_level'] = 'view'
+            task_dict['user_access_level'] = TaskAccessLevelEnum.VIEW.value
 
         result.append(task_dict)
 

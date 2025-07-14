@@ -4,7 +4,18 @@ import io
 import pandas as pd
 import yaml
 from sqlalchemy import and_, or_
-from app.models import db, Task, Objective, ProgressUpdate, Status, User, TaskAccessUser, TaskAccessOrganization, UserTaskOrder
+from app.models import (
+    db,
+    Task,
+    Objective,
+    ProgressUpdate,
+    Status,
+    User,
+    TaskAccessUser,
+    TaskAccessOrganization,
+    UserTaskOrder,
+)
+from app.constants import TaskAccessLevelEnum
 
 
 class ProgressFormatter:
@@ -83,7 +94,13 @@ class TaskDataExporter:
             Task.id.in_(
                 db.session.query(TaskAccessUser.task_id)
                 .filter(TaskAccessUser.user_id == self.user_id)
-                .filter(TaskAccessUser.access_level.in_(['view', 'edit', 'full']))
+                .filter(
+                    TaskAccessUser.access_level.in_([
+                        TaskAccessLevelEnum.VIEW,
+                        TaskAccessLevelEnum.EDIT,
+                        TaskAccessLevelEnum.FULL,
+                    ])
+                )
             ),
         ]
 
@@ -92,7 +109,13 @@ class TaskDataExporter:
                 Task.id.in_(
                     db.session.query(TaskAccessOrganization.task_id)
                     .filter(TaskAccessOrganization.organization_id == user.organization_id)
-                    .filter(TaskAccessOrganization.access_level.in_(['view', 'edit', 'full']))
+                    .filter(
+                        TaskAccessOrganization.access_level.in_([
+                            TaskAccessLevelEnum.VIEW,
+                            TaskAccessLevelEnum.EDIT,
+                            TaskAccessLevelEnum.FULL,
+                        ])
+                    )
                 )
             )
             # 組織に直接属するタスクも追加

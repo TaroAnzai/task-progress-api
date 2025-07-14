@@ -1,6 +1,7 @@
 from flask import jsonify
 from app.models import db, Task, User, Organization, TaskAccessUser, TaskAccessOrganization
 from app.utils import check_task_access, access_level_sufficient
+from app.constants import TaskAccessLevelEnum
 
 
 def get_task_by_id(task_id):
@@ -11,13 +12,13 @@ def get_task_by_id_with_deleted(task_id):
     return db.session.get(Task, task_id)
 
 # Access levels in order of increasing permission
-ACCESS_LEVELS = ['view', 'edit', 'full', 'owner']
+ACCESS_LEVELS = list(TaskAccessLevelEnum)
 
 def update_access_level(task_id, data, user):
     task = get_task_by_id(task_id)
     if not task:
         return jsonify({'error': 'タスクが見つかりません'}), 404
-    if not check_task_access(user, task, 'full'):
+    if not check_task_access(user, task, TaskAccessLevelEnum.FULL):
         return jsonify({'error': 'スコープ権限を変更する権限がありません'}), 403
 
     # --- ユーザーアクセス処理 ---
@@ -28,7 +29,7 @@ def update_access_level(task_id, data, user):
 
     for entry in input_user_access:
         user_id = entry['user_id']
-        access_level = entry['access_level']
+        access_level = TaskAccessLevelEnum(entry['access_level'])
         if user_id in existing_user_map:
             existing_user_map[user_id].access_level = access_level
         else:
@@ -45,7 +46,7 @@ def update_access_level(task_id, data, user):
 
     for entry in input_org_access:
         org_id = entry['organization_id']
-        access_level = entry['access_level']
+        access_level = TaskAccessLevelEnum(entry['access_level'])
         if org_id in existing_org_map:
             existing_org_map[org_id].access_level = access_level
         else:
@@ -59,7 +60,7 @@ def update_access_level(task_id, data, user):
 
 def get_task_users(task_id):
     # "edit" 以上のアクセスレベルを持つユーザーを返す
-    allowed_levels = [lvl for lvl in ACCESS_LEVELS if access_level_sufficient(lvl, 'edit')]
+    allowed_levels = [lvl for lvl in ACCESS_LEVELS if access_level_sufficient(lvl, TaskAccessLevelEnum.EDIT)]
 
     access_user_ids = db.session.query(TaskAccessUser.user_id).filter(
         TaskAccessUser.task_id == task_id,
@@ -101,7 +102,7 @@ def get_task_access_users(task_id):
         "id": u.id,
         "name": u.name,
         "email": u.email,
-        "access_level": u.access_level
+        "access_level": u.access_level.value
     } for u in entries]
 
     return jsonify(result)
@@ -116,7 +117,7 @@ def get_task_access_organizations(task_id):
     result = [{
         "organization_id": o.id,
         "name": o.name,
-        "access_level": o.access_level
+        "access_level": o.access_level.value
     } for o in entries]
 
     return jsonify(result)
