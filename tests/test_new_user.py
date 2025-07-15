@@ -1,7 +1,7 @@
-def test_full_user_creation_flow(client, login_superuser):
+def test_full_user_creation_flow(superuser_login):
     # ① Company を作成
     company_payload = {'name': 'TestCompanyX'}
-    company_res = client.post('/companies/', json=company_payload)
+    company_res = superuser_login.post('/companies/', json=company_payload)
     assert company_res.status_code == 201
     company = company_res.json
     assert company['name'] == 'TestCompanyX'
@@ -14,7 +14,7 @@ def test_full_user_creation_flow(client, login_superuser):
         'parent_id': None,
         'level': 1
     }
-    org_res = client.post('/organizations/', json=org_payload)
+    org_res = superuser_login.post('/organizations/', json=org_payload)
     assert org_res.status_code == 201
     org = org_res.json
     assert org['name'] == 'DevelopmentDept'
@@ -28,7 +28,7 @@ def test_full_user_creation_flow(client, login_superuser):
         'organization_id': org['id'],
         'is_superuser': False
     }
-    user_res = client.post('/users', json=user_payload)
+    user_res = superuser_login.post('/users', json=user_payload)
     assert user_res.status_code == 201
     user = user_res.json['user']
     assert user['email'] == 'testuser1@example.com'

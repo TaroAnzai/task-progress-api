@@ -14,7 +14,7 @@ def resolve_company_id(provided_company_id):
     return current_user.organization.company_id
 
 
-@organization_bp.route('/', methods=['POST'])
+@organization_bp.route('', methods=['POST'])
 @login_required
 def create_organization():
     data = request.get_json()

@@ -1,13 +1,13 @@
 # tests/test_company.py
 
-def test_create_company(client, login_superuser):
+def test_create_company(superuser_login):
     payload = {'name': 'TestCompany'}
-    response = client.post('/companies/', json=payload)
+    response = superuser_login.post('/companies/', json=payload)
 
     assert response.status_code == 201
     assert response.json['name'] == 'TestCompany'
 
-    response = client.get('/companies/')
+    response = superuser_login.get('/companies/')
     assert response.status_code == 200
 
 

@@ -2,49 +2,26 @@ import pytest
 from app import db
 from app.models import Company, Organization
 
-@pytest.fixture(scope='module')
-def create_company_data():
-    return {"name": "Test2 Company"}
-
-@pytest.fixture(scope='module')
-def test_company(client, login_superuser, create_company_data):
-    response = client.post("/companies/", json=create_company_data)
-    assert response.status_code == 201
-    return response.get_json()  # ← JSON データにして返す（例：{'id': 1, 'name': 'Test Company'})
-
-@pytest.fixture(scope='module')
-def root_org(client, login_superuser, test_company):
-    org = Organization(name="RootOrg", org_code="root", company_id=test_company['id'])
-    return org
-
-@pytest.fixture(scope='module')
-def root_org_data(client, login_superuser, test_company, root_org):
-    responce = client.post('/organizations/',json={
-        'name': root_org.name,
-        'org_code': root_org.org_code,
-        'company_id':root_org.company_id
-    })
-    assert responce.status_code == 201
-    return responce.get_json()
-
-def test_create_organization(client, login_superuser, test_company, root_org, root_org_data):
-    res = client.post('/organizations/', json={
+def test_create_organization(login_as_user, root_org, system_related_users):
+    system_admin = system_related_users['system_admin']
+    client = login_as_user(system_admin['email'], system_admin['password'])
+    res = client.post('/organizations', json={
         'name': '営業部',
         'org_code': 'sales',
-        'company_id': test_company['id'],
-        'parent_id': root_org_data['id']
+        'parent_id': root_org['id']
     })
     assert res.status_code == 201
     data = res.get_json()
     assert data['name'] == '営業部'
     assert data['org_code'] == 'sales'
 
-def test_create_root_organization_twice(client, login_superuser):
-    company_res = response = client.post("/companies/", json={'name':'test_create_root_organization_twice'})
+def test_create_root_organization_twice(login_as_user, superuser):
+    client = login_as_user(superuser['email'], superuser["password"])
+    company_res = client.post("/companies", json={'name':'test_create_root_organization_twice'})
     assert company_res.status_code == 201
     company_res = company_res.get_json()
     # 最初のルート組織作成
-    res1 = client.post('/organizations/', json={
+    res1 = client.post('/organizations', json={
         'name': 'root',
         'org_code': 'code',
         'company_id': company_res['id'],
@@ -52,7 +29,7 @@ def test_create_root_organization_twice(client, login_superuser):
     assert res1.status_code == 201
 
     # 2つ目はエラー
-    res2 = client.post('/organizations/', json={
+    res2 = client.post('/organizations', json={
         'name': 'AnotherRoot',
         'org_code': 'root2',
         'company_id': company_res['id']
@@ -60,35 +37,42 @@ def test_create_root_organization_twice(client, login_superuser):
     assert res2.status_code == 400
     assert 'ルート組織' in res2.get_json()['error']
 
-def test_get_organizations(client, login_superuser, root_org):
-    res = client.get(f'/organizations/?company_id={root_org.company_id}')
+def test_get_organizations(login_as_user, test_company, root_org, system_related_users):
+    system_admin = system_related_users['system_admin']
+    client = login_as_user(system_admin['email'], system_admin['password'])
+    res = client.get(f'/organizations/?company_id={test_company['id']}')
     assert res.status_code == 200
     data = res.get_json()
     assert isinstance(data, list)
-    assert any(org['name'] == root_org.name for org in data)
+    assert any(org['name'] == root_org['name'] for org in data)
 
-def test_get_organization_by_id(client, login_superuser, root_org_data):
-    res = client.get(f'/organizations/{root_org_data['id']}')
+def test_get_organization_by_id(login_as_user, root_org, system_related_users):
+    system_admin = system_related_users['system_admin']
+    client = login_as_user(system_admin['email'], system_admin['password'])
+    res = client.get(f'/organizations/{root_org['id']}')
     assert res.status_code == 200
-    assert res.get_json()['name'] == root_org_data['name']
+    assert res.get_json()['name'] == root_org['name']
 
-def test_update_organization(client, login_superuser, root_org_data):
-    res = client.put(f'/organizations/{root_org_data['id']}', json={
+def test_update_organization(login_as_user, root_org, system_related_users):
+    system_admin = system_related_users['system_admin']
+    client = login_as_user(system_admin['email'], system_admin['password'])
+    res = client.put(f'/organizations/{root_org['id']}', json={
         'name': '新しい名前',
         'parent_id': None
     })
     assert res.status_code == 200
     assert res.get_json()['name'] == '新しい名前'
 
-def test_delete_organization_with_children(client, login_superuser, root_org_data):
-    parent_id = root_org_data['id']
-    company_id = root_org_data['company_id']
+def test_delete_organization_with_children(login_as_user, root_org, system_related_users):
+    system_admin = system_related_users['system_admin']
+    client = login_as_user(system_admin['email'], system_admin['password'])
+    parent_id = root_org['id']
+    company_id = root_org['company_id']
 
     # 1. 子組織を作成
-    res_create_child = client.post('/organizations/', json={
+    res_create_child = client.post('/organizations', json={
         'name': '子組織',
         'org_code': 'child01',
-        'company_id': company_id,
         'parent_id': parent_id
     })
     assert res_create_child.status_code == 201
@@ -110,22 +94,26 @@ def test_delete_organization_with_children(client, login_superuser, root_org_dat
     children = res_check_children.get_json()
     assert all(c['id'] != child_id for c in children)
 
-def test_get_organization_tree(client, login_superuser, root_org_data):
-    res = client.get(f'/organizations/tree?company_id={root_org_data['company_id']}')
+def test_get_organization_tree(login_as_user, root_org, system_related_users):
+    system_admin = system_related_users['system_admin']
+    client = login_as_user(system_admin['email'], system_admin['password'])
+    res = client.get(f'/organizations/tree?company_id={root_org['company_id']}')
     assert res.status_code == 200
     assert isinstance(res.get_json(), list)
 
-def test_get_children(client, login_superuser, root_org_data):
+def test_get_children(login_as_user, root_org, system_related_users):
+    system_admin = system_related_users['system_admin']
+    client = login_as_user(system_admin['email'], system_admin['password'])
     child = Organization(
         name="子組織",
         org_code="child",
-        parent_id=root_org_data['id'],
-        company_id=root_org_data['company_id']
+        parent_id=root_org['id'],
+        company_id=root_org['company_id']
     )
     db.session.add(child)
     db.session.commit()
 
-    res = client.get(f'/organizations/children?parent_id={root_org_data['id']}')
+    res = client.get(f'/organizations/children?parent_id={root_org['id']}')
     assert res.status_code == 200
     data = res.get_json()
     assert isinstance(data, list)

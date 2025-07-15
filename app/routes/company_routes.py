@@ -7,7 +7,7 @@ company_bp = Blueprint('company', __name__, url_prefix='/companies')
 
 
 # 会社一覧（論理削除除く）
-@company_bp.route('/', methods=['GET'])
+@company_bp.route('', methods=['GET'])
 @login_required
 def list_companies():
     require_superuser(current_user)
@@ -38,7 +38,7 @@ def get_company_by_id_with_deleted(company_id):
 
 
 # 会社作成
-@company_bp.route('/', methods=['POST'])
+@company_bp.route('', methods=['POST'])
 @login_required
 def create_company():
     require_superuser(current_user)
