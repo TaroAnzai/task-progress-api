@@ -125,34 +125,45 @@ def access_level_sufficient(user_level, required_level):
         >= TASK_ACCESS_PRIORITY.get(required_level, 0)
     )
 
-def check_access_scope(user, organization_id, required_level=TaskAccessLevelEnum.VIEW):
-    """Return True if ``user`` has ``required_level`` access for ``organization_id``.
+def check_org_access(user, organization_id: int, required_role: OrgRoleEnum = OrgRoleEnum.MEMBER) -> bool:
+    """Return ``True`` if ``user`` has ``required_role`` for ``organization_id``.
 
-    Superusers and ``system_admin`` roles bypass all checks. ``org_admin`` roles
-    are treated as having ``full`` access to their organisation and its
-    descendants.  For regular scopes, the role stored in ``AccessScope`` is
-    compared against ``required_level`` using :func:`access_level_sufficient`.
+    ``SYSTEM_ADMIN`` roles grant access to all organisations in the same company
+    as the scope organisation. ``ORG_ADMIN`` roles grant access to their
+    organisation and all descendants. Regular members only have access to their
+    own organisation.
     """
 
-    if getattr(user, 'is_superuser', False):
+    if getattr(user, "is_superuser", False):
         return True
+
+    target_org = db.session.get(Organization, organization_id)
+    if not target_org:
+        return False
+
+    highest_priority = 0
+
+    # Membership check for MEMBER level
+    if user.organization_id == organization_id:
+        highest_priority = ORG_ROLE_PRIORITY[OrgRoleEnum.MEMBER]
 
     for scope in user.access_scopes:
         if scope.role == OrgRoleEnum.SYSTEM_ADMIN:
-            return True
+            scope_org = scope.organization or db.session.get(Organization, scope.organization_id)
+            if scope_org and scope_org.company_id == target_org.company_id:
+                highest_priority = max(highest_priority, ORG_ROLE_PRIORITY[OrgRoleEnum.SYSTEM_ADMIN])
+                break
 
-        if scope.role == OrgRoleEnum.ORG_ADMIN:
-            all_orgs = Organization.query.all()
-            descendant_orgs = get_descendant_organizations(scope.organization_id or user.organization_id, all_orgs)
-            descendant_ids = [org.id for org in descendant_orgs]
+        elif scope.role == OrgRoleEnum.ORG_ADMIN:
+            base_id = scope.organization_id or user.organization_id
+            descendant_ids = get_all_child_organizations(base_id)
             if organization_id in descendant_ids:
-                return access_level_sufficient(TaskAccessLevelEnum.FULL, required_level)
+                highest_priority = max(highest_priority, ORG_ROLE_PRIORITY[OrgRoleEnum.ORG_ADMIN])
 
-        if scope.organization_id == organization_id:
-            if access_level_sufficient(scope.role, required_level):
-                return True
+        elif scope.organization_id == organization_id:
+            highest_priority = max(highest_priority, ORG_ROLE_PRIORITY[OrgRoleEnum.MEMBER])
 
-    return False
+    return highest_priority >= ORG_ROLE_PRIORITY.get(required_role, 0)
 
 def require_superuser(user):
     if not getattr(user, 'is_superuser', False):
