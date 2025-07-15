@@ -18,6 +18,10 @@ def is_valid_email(email):
     return re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email)
 
 def create_user(data, current_user):
+    #組織の項目のチェック
+    org_id = data.get('organization_id')
+    if not org_id:
+        return {'error': 'organization_idは必須です'}, 400
     # 組織管理権限チェック
     if not check_org_access(current_user, data.get('organization_id'), OrgRoleEnum.ORG_ADMIN):
         return {'error': '権限がありません'}, 403
@@ -25,13 +29,12 @@ def create_user(data, current_user):
     wp_user_id = data.get('wp_user_id')
     name = data.get('name')
     email = data.get('email')
-    org_id = data.get('organization_id')
     password = data.get('password')
     role = data.get('role', OrgRoleEnum.MEMBER)  # ← デフォルトはMEMBER
 
     # 必須項目チェック
     if not name or not email or not org_id:
-        return {'error': 'name、email、organization_idは必須です'}, 400
+        return {'error': 'name、emailは必須です'}, 400
 
     if not password:
         return {'error': 'password は必須です'}, 400

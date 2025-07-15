@@ -2,99 +2,47 @@ import pytest
 from app import db
 from app.models import User, Company, Organization
 
-def longin_superuser(client, superuser):
-    """スーパーユーザーをログイン状態にする"""
-    res = client.post('/auth/login', json={
-                'email': superuser['email'],
-                'password': superuser['password']
-            })
-    assert res.status_code == 200
-@pytest.fixture(scope='module')
-def create_test_company_data():
-    return {"name": "Auth Test Company"}
-
-@pytest.fixture(scope='module')
-def test_auth_company(client, create_test_company_data, superuser):
-    longin_superuser(client, superuser)
-    response = client.post("/companies/", json=create_test_company_data)
-    assert response.status_code == 201
-    return response.get_json()
-
-@pytest.fixture(scope='module')
-def test_auth_organization(client, test_auth_company, superuser):
-    longin_superuser(client, superuser)
-    org_data = {
-        'name': 'Auth Test Organization',
-        'org_code': 'auth_test_org',
-        'company_id': test_auth_company['id']
-    }
-    response = client.post('/organizations/', json=org_data)
-    assert response.status_code == 201
-    return response.get_json()
-
-@pytest.fixture(scope='module')
-def test_user_data(test_auth_organization):
+@pytest.fixture
+def wp_user_data(root_org):
     return {
-        "name": "Test User",
-        "email": "test@example.com",
-        "password": "testpassword123",
-        'organization_id': test_auth_organization['id']
+        'name': 'ValidUser',
+        'email': 'valid@example.com',
+        'password': 'password123',
+        'role': 'member',
+        'wp_user_id':1234,
+        'organization_id':root_org['id']
     }
-
 @pytest.fixture(scope='module')
-def test_user_with_org_data(test_auth_organization):
-    return {
-        "name": "Test User with Org",
-        "email": "testorg@example.com",
-        "password": "testpassword123",
-        "organization_id": test_auth_organization['id']
+def wp_user_data2(root_org):
+    return{
+        'name': 'ValidUser',
+        'email': 'valid2@example.com',
+        'password': 'password123',
+        'role': 'member',
+        'wp_user_id':2222,
+        'organization_id':root_org['id']
     }
+@pytest.fixture(scope='function')
+def created_wp_user_data2(client, wp_user_data2, superuser,login_as_user):
+    login_as_user(superuser['email'], superuser["password"])
+    res = client.post('/users', json=wp_user_data2)
+    assert res.status_code == 201
 
-@pytest.fixture(scope='module')
-def test_wp_user_data(test_auth_organization):
-    return {
-        "name": "WP Test User",
-        "email": "wpuser@example.com",
-        "wp_user_id": 12345,
-        "password": "wppassword123",
-        "organization_id": test_auth_organization['id']
-    }
 
-@pytest.fixture(scope='module')
-def registered_user(client, test_user_data, superuser):
-    longin_superuser(client, superuser)
-    # ユーザー登録エンドポイントを使用してユーザーを作成
-    response = client.post("/users", json=test_user_data)
-    print("Registered user response:", response.get_json())  # Debugging line
-    assert response.status_code == 201
-    return response.get_json()
-
-@pytest.fixture(scope='module')
-def registered_user_with_org(client, test_user_with_org_data, superuser):
-    longin_superuser(client, superuser)
-    response = client.post("/users", json=test_user_with_org_data)
-    assert response.status_code == 201
-    return response.get_json()
-
-@pytest.fixture(scope='module')
-def registered_wp_user(client, test_wp_user_data, superuser):
-    longin_superuser(client, superuser)
-    response = client.post("/users", json=test_wp_user_data)
-    assert response.status_code == 201
-    return response.get_json()
-
-def test_login_with_email_success(client, registered_user, test_user_data):
+@pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
+def test_login_with_email_success(client, system_related_users, role):
+    user = system_related_users[role]
     """メールアドレスでのログイン成功テスト"""
     login_data = {
-        "email": test_user_data["email"],
-        "password": test_user_data["password"]
+        "email": user["email"],
+        "password": user["password"]
     }
     response = client.post("/auth/login", json=login_data)
     assert response.status_code == 200
     data = response.get_json()
     assert data["message"] == "ログイン成功"
-    assert data["user"]["email"] == test_user_data["email"]
-    assert data["user"]["name"] == test_user_data["name"]
+    assert data["user"]["email"] == user["email"]
+    assert data["user"]["name"] == user["name"]
 
 def test_login_with_email_invalid_email(client):
     """存在しないメールアドレスでのログイン失敗テスト"""
@@ -107,16 +55,18 @@ def test_login_with_email_invalid_email(client):
     data = response.get_json()
     assert "無効" in data["error"]
 
-def test_login_with_email_invalid_password(client, registered_user, test_user_data):
+def test_login_with_email_invalid_password(client, system_related_users):
+    user = system_related_users['member']
     """間違ったパスワードでのログイン失敗テスト"""
     login_data = {
-        "email": test_user_data["email"],
+        "email": user["email"],
         "password": "wrongpassword"
     }
     response = client.post("/auth/login", json=login_data)
     assert response.status_code == 401
     data = response.get_json()
     assert "無効" in data["error"]
+
 
 def test_login_with_email_missing_fields(client):
     """必須フィールドが不足している場合のテスト"""
@@ -132,17 +82,21 @@ def test_login_with_email_missing_fields(client):
     data = response.get_json()
     assert "必須" in data["error"]
 
-def test_login_with_wp_user_id_success(client, registered_wp_user, test_wp_user_data):
+def test_login_with_wp_user_id_success(client, superuser, login_as_user, wp_user_data):
+    login_as_user(superuser['email'], superuser["password"])
+    res = client.post('/users', json=wp_user_data)
+    assert res.status_code == 201
+
     """wp_user_idでのログイン成功テスト"""
     login_data = {
-        "wp_user_id": test_wp_user_data["wp_user_id"]
+        "wp_user_id": wp_user_data["wp_user_id"]
     }
     response = client.post("/auth/login/by-id", json=login_data)
     assert response.status_code == 200
     data = response.get_json()
     assert data["message"] == "ログイン成功"
-    assert data["user"]["wp_user_id"] == test_wp_user_data["wp_user_id"]
-    assert data["user"]["name"] == test_wp_user_data["name"]
+    assert data["user"]["wp_user_id"] == wp_user_data["wp_user_id"]
+    assert data["user"]["name"] == wp_user_data["name"]
 
 def test_login_with_wp_user_id_not_found(client):
     """存在しないwp_user_idでのログイン失敗テスト"""
@@ -161,12 +115,14 @@ def test_login_with_wp_user_id_missing_field(client):
     data = response.get_json()
     assert "必須" in data["error"]
 
-def test_get_current_user_authenticated(client, registered_user_with_org, test_user_with_org_data):
+@pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
+def test_get_current_user_authenticated(client, system_related_users, role):
+    user = system_related_users[role]
     """認証済みユーザーの現在のユーザー情報取得テスト"""
     # まずログイン
     login_data = {
-        "email": test_user_with_org_data["email"],
-        "password": test_user_with_org_data["password"]
+        "email": user["email"],
+        "password": user["password"]
     }
     login_response = client.post("/auth/login", json=login_data)
     assert login_response.status_code == 200
@@ -175,9 +131,9 @@ def test_get_current_user_authenticated(client, registered_user_with_org, test_u
     response = client.get("/auth/current_user")
     assert response.status_code == 200
     data = response.get_json()
-    assert data["email"] == test_user_with_org_data["email"]
-    assert data["name"] == test_user_with_org_data["name"]
-    assert data["organization_id"] == test_user_with_org_data["organization_id"]
+    assert data["email"] == user["email"]
+    assert data["name"] == user["name"]
+    assert data["organization_id"] == user["organization_id"]
     assert "organization_name" in data
 
 def test_get_current_user_unauthenticated(client):
@@ -191,12 +147,14 @@ def test_get_current_user_unauthenticated(client):
     data = response.get_json()
     assert "ログインが必要です" in data["error"]
 
-def test_logout_authenticated(client, registered_user, test_user_data):
+@pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
+def test_logout_authenticated(client, system_related_users, role):
+    user = system_related_users[role]
     """認証済みユーザーのログアウトテスト"""
     # まずログイン
     login_data = {
-        "email": test_user_data["email"],
-        "password": test_user_data["password"]
+        "email": user["email"],
+        "password": user["password"]
     }
     login_response = client.post("/auth/login", json=login_data)
     assert login_response.status_code == 200
@@ -218,12 +176,14 @@ def test_logout_unauthenticated(client):
     data = response.get_json()
     assert "ログインが必要" in data["error"]
 
-def test_login_logout_flow(client, registered_user, test_user_data):
+@pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
+def test_login_logout_flow(client,  system_related_users, role):
+    user = system_related_users[role]
     """ログイン→ユーザー情報取得→ログアウトの一連の流れをテスト"""
     # 1. ログイン
     login_data = {
-        "email": test_user_data["email"],
-        "password": test_user_data["password"]
+        "email": user["email"],
+        "password": user["password"]
     }
     login_response = client.post("/auth/login", json=login_data)
     assert login_response.status_code == 200
@@ -232,7 +192,7 @@ def test_login_logout_flow(client, registered_user, test_user_data):
     current_user_response = client.get("/auth/current_user")
     assert current_user_response.status_code == 200
     user_data = current_user_response.get_json()
-    assert user_data["email"] == test_user_data["email"]
+    assert user_data["email"] == user["email"]
 
     # 3. ログアウト
     logout_response = client.post("/auth/logout")
@@ -242,11 +202,13 @@ def test_login_logout_flow(client, registered_user, test_user_data):
     current_user_response = client.get("/auth/current_user")
     assert current_user_response.status_code == 401
 
-def test_multiple_login_attempts(client, registered_user, test_user_data):
+@pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
+def test_multiple_login_attempts(client,  system_related_users, role):
+    user = system_related_users[role]
     """複数回のログイン試行テスト"""
     login_data = {
-        "email": test_user_data["email"],
-        "password": test_user_data["password"]
+        "email": user["email"],
+        "password": user["password"]
     }
     
     # 複数回ログインしても成功する
@@ -256,11 +218,12 @@ def test_multiple_login_attempts(client, registered_user, test_user_data):
         data = response.get_json()
         assert data["message"] == "ログイン成功"
 
-def test_login_with_different_methods(client, registered_wp_user, test_wp_user_data):
+def test_login_with_different_methods(client, created_wp_user_data2, wp_user_data2):
+    user = wp_user_data2
     """異なるログイン方法でのテスト"""
     # wp_user_idでログイン
     wp_login_data = {
-        "wp_user_id": test_wp_user_data["wp_user_id"]
+        "wp_user_id": user["wp_user_id"]
     }
     wp_response = client.post("/auth/login/by-id", json=wp_login_data)
     assert wp_response.status_code == 200
@@ -271,8 +234,8 @@ def test_login_with_different_methods(client, registered_wp_user, test_wp_user_d
 
     # 今度はメールアドレスでログイン
     email_login_data = {
-        "email": test_wp_user_data["email"],
-        "password": test_wp_user_data["password"]
+        "email": user["email"],
+        "password": user["password"]
     }
     email_response = client.post("/auth/login", json=email_login_data)
     assert email_response.status_code == 200

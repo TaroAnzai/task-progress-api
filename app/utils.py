@@ -132,7 +132,6 @@ def check_org_access(user, organization_id: int, required_role: OrgRoleEnum = Or
     ORG_ADMIN: 自組織＋子組織にアクセス可能
     MEMBER: 自組織のみ
     """
-    print("check org access user",user.access_scopes)
 
     if getattr(user, "is_superuser", False):
         return True
