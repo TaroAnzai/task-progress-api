@@ -7,20 +7,20 @@ def create_company_data():
     return {"name": "Test Company"}
 
 def test_create_company(superuser_login, create_company_data):
-    response = superuser_login.post("/companies/", json=create_company_data)
+    response = superuser_login.post("/companies", json=create_company_data)
     assert response.status_code == 201
     assert response.json["name"] == create_company_data["name"]
 
 
 
 def test_list_companies(superuser_login):
-    response = superuser_login.get("/companies/")
+    response = superuser_login.get("/companies")
     assert response.status_code == 200
     assert isinstance(response.json, list)
 
 def test_get_company_by_id(superuser_login):
     # 会社作成
-    post_response = superuser_login.post("/companies/", json={"name": "by_id"})
+    post_response = superuser_login.post("/companies", json={"name": "by_id"})
     assert post_response.status_code == 201
     company_id = post_response.json["id"]
 
@@ -31,7 +31,7 @@ def test_get_company_by_id(superuser_login):
 
 def test_update_company(superuser_login):
     # 作成
-    post_response = superuser_login.post("/companies/", json={"name": "Old Name"})
+    post_response = superuser_login.post("/companies", json={"name": "Old Name"})
     company_id = post_response.json["id"]
 
     # 更新
@@ -41,7 +41,7 @@ def test_update_company(superuser_login):
 
 def test_delete_and_restore_company(superuser_login):
     # 作成
-    post_response = superuser_login.post("/companies/", json={"name": "Delete Me"})
+    post_response = superuser_login.post("/companies", json={"name": "Delete Me"})
     company_id = post_response.json["id"]
 
     # 論理削除
@@ -66,7 +66,7 @@ def test_delete_and_restore_company(superuser_login):
 
 def test_permanent_delete_company(superuser_login):
     # 作成
-    post_response = superuser_login.post("/companies/", json={"name": "Permanent Delete"})
+    post_response = superuser_login.post("/companies", json={"name": "Permanent Delete"})
     company_id = post_response.json["id"]
 
     # 物理削除
