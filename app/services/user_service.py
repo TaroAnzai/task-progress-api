@@ -3,7 +3,7 @@
 from flask import current_app, jsonify
 import re
 from sqlalchemy.orm import joinedload
-from ..models import db, User, Organization
+from ..models import db, User, Organization, AccessScope
 from ..utils import (
     get_all_child_organizations,
     get_descendant_organizations,
@@ -18,6 +18,7 @@ def is_valid_email(email):
     return re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email)
 
 def create_user(data, current_user):
+    # 組織管理権限チェック
     if not check_org_access(current_user, data.get('organization_id'), OrgRoleEnum.ORG_ADMIN):
         return {'error': '権限がありません'}, 403
 
@@ -26,7 +27,9 @@ def create_user(data, current_user):
     email = data.get('email')
     org_id = data.get('organization_id')
     password = data.get('password')
+    role = data.get('role', OrgRoleEnum.MEMBER)  # ← デフォルトはMEMBER
 
+    # 必須項目チェック
     if not name or not email or not org_id:
         return {'error': 'name、email、organization_idは必須です'}, 400
 
@@ -35,6 +38,9 @@ def create_user(data, current_user):
 
     if not is_valid_email(email):
         return {'error': '無効なメールアドレス形式です'}, 400
+
+    if role not in OrgRoleEnum.__members__.values() and role not in OrgRoleEnum.__members__:
+        return {'error': f'指定されたroleが不正です: {role}'}, 400
 
     if wp_user_id and User.query.filter_by(wp_user_id=wp_user_id).first():
         return {'error': 'この wp_user_id は既に使用されています'}, 400
@@ -46,12 +52,29 @@ def create_user(data, current_user):
     if not org:
         return {'error': '指定された組織IDが存在しません'}, 400
 
-    user = User(wp_user_id=wp_user_id, name=name, email=email, organization_id=org_id)
+    # --- ユーザー登録 ---
+    user = User(
+        wp_user_id=wp_user_id,
+        name=name,
+        email=email,
+        organization_id=org_id
+    )
     user.set_password(password)
     db.session.add(user)
+    db.session.flush()  # user.id をAccessScope登録に使用するため
+
+    # --- AccessScope登録 ---
+    access_scope = AccessScope(
+        user_id=user.id,
+        organization_id=org_id,
+        role=role if isinstance(role, OrgRoleEnum) else OrgRoleEnum(role)
+    )
+    db.session.add(access_scope)
+
     db.session.commit()
 
     return {'message': 'ユーザーを登録しました', 'user': user.to_dict(include_org=True)}, 201
+
 
 
 
