@@ -43,7 +43,7 @@ def superuser(client):
     user.set_password("adminpass")
     _db.session.add(user)
     _db.session.commit()
-    return user
+    return {'id': user.id, 'name': user.name, 'email': user.email, 'password': "adminpass"}
 
 
 @pytest.fixture(scope='module')
