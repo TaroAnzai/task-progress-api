@@ -195,6 +195,18 @@ class Status(db.Model):
         return {'id': self.id, 'name': self.name}
 
 
+@event.listens_for(Status.__table__, "after_create")
+def insert_default_statuses(*args, **kwargs):
+    """Seed default statuses after the table is created."""
+    from .constants import StatusEnum
+
+    db.session.add_all(
+        [Status(id=idx, name=status_enum.value)
+         for idx, status_enum in enumerate(StatusEnum, start=1)]
+    )
+    db.session.commit()
+
+
 # 進捗
 class ProgressUpdate(db.Model, SoftDeleteMixin):
     id = db.Column(db.Integer, primary_key=True)

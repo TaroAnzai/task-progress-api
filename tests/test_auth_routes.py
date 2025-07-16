@@ -6,7 +6,7 @@ from app.models import User, Company, Organization
 def wp_user_data(root_org):
     return {
         'name': 'ValidUser',
-        'email': 'valid@example.com',
+        'email': 'wp_valid@example.com',
         'password': 'password123',
         'role': 'member',
         'wp_user_id':1234,
