@@ -5,8 +5,7 @@ from app.models import db, Company
 def create_company(name):
     existing = Company.query.filter_by(name=name, is_deleted=False).first()
     if existing:
-        return existing
-
+        raise ValueError("Company with the same name already exists.")
     company = Company(name=name)
     db.session.add(company)
     try:
