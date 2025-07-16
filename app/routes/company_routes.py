@@ -8,6 +8,7 @@ company_bp = Blueprint('company', __name__, url_prefix='/companies')
 
 # 会社一覧（論理削除除く）
 @company_bp.route('', methods=['GET'])
+@company_bp.route('/', methods=['GET'])
 @login_required
 def list_companies():
     require_superuser(current_user)

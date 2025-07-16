@@ -23,3 +23,20 @@ TASK_ACCESS_PRIORITY = {
     TaskAccessLevelEnum.FULL: 3,
     TaskAccessLevelEnum.OWNER: 4,
 }
+
+
+class StatusEnum(str, Enum):
+    UNDEFINED = "undefined"
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    SAVED = "saved"
+
+
+STATUS_LABELS = {
+    StatusEnum.UNDEFINED: "未定義",
+    StatusEnum.NOT_STARTED: "未着手",
+    StatusEnum.IN_PROGRESS: "進行中",
+    StatusEnum.COMPLETED: "完了",
+    StatusEnum.SAVED: "保存",
+}

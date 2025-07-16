@@ -1,7 +1,7 @@
 from flask import jsonify, current_app
 from datetime import datetime
 from app.models import db, Task, Objective, UserTaskOrder, TaskAccessUser, TaskAccessOrganization
-from app.utils import check_task_access
+from app.utils import check_task_access, is_valid_status_id
 from app.constants import TaskAccessLevelEnum
 from sqlalchemy import and_, or_
 
@@ -52,6 +52,8 @@ def update_task(task_id, data, user):
         return jsonify({'error': 'このタスクを編集する権限がありません'}), 403
 
     if 'status_id' in data:
+        if not is_valid_status_id(data['status_id']):
+            return jsonify({'error': 'ステータスIDが不正です'}), 400
         task.status_id = data['status_id']
     if 'title' in data:
         task.title = data['title']

@@ -2,8 +2,8 @@
 from flask import jsonify
 from datetime import datetime
 from app.models import db, Objective, Task, Status
-from app.utils import check_task_access
-from app.constants import TaskAccessLevelEnum
+from app.utils import check_task_access, is_valid_status_id
+from app.constants import TaskAccessLevelEnum, StatusEnum, STATUS_LABELS
 
 
 def get_task_by_id(task_id):
@@ -84,6 +84,8 @@ def update_objective(objective_id, data, user):
     if 'assigned_user_id' in data:
         objective.assigned_user_id = data['assigned_user_id']
     if 'status_id' in data:
+        if not is_valid_status_id(data['status_id']):
+            return {'error': 'ステータスIDが不正です'}, 400
         objective.status_id = data['status_id']
 
     db.session.commit()
@@ -159,4 +161,11 @@ def delete_objective(objective_id, user):
 
 def get_statuses():
     statuses = Status.query.all()
-    return [{'id': s.id, 'label': s.name} for s in statuses]
+    result = []
+    for s in statuses:
+        try:
+            enum = StatusEnum(s.name)
+        except ValueError:
+            continue
+        result.append({'id': s.id, 'label': STATUS_LABELS[enum]})
+    return result

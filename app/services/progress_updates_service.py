@@ -1,8 +1,8 @@
 # app/services/progress_updates_service.py
 from datetime import datetime
 from app.models import db, Objective, Task, ProgressUpdate, Status, User
-from app.utils import check_task_access
-from app.constants import TaskAccessLevelEnum
+from app.utils import check_task_access, is_valid_status_id
+from app.constants import TaskAccessLevelEnum, StatusEnum, STATUS_LABELS
 
 
 def get_task_by_id(task_id):
@@ -43,6 +43,9 @@ def add_progress(objective_id, data, user):
     ):
         return {'error': '進捗追加の権限がありません'}, 403
 
+    if not is_valid_status_id(data['status_id']):
+        return {'error': 'ステータスIDが不正です'}, 400
+
     progress = ProgressUpdate(
         objective_id=objective_id,
         status_id=data['status_id'],
@@ -67,15 +70,22 @@ def get_progress_list(objective_id, user):
         return {'error': '閲覧権限がありません'}, 403
 
     progress_list = ProgressUpdate.query.filter_by(objective_id=objective_id, is_deleted=False).all()
-    return [
-        {
+    result = []
+    for p in progress_list:
+        status = db.session.get(Status, p.status_id)
+        try:
+            enum = StatusEnum(status.name)
+            label = STATUS_LABELS[enum]
+        except Exception:
+            label = '-'
+        result.append({
             'id': p.id,
-            'status': db.session.get(Status, p.status_id).name,
+            'status': label,
             'detail': p.detail,
             'report_date': p.report_date.strftime('%Y-%m-%d'),
             'updated_by': db.session.get(User, p.updated_by).name
-        } for p in progress_list
-    ], 200
+        })
+    return result, 200
 
 
 def get_latest_progress(objective_id, user):
@@ -107,8 +117,17 @@ def get_latest_progress(objective_id, user):
     status = db.session.get(Status, progress.status_id)
     user_name = db.session.get(User, progress.updated_by).name
 
+    if status:
+        try:
+            enum = StatusEnum(status.name)
+            label = STATUS_LABELS[enum]
+        except Exception:
+            label = '-'
+    else:
+        label = '-'
+
     return {
-        'status': status.name if status else '-',
+        'status': label,
         'report_date': progress.report_date.strftime('%Y-%m-%d'),
         'updated_by': user_name,
         'detail': progress.detail

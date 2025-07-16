@@ -15,7 +15,7 @@ from app.models import (
     TaskAccessOrganization,
     UserTaskOrder,
 )
-from app.constants import TaskAccessLevelEnum
+from app.constants import TaskAccessLevelEnum, StatusEnum, STATUS_LABELS
 
 
 class ProgressFormatter:
@@ -68,7 +68,13 @@ class ObjectiveFormatter:
 
     def _get_status_name(self, status_id):
         status = self.db.session.get(Status, status_id)
-        return status.name if status else ""
+        if not status:
+            return ""
+        try:
+            enum = StatusEnum(status.name)
+            return STATUS_LABELS[enum]
+        except Exception:
+            return status.name
 
     def _get_user_name(self, user_id):
         user = self.db.session.get(User, user_id)

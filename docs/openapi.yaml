@@ -1150,6 +1150,12 @@ components:
           type: integer
         label:
           type: string
+          enum:
+            - 未定義
+            - 未着手
+            - 進行中
+            - 完了
+            - 保存
     Progress:
       type: object
       properties:
