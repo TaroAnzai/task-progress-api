@@ -74,13 +74,16 @@ def root_org(client, test_company):
 
 # 4. テスト用ユーザー（systemadmin）をルート組織に登録（エンドポイント）
 @pytest.fixture(scope="session")
-def systemadmin_user(client, root_org):
+def systemadmin_user(client, root_org, superuser):
+        # スーパーユーザーでログイン
+    res = client.post("/auth/login", json={"email": superuser["email"], "password": superuser["password"]})
+    assert res.status_code == 200
     res = client.post("/users", json={
         "name": "SystemAdmin",
         "email": "systemadmin@example.com",
         "password": "adminpass",
         "organization_id": root_org["id"],
-        "role": "systemadmin"
+        "role": "system_admin"
     })
     assert res.status_code == 201
     return res.get_json()

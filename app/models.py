@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import event, Column, Boolean, UniqueConstraint
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declared_attr
-from datetime import datetime, date
+from datetime import datetime, UTC
 import sqlite3
 from app import db
 from .constants import OrgRoleEnum, TaskAccessLevelEnum
@@ -140,7 +140,7 @@ class Task(db.Model, SoftDeleteMixin):
     due_date = db.Column(db.Date)
     assigned_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC)) 
     display_order = db.Column(db.Integer, nullable=True)
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'))
 
@@ -171,7 +171,7 @@ class Objective(db.Model, SoftDeleteMixin):
     display_order = db.Column(db.Integer, default=0)
     status_id = db.Column(db.Integer, db.ForeignKey('status.id'), default=1)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     def to_dict(self):
         return {
@@ -215,7 +215,7 @@ class ProgressUpdate(db.Model, SoftDeleteMixin):
     detail = db.Column(db.Text)
     report_date = db.Column(db.Date)
     updated_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     def to_dict(self):
         return {

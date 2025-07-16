@@ -1,13 +1,16 @@
 # tests/test_company.py
 
-def test_create_company(superuser_login):
-    payload = {'name': 'TestCompany'}
-    response = superuser_login.post('/companies', json=payload)
-
+def test_create_company(client, superuser):
+    # スーパーユーザーでログイン
+    res = client.post("/auth/login", json={"email": superuser["email"], "password": superuser["password"]})
+    assert res.status_code == 200
+    payload = {'name': 'TestCompany_test_company'}
+    response = client.post('/companies', json=payload)
+    print(response.get_json())  # デバッグ用
     assert response.status_code == 201
-    assert response.json['name'] == 'TestCompany'
+    assert response.json['name'] == 'TestCompany_test_company'
 
-    response = superuser_login.get('/companies/')
+    response = client.get('/companies')
     assert response.status_code == 200
 
 
