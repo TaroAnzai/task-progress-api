@@ -1,4 +1,4 @@
-def test_full_user_creation_flow(superuser_login):
+def test_full_user_creation_flow(superuser_login, superuser):
     # ① Company を作成
     company_payload = {'name': 'TestCompanyX'}
     company_res = superuser_login.post('/companies', json=company_payload)

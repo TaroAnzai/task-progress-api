@@ -89,7 +89,9 @@ def systemadmin_user(client, root_org, superuser):
     return res.get_json()
 
 @pytest.fixture(scope="session")
-def task_access_users(client, root_org):
+def task_access_users(client, systemadmin_user, root_org):
+    res = client.post("/auth/login", json={"email": systemadmin_user['user']['email'], "password": 'adminpass'})
+    assert res.status_code == 200
     access_levels = ["view", "edit", "full", "owner"]
     created_users = {}
 
@@ -107,7 +109,7 @@ def task_access_users(client, root_org):
         # ★タスクアクセス権限の付与エンドポイント（例）
         client.post("/task_access", json={
             "task_id": 1,  # テスト用タスクID（別fixtureで事前作成が必要）
-            "user_id": user_data["id"],
+            "user_id": user_data['user']["id"],
             "access_level": level
         })
 
