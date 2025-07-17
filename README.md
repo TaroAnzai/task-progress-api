@@ -130,5 +130,22 @@ progress-backend/
 
 ---
 
+## 🛡 Permissions Overview
 
+### Organizational Roles
+- **System Admin（システム全体管理者）**  
+  所属会社内のすべての組織作成とユーザー作成が可能。
+- **Organization Admin（組織管理者）**  
+  設定されている組織およびその子組織以下において、組織作成とユーザー作成が可能。
+- **Member（メンバー）**  
+  組織作成およびユーザー作成は不可。
+
+### Task & Objectives Permissions
+タスクおよびオブジェクティブには、以下の権限レベルが存在します。
+
+- **full** : フル権限（作成者を含む）  
+- **edit** : 担当権限（タスク担当者、オブジェクティブの作成・編集が可能）  
+- **view** : 閲覧権限（閲覧のみ、オブジェクティブ担当者は進捗入力可）
+
+操作ごとの詳細は、[docs/permissions.md](docs/permissions.md) を参照してください。
 
