@@ -209,7 +209,7 @@ class TestTaskList:
         res = client.get("/tasks")
         assert res.status_code == 200
         
-        data = res.get_json()
+        data = res.get_json()['tasks']
         assert isinstance(data, list)
         assert len(data) >= 1
         
@@ -231,7 +231,7 @@ class TestTaskList:
         res = client.get("/tasks")
         assert res.status_code == 200
         
-        data = res.get_json()
+        data = res.get_json()['tasks']
         assert isinstance(data, list)
 
 
@@ -243,7 +243,7 @@ class TestObjectiveOrder:
         task_id = multiple_objectives[0]["task_id"]
         
         # 順序を逆転
-        objective_ids = [obj["objective_id"] for obj in multiple_objectives]
+        objective_ids = [obj['objective']["id"] for obj in multiple_objectives]
         reversed_order = list(reversed(objective_ids))
         
         res = client.post(f"/tasks/{task_id}/objectives/order", json={
@@ -322,7 +322,7 @@ class TestIntegration:
         list_res = client.get("/tasks")
         assert list_res.status_code == 200
         
-        tasks = list_res.get_json()
+        tasks = list_res.get_json()['tasks']
         task_ids = [task["id"] for task in tasks]
         assert task_id in task_ids
         
@@ -340,8 +340,8 @@ class TestIntegration:
         obj_res = client.post("/objectives", json=objective_data)
         assert obj_res.status_code == 201
         
-        objective = obj_res.get_json()
-        objective_id = objective["objective_id"]
+        objective = obj_res.get_json()['objective']
+        objective_id = objective["id"]
         
         # 5. オブジェクティブ順序更新
         order_res = client.post(f"/tasks/{task_id}/objectives/order", json={
@@ -357,6 +357,6 @@ class TestIntegration:
         final_list_res = client.get("/tasks")
         assert final_list_res.status_code == 200
         
-        final_tasks = final_list_res.get_json()
+        final_tasks = final_list_res.get_json()['tasks']
         final_task_ids = [task["id"] for task in final_tasks]
         assert task_id not in final_task_ids  # 削除されたタスクは含まれない

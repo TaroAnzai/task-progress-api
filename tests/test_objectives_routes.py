@@ -136,5 +136,5 @@ def created_objective(client, login_as_user, task_access_users, make_objective_d
     data = make_objective_data()
     resp = client.post("/objectives", json=data)
     assert resp.status_code == 201
-    obj_id = resp.get_json()["objective_id"]
+    obj_id = resp.get_json()['objective']["id"]
     return {"id": obj_id}

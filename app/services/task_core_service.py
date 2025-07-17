@@ -159,7 +159,7 @@ def get_tasks(user):
 
         result.append(task_dict)
 
-    return jsonify(result)
+    return {'tasks': result}, 200
 
 def update_objective_order(task_id, data):
     new_order = data.get('order')

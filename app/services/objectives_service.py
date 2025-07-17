@@ -60,7 +60,6 @@ def create_objective(data, user):
     return {
         'message': 'オブジェクティブを追加しました',
         'objective': objective.to_dict(),
-        'display_order': objective.display_order
     }, 201
 
 
@@ -89,7 +88,10 @@ def update_objective(objective_id, data, user):
         objective.status_id = data['status_id']
 
     db.session.commit()
-    return {'message': 'オブジェクティブを更新しました', 'objective': objective.to_dict()}, 200
+    return {
+        'message': 'オブジェクティブを更新しました',
+        'objective': objective.to_dict()
+        }, 200
 
 
 def get_objectives_for_task(task_id, user):
@@ -101,18 +103,10 @@ def get_objectives_for_task(task_id, user):
 
     objectives = Objective.query.filter_by(task_id=task_id, is_deleted=False) \
                                  .order_by(Objective.display_order).all()
-    return [
-        {
-            'id': obj.id,
-            'title': obj.title,
-            'due_date': obj.due_date.strftime('%Y-%m-%d') if obj.due_date else None,
-            'assigned_user_id': obj.assigned_user_id,
-            'status_id': obj.status_id,
-            'display_order': obj.display_order,
-            'task_id': obj.task_id,
-            'created_at': obj.created_at
-        } for obj in objectives
-    ], 200
+    
+    # to_dictで一括変換
+    objective_list = [obj.to_dict() for obj in objectives]
+    return {'objectives': objective_list}, 200
 
 
 def get_objective(objective_id, user):
@@ -126,14 +120,7 @@ def get_objective(objective_id, user):
     if not check_task_access(user, task, TaskAccessLevelEnum.VIEW):
         return {'error': '閲覧権限がありません'}, 403
 
-    return {
-        'id': objective.id,
-        'task_id': objective.task_id,
-        'title': objective.title,
-        'due_date': objective.due_date.strftime('%Y-%m-%d') if objective.due_date else None,
-        'assigned_user_id': objective.assigned_user_id,
-        'status_id': objective.status_id
-    }, 200
+    return {'objective': objective.to_dict()}, 200
 
 
 def delete_objective(objective_id, user):
