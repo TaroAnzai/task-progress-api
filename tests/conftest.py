@@ -113,7 +113,8 @@ def task_access_users(client, systemadmin_user, root_org):
             "access_level": level
         })
 
-        created_users[level] = user_data
+        created_users[level] = user_data['user']
+        created_users[level]['password'] = 'testpass'
 
     return created_users
 
@@ -164,3 +165,29 @@ def login_as_user(client):
         return client
     yield _login
     client.post("/auth/logout")
+
+@pytest.fixture(scope="function")
+def system_admin_client(systemadmin_user, login_as_user):
+    """システム管理者でログインしたクライアントを返す"""
+    client = login_as_user(systemadmin_user["user"]["email"], "adminpass")
+    return client
+
+@pytest.fixture(scope="function")
+def setup_task_access(system_admin_client, task_access_users):
+    def _setup_task_access(task):
+        """タスクに対して各ユーザーのアクセス権限を設定"""
+        task_id = task["id"]
+
+        user_access = [
+            {"user_id": task_access_users[level]["id"], "access_level": level}
+            for level in ["view", "edit", "full", "owner"]
+        ]
+        org_access = []  # 必要に応じて組織アクセスも設定可能
+
+        res = system_admin_client.put(
+            f"/tasks/{task_id}/scope/access_levels",
+            json={"user_access": user_access, "organization_access": org_access}
+        )
+        assert res.status_code == 200
+        return task_id
+    return _setup_task_access

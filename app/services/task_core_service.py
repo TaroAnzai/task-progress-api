@@ -42,7 +42,8 @@ def create_task(data, user):
     db.session.add(UserTaskOrder(user_id=user.id, task_id=task.id, display_order=0))
     db.session.commit()
 
-    return jsonify({'message': 'タスクを追加しました', 'task_id': task.id}), 201
+    return jsonify({'message': 'タスクを追加しました', 'task': task.to_dict()}), 201
+
 
 def update_task(task_id, data, user):
     task = get_task_by_id(task_id)

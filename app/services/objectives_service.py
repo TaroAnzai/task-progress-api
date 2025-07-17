@@ -59,7 +59,7 @@ def create_objective(data, user):
 
     return {
         'message': 'オブジェクティブを追加しました',
-        'objective_id': objective.id,
+        'objective': objective.to_dict(),
         'display_order': objective.display_order
     }, 201
 
@@ -89,7 +89,7 @@ def update_objective(objective_id, data, user):
         objective.status_id = data['status_id']
 
     db.session.commit()
-    return {'message': 'オブジェクティブを更新しました'}, 200
+    return {'message': 'オブジェクティブを更新しました', 'objective': objective.to_dict()}, 200
 
 
 def get_objectives_for_task(task_id, user):
