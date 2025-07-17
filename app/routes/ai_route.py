@@ -1,28 +1,41 @@
-# app/routes/ai_route.py
-
-from flask import Blueprint, request, jsonify
+from flask_smorest import Blueprint
+from flask.views import MethodView
+from flask import request
 from flask_login import login_required
+from marshmallow import Schema, fields
+
 from app.services import ai_service
 
-ai_bp = Blueprint("ai", __name__, url_prefix="/ai")
+class AISuggestInputSchema(Schema):
+    task_info = fields.Dict(required=True)
+    mode = fields.Str(load_default="task_name")
 
-@ai_bp.route("/suggest", methods=["POST"])
-@login_required
-def suggest_ai_content():
-    """
-    タスク情報を受け取り、Geminiによる非同期AI提案を実行する
-    mode: "task_name" または "objectives"
-    """
-    data = request.get_json()
-    result, status = ai_service.enqueue_ai_task(data)
-    return jsonify(result), status
+class JobIdSchema(Schema):
+    job_id = fields.Str()
 
+class AIResultSchema(Schema):
+    job_id = fields.Str()
+    status = fields.Str()
+    message = fields.Str(load_default=None)
 
-@ai_bp.route("/result/<job_id>", methods=["GET"])
-@login_required
-def get_ai_result(job_id):
-    """
-    指定されたjob_idの非同期AI処理結果を返す
-    """
-    result, status = ai_service.get_ai_task_result(job_id)
-    return jsonify(result), status
+ai_bp = Blueprint("AI", __name__, url_prefix="/ai", description="AI 提案")
+
+@ai_bp.route("/suggest")
+class AISuggestResource(MethodView):
+    @login_required
+    @ai_bp.arguments(AISuggestInputSchema)
+    @ai_bp.response(202, JobIdSchema)
+    def post(self, data):
+        """AI提案実行"""
+        result, status = ai_service.enqueue_ai_task(data)
+        return result, status
+
+@ai_bp.route("/result/<job_id>")
+class AIResultResource(MethodView):
+    @login_required
+    @ai_bp.response(200, AIResultSchema)
+    def get(self, job_id):
+        """AI結果取得"""
+        result, status = ai_service.get_ai_task_result(job_id)
+        return result, status
+

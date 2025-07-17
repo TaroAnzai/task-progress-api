@@ -1,22 +1,39 @@
-# --- task_export_route.py ---
-
-from flask import Blueprint, send_file, jsonify
+from flask_smorest import Blueprint
+from flask.views import MethodView
+from flask import send_file, jsonify
 from flask_login import login_required, current_user
+from marshmallow import Schema, fields
+
 from app.services.task_export_service import TaskDataExporter
 from app.models import db
 
-task_export_bp = Blueprint('task_export', __name__)
+class YAMLResponseSchema(Schema):
+    yaml = fields.Str()
 
-@task_export_bp.route('/export/excel', methods=['GET'])
-@login_required
-def export_tasks_excel():
-    exporter = TaskDataExporter(current_user.id, db)
-    file = exporter.export_as_excel()
-    return send_file(file, as_attachment=True, download_name="tasks.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-@task_export_bp.route('/export/yaml', methods=['GET'])
-@login_required
-def export_tasks_yaml():
-    exporter = TaskDataExporter(current_user.id, db)
-    yaml_data = exporter.export_as_yaml()
-    return jsonify({"yaml": yaml_data})
+task_export_bp = Blueprint("TaskExport", __name__, description="タスクエクスポート")
+
+@task_export_bp.route('/export/excel')
+class ExportExcelResource(MethodView):
+    @login_required
+    def get(self):
+        """タスクをExcelでエクスポート"""
+        exporter = TaskDataExporter(current_user.id, db)
+        file = exporter.export_as_excel()
+        return send_file(
+            file,
+            as_attachment=True,
+            download_name="tasks.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+@task_export_bp.route('/export/yaml')
+class ExportYAMLResource(MethodView):
+    @login_required
+    @task_export_bp.response(200, YAMLResponseSchema)
+    def get(self):
+        """タスクをYAMLでエクスポート"""
+        exporter = TaskDataExporter(current_user.id, db)
+        yaml_data = exporter.export_as_yaml()
+        return {"yaml": yaml_data}
+
