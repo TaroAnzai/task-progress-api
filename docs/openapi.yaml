@@ -92,11 +92,16 @@ paths:
               $ref: '#/components/schemas/UserInput'
       responses:
         '201':
-          description: 作成成功
+          description: 作成メッセージとユーザー
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
     get:
       summary: ユーザー一覧取得
       parameters:
@@ -298,6 +303,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Message'
+  /companies/with_deleted/{company_id}:
+    get:
+      summary: 削除済みも含む会社詳細
+      parameters:
+        - in: path
+          name: company_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 会社情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
   /companies/restore/{company_id}:
     post:
       summary: 会社復元
@@ -460,11 +481,16 @@ paths:
               $ref: '#/components/schemas/TaskInput'
       responses:
         '201':
-          description: 作成メッセージ
+          description: 作成メッセージとタスク
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
+                type: object
+                properties:
+                  message:
+                    type: string
+                  task:
+                    $ref: '#/components/schemas/Task'
     get:
       summary: タスク一覧
       responses:
@@ -473,9 +499,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Task'
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
   /tasks/{task_id}:
     put:
       summary: タスク更新
@@ -685,11 +714,16 @@ paths:
               $ref: '#/components/schemas/ObjectiveInput'
       responses:
         '201':
-          description: 作成メッセージ
+          description: 作成メッセージとオブジェクティブ
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
+                type: object
+                properties:
+                  message:
+                    type: string
+                  objective:
+                    $ref: '#/components/schemas/Objective'
   /objectives/{objective_id}:
     get:
       summary: オブジェクティブ詳細
@@ -705,7 +739,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Objective'
+                type: object
+                properties:
+                  objective:
+                    $ref: '#/components/schemas/Objective'
     put:
       summary: オブジェクティブ更新
       parameters:
@@ -722,11 +759,16 @@ paths:
               $ref: '#/components/schemas/ObjectiveInput'
       responses:
         '200':
-          description: 更新メッセージ
+          description: 更新メッセージとオブジェクティブ
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Message'
+                type: object
+                properties:
+                  message:
+                    type: string
+                  objective:
+                    $ref: '#/components/schemas/Objective'
     delete:
       summary: オブジェクティブ削除
       parameters:
@@ -757,9 +799,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Objective'
+                type: object
+                properties:
+                  objectives:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Objective'
   /statuses:
     get:
       summary: ステータス一覧
@@ -898,6 +943,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Message'
+  /export/excel:
+    get:
+      summary: タスクをExcelにエクスポート
+      responses:
+        '200':
+          description: Excelファイル
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+  /export/yaml:
+    get:
+      summary: タスクをYAMLにエクスポート
+      responses:
+        '200':
+          description: YAML データ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  yaml:
+                    type: string
   /ai/suggest:
     post:
       summary: AI 提案タスク実行
@@ -1082,6 +1151,11 @@ components:
           type: integer
         access_level:
           type: string
+          enum:
+            - view
+            - edit
+            - full
+            - owner
     TaskOrgAccess:
       type: object
       properties:
@@ -1089,6 +1163,11 @@ components:
           type: integer
         access_level:
           type: string
+          enum:
+            - view
+            - edit
+            - full
+            - owner
     UserAccessInfo:
       type: object
       properties:
@@ -1100,6 +1179,11 @@ components:
           type: string
         access_level:
           type: string
+          enum:
+            - view
+            - edit
+            - full
+            - owner
     OrgAccessInfo:
       type: object
       properties:
@@ -1109,6 +1193,11 @@ components:
           type: string
         access_level:
           type: string
+          enum:
+            - view
+            - edit
+            - full
+            - owner
     Objective:
       type: object
       properties:
@@ -1127,6 +1216,11 @@ components:
           nullable: true
         status_id:
           type: integer
+        created_by:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
         display_order:
           type: integer
     ObjectiveInput:
@@ -1189,6 +1283,10 @@ components:
           type: integer
         role:
           type: string
+          enum:
+            - member
+            - org_admin
+            - system_admin
     AccessScopeInput:
       type: object
       properties:
@@ -1196,3 +1294,7 @@ components:
           type: integer
         role:
           type: string
+          enum:
+            - member
+            - org_admin
+            - system_admin
