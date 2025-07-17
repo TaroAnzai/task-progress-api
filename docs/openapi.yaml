@@ -6,7 +6,7 @@ info:
     Flask 製バックエンド API の概要仕様。
     主なエンドポイントをまとめた簡易 OpenAPI ドキュメントです。
 servers:
-  - url: http://localhost:5000
+  - url: https://api.anzai-home.com/progress/
 paths:
   /ping:
     get:
