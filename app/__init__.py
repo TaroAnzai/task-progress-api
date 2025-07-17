@@ -2,6 +2,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from config import Config
+from flask_smorest import Api 
 from dotenv import load_dotenv
 from app.extensions import db, login_manager, migrate
 
@@ -34,6 +35,8 @@ def create_app(config_class=Config):
     # モデル登録
     from . import models
 
+    # Flask-SmorestのApiオブジェクト生成
+    api = Api(app)
     #Blueprint登録
     from app.routes.access_scope_routes import access_scope_bp
     from app.routes.ai_route import ai_bp
@@ -49,19 +52,19 @@ def create_app(config_class=Config):
     from app.routes.test_routes import test_bp
     from app.routes.user_routes import user_bp
 
-    app.register_blueprint(access_scope_bp)
-    app.register_blueprint(ai_bp)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(company_bp)
-    app.register_blueprint(objectives_bp)
-    app.register_blueprint(organization_bp)
-    app.register_blueprint(progress_bp)
-    app.register_blueprint(task_access_bp)
-    app.register_blueprint(task_core_bp)
-    app.register_blueprint(task_export_bp)
-    app.register_blueprint(task_order_bp)
-    app.register_blueprint(test_bp)
-    app.register_blueprint(user_bp)
+    api.register_blueprint(access_scope_bp)
+    api.register_blueprint(ai_bp)
+    api.register_blueprint(auth_bp)
+    api.register_blueprint(company_bp)
+    api.register_blueprint(objectives_bp)
+    api.register_blueprint(organization_bp)
+    api.register_blueprint(progress_bp)
+    api.register_blueprint(task_access_bp)
+    api.register_blueprint(task_core_bp)
+    api.register_blueprint(task_export_bp)
+    api.register_blueprint(task_order_bp)
+    api.register_blueprint(test_bp)
+    api.register_blueprint(user_bp)
 
     return app
 
