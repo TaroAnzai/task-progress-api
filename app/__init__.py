@@ -1,5 +1,6 @@
 # app/__init__.py
 from flask import Flask, jsonify
+from flask_cors import CORS
 from config import Config
 from dotenv import load_dotenv
 from app.extensions import db, login_manager, migrate
@@ -9,6 +10,9 @@ def create_app(config_class=Config):
 
     app = Flask(__name__)
     app.config.from_object(config_class)
+    CORS(app, resources={
+        r"/*": {"origins": app.config['CORS_ORIGINS']}
+    })
 
     db.init_app(app)
     migrate.init_app(app, db)
