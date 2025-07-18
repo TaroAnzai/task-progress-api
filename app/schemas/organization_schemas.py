@@ -1,14 +1,22 @@
 from marshmallow import Schema, fields
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from app.models import Organization
 
-class OrganizationSchema(Schema):
-    id = fields.Int()
-    name = fields.Str()
-    org_code = fields.Str()
-    company_id = fields.Int()
-    parent_id = fields.Int(allow_none=True)
+class OrganizationSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Organization
+        load_instance = True
+        include_fk = True
+
     level = fields.Int()
 
-class OrganizationInputSchema(Schema):
+class OrganizationInputSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Organization
+        load_instance = False
+        include_fk = True
+        exclude = ("id",)
+
     name = fields.Str(required=True)
     org_code = fields.Str(required=True)
     company_id = fields.Int(load_default=None)

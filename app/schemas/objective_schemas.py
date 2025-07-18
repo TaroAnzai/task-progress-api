@@ -1,16 +1,21 @@
 from marshmallow import Schema, fields
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from app.models import Objective, Status
 
-class ObjectiveSchema(Schema):
-    id = fields.Int()
-    task_id = fields.Int()
-    title = fields.Str()
-    due_date = fields.Str(allow_none=True)
-    assigned_user_id = fields.Int(allow_none=True)
-    status_id = fields.Int()
-    created_by = fields.Int()
-    created_at = fields.Str()
+class ObjectiveSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Objective
+        load_instance = True
+        include_fk = True
+        exclude = ("is_deleted",)
 
-class ObjectiveInputSchema(Schema):
+class ObjectiveInputSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Objective
+        load_instance = False
+        include_fk = True
+        exclude = ("id", "created_by", "created_at", "display_order", "is_deleted")
+
     task_id = fields.Int(required=True)
     title = fields.Str(required=True)
     due_date = fields.Str(load_default=None)

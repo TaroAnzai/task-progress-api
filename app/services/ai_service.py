@@ -3,6 +3,7 @@
 from celery.result import AsyncResult
 from app.ai.ai_tasks import run_ai_suggestion
 from celery_app import celery
+from app.service_errors import ServiceValidationError
 
 def enqueue_ai_task(data: dict):
     """
@@ -12,13 +13,13 @@ def enqueue_ai_task(data: dict):
     mode = data.get("mode", "task_name")
 
     if not task_info:
-        return {"error": "task_info が指定されていません"}, 400
+        raise ServiceValidationError("task_info が指定されていません")
 
     if mode not in ("task_name", "objectives"):
-        return {"error": f"無効な mode: {mode}"}, 400
+        raise ServiceValidationError(f"無効な mode: {mode}")
 
     result = run_ai_suggestion.delay(task_info, mode)
-    return {"job_id": result.id}, 202
+    return {"job_id": result.id}
 
 
 def get_ai_task_result(job_id: str):
@@ -28,12 +29,12 @@ def get_ai_task_result(job_id: str):
     result = AsyncResult(job_id, app=celery)
 
     if result.state == "PENDING":
-        return {"status": "processing"}, 202
+        return {"status": "processing"}
     elif result.state == "FAILURE":
-        return {"status": "error", "message": str(result.result)}, 500
+        raise ServiceValidationError(str(result.result))
     elif result.state == "SUCCESS":
         data = result.result
         data["job_id"] = job_id
-        return data, 200
+        return data
     else:
-        return {"status": result.state}, 202
+        return {"status": result.state}

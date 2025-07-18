@@ -1,5 +1,5 @@
-from flask import jsonify
 from app.models import db, UserTaskOrder, Task
+from app.service_errors import ServiceValidationError
 
 def get_task_order(user_id):
     orders = (
@@ -17,12 +17,12 @@ def get_task_order(user_id):
                 'title': order.task.title
             })
 
-    return jsonify(result)
+    return result
 
 def save_task_order(user_id, data):
     task_ids = data.get('task_ids', [])
     if not isinstance(task_ids, list):
-        return jsonify({'error': 'task_ids はリストである必要があります'}), 400
+        raise ServiceValidationError('task_ids はリストである必要があります')
 
     # 一括削除 & 再登録
     db.session.query(UserTaskOrder).filter_by(user_id=user_id).delete()
@@ -30,4 +30,4 @@ def save_task_order(user_id, data):
         db.session.add(UserTaskOrder(user_id=user_id, task_id=task_id, display_order=index))
 
     db.session.commit()
-    return jsonify({'message': 'タスクの並び順を保存しました'})
+    return {'message': 'タスクの並び順を保存しました'}
