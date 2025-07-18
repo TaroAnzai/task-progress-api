@@ -2,29 +2,15 @@ from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask import request
 from flask_login import login_required, current_user
-from marshmallow import Schema, fields
 
 from app.services import user_service
-
-class UserSchema(Schema):
-    id = fields.Int()
-    wp_user_id = fields.Int(allow_none=True)
-    name = fields.Str()
-    email = fields.Str()
-    is_superuser = fields.Bool()
-    organization_id = fields.Int(allow_none=True)
-    organization_name = fields.Str(allow_none=True)
-
-class UserInputSchema(Schema):
-    wp_user_id = fields.Int(load_default=None)
-    name = fields.Str(required=True)
-    email = fields.Str(required=True)
-    password = fields.Str(load_default=None)
-    role = fields.Str(load_default=None)
-    organization_id = fields.Int(required=True)
-
-class MessageSchema(Schema):
-    message = fields.Str()
+from app.schemas import (
+    UserSchema,
+    UserInputSchema,
+    UserCreateResponseSchema,
+    MessageSchema,
+    ErrorResponseSchema,
+)
 
 user_bp = Blueprint("Users", __name__, description="ユーザー管理")
 
@@ -32,7 +18,9 @@ user_bp = Blueprint("Users", __name__, description="ユーザー管理")
 class UsersResource(MethodView):
     @login_required
     @user_bp.arguments(UserInputSchema)
-    @user_bp.response(201, MessageSchema)
+    @user_bp.response(201, UserCreateResponseSchema)
+    @user_bp.response(400, ErrorResponseSchema)
+    @user_bp.response(403, ErrorResponseSchema)
     def post(self, data):
         """ユーザー作成"""
         result, status = user_service.create_user(data, current_user)
@@ -42,6 +30,8 @@ class UsersResource(MethodView):
 
     @login_required
     @user_bp.response(200, UserSchema(many=True))
+    @user_bp.response(403, ErrorResponseSchema)
+    @user_bp.response(404, ErrorResponseSchema)
     def get(self):
         """ユーザー一覧取得"""
         user_id = request.args.get("user_id", type=int)
@@ -53,6 +43,8 @@ class UsersResource(MethodView):
 class UserResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)
+    @user_bp.response(403, ErrorResponseSchema)
+    @user_bp.response(404, ErrorResponseSchema)
     def get(self, user_id):
         """ユーザー取得"""
         result, status = user_service.get_user_by_id(user_id, current_user)
@@ -61,6 +53,8 @@ class UserResource(MethodView):
     @login_required
     @user_bp.arguments(UserInputSchema)
     @user_bp.response(200, UserSchema)
+    @user_bp.response(403, ErrorResponseSchema)
+    @user_bp.response(404, ErrorResponseSchema)
     def put(self, data, user_id):
         """ユーザー更新"""
         result, status = user_service.update_user(user_id, data, current_user)
@@ -68,6 +62,8 @@ class UserResource(MethodView):
 
     @login_required
     @user_bp.response(200, MessageSchema)
+    @user_bp.response(403, ErrorResponseSchema)
+    @user_bp.response(404, ErrorResponseSchema)
     def delete(self, user_id):
         """ユーザー削除"""
         result, status = user_service.delete_user(user_id, current_user)
@@ -77,6 +73,8 @@ class UserResource(MethodView):
 class UserByEmailResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)
+    @user_bp.response(403, ErrorResponseSchema)
+    @user_bp.response(404, ErrorResponseSchema)
     def get(self):
         """メールアドレスでユーザー取得"""
         email = request.args.get("email")
@@ -87,6 +85,8 @@ class UserByEmailResource(MethodView):
 class UserByWPIDResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)
+    @user_bp.response(403, ErrorResponseSchema)
+    @user_bp.response(404, ErrorResponseSchema)
     def get(self):
         """WordPress IDでユーザー取得"""
         wp_user_id = request.args.get("wp_user_id", type=int)
@@ -97,6 +97,7 @@ class UserByWPIDResource(MethodView):
 class UsersByOrgTreeResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema(many=True))
+    @user_bp.response(403, ErrorResponseSchema)
     def get(self, org_id):
         """組織ツリーでユーザー一覧取得"""
         result, status = user_service.get_users_by_org_tree(org_id, current_user)

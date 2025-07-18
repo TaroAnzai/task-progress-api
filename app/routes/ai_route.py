@@ -2,21 +2,13 @@ from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask import request
 from flask_login import login_required
-from marshmallow import Schema, fields
-
 from app.services import ai_service
-
-class AISuggestInputSchema(Schema):
-    task_info = fields.Dict(required=True)
-    mode = fields.Str(load_default="task_name")
-
-class JobIdSchema(Schema):
-    job_id = fields.Str()
-
-class AIResultSchema(Schema):
-    job_id = fields.Str()
-    status = fields.Str()
-    message = fields.Str(load_default=None)
+from app.schemas import (
+    AISuggestInputSchema,
+    JobIdSchema,
+    AIResultSchema,
+    ErrorResponseSchema,
+)
 
 ai_bp = Blueprint("AI", __name__, url_prefix="/ai", description="AI 提案")
 
@@ -25,6 +17,7 @@ class AISuggestResource(MethodView):
     @login_required
     @ai_bp.arguments(AISuggestInputSchema)
     @ai_bp.response(202, JobIdSchema)
+    @ai_bp.response(400, ErrorResponseSchema)
     def post(self, data):
         """AI提案実行"""
         result, status = ai_service.enqueue_ai_task(data)
@@ -34,6 +27,8 @@ class AISuggestResource(MethodView):
 class AIResultResource(MethodView):
     @login_required
     @ai_bp.response(200, AIResultSchema)
+    @ai_bp.response(202, AIResultSchema)
+    @ai_bp.response(500, ErrorResponseSchema)
     def get(self, job_id):
         """AI結果取得"""
         result, status = ai_service.get_ai_task_result(job_id)
