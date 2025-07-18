@@ -1,5 +1,6 @@
 from app.models import db, Organization
 from sqlalchemy.exc import IntegrityError
+from app.service_errors import ServiceValidationError
 
 
 def can_create_root_organization(company_id):
@@ -11,23 +12,27 @@ def can_create_root_organization(company_id):
 
 
 def create_organization(name, org_code, company_id=None, parent_id=None):
+    if not name or not org_code:
+        raise ServiceValidationError("name と org_code は必須です")
+    if parent_id is None and not can_create_root_organization(company_id):
+        raise ServiceValidationError("この会社にはすでにルート組織が存在します")
     if parent_id:
         parent = db.session.get(Organization, parent_id)
         if not parent:
-            raise ValueError("指定された親組織が存在しません。")
+            raise ServiceValidationError("指定された親組織が存在しません。")
         if company_id and company_id != parent.company_id:
-            raise ValueError("指定されたcompany_idと親組織のcompany_idが一致しません。")
+            raise ServiceValidationError("指定されたcompany_idと親組織のcompany_idが一致しません。")
         company_id = parent.company_id
         level = parent.level + 1
     else:
         if not company_id:
-            raise ValueError("ルート組織にはcompany_idが必須です。")
+            raise ServiceValidationError("ルート組織にはcompany_idが必須です。")
         level = 1
 
     # org_codeの重複チェック（同一会社内）
     existing = Organization.query.filter_by(company_id=company_id, org_code=org_code).first()
     if existing:
-        raise ValueError("同一会社内でこの org_code は既に使用されています。")
+        raise ServiceValidationError("同一会社内でこの org_code は既に使用されています。")
 
     org = Organization(
         name=name,

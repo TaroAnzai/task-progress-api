@@ -22,7 +22,7 @@ organization_bp = Blueprint("Organizations", __name__, url_prefix="/organization
 
 @organization_bp.errorhandler(ServiceValidationError)
 def organization_validation_error(e):
-    abort(400, message=str(e))
+     return {"message": str(e)}, 400
 
 @organization_bp.errorhandler(ServiceAuthenticationError)
 def organization_auth_error(e):
@@ -42,7 +42,7 @@ def resolve_company_id(provided_company_id):
     if provided_company_id:
         return provided_company_id
     if not current_user or not current_user.organization:
-        raise ValueError("company_id が指定されていないか、ユーザーに紐づく組織がありません。")
+        raise ServiceValidationError("company_id が指定されていないか、ユーザーに紐づく組織がありません。")
     return current_user.organization.company_id
 
 @organization_bp.route("")
@@ -57,23 +57,14 @@ class OrganizationListResource(MethodView):
     })
     def post(self, data):
         """組織作成"""
-        name = data.get("name")
-        org_code = data.get("org_code")
-        company_id = data.get("company_id")
-        parent_id = data.get("parent_id")
-        if not name or not org_code:
-            abort(400, message="name と org_code は必須です")
-        try:
-            resolved_company_id = resolve_company_id(company_id)
-            if parent_id is None:
-                if not organization_service.can_create_root_organization(resolved_company_id):
-                    abort(400, message="この会社にはすでにルート組織が存在します")
-            org = organization_service.create_organization(
-                name, org_code, resolved_company_id, parent_id
-            )
-            return org
-        except ValueError as e:
-            abort(400, message=str(e))
+        resolved_company_id = resolve_company_id(data.get("company_id"))
+        org = organization_service.create_organization(
+            data.get("name"),
+            data.get("org_code"),
+            resolved_company_id,
+            data.get("parent_id"),
+        )
+        return org
 
     @login_required
     @organization_bp.response(200, OrganizationSchema(many=True))
@@ -84,13 +75,9 @@ class OrganizationListResource(MethodView):
     })
     def get(self):
         """組織一覧取得"""
-        company_id = request.args.get("company_id", type=int)
-        try:
-            resolved_company_id = resolve_company_id(company_id)
-            orgs = organization_service.get_organizations(resolved_company_id)
-            return orgs
-        except ValueError as e:
-            abort(400, message=str(e))
+        resolved_company_id = resolve_company_id(request.args.get("company_id", type=int))
+        return organization_service.get_organizations(resolved_company_id)
+
 
 @organization_bp.route("/<int:org_id>")
 class OrganizationResource(MethodView):

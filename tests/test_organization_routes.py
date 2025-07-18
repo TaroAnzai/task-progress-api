@@ -35,12 +35,13 @@ def test_create_root_organization_twice(login_as_user, superuser):
         'company_id': company_res['id']
     })
     assert res2.status_code == 400
-    assert 'ルート組織' in res2.get_json()['error']
+    assert 'ルート組織' in res2.get_json()['message']
 
 def test_get_organizations(login_as_user, test_company, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
     client = login_as_user(system_admin['email'], system_admin['password'])
     res = client.get(f'/organizations/?company_id={test_company['id']}')
+    print(res.get_json())
     assert res.status_code == 200
     data = res.get_json()
     assert isinstance(data, list)
