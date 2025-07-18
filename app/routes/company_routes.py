@@ -32,7 +32,7 @@ class CompanyListResource(MethodView):
         """会社一覧取得"""
         require_superuser(current_user)
         companies = company_service.get_all_companies()
-        return [c.to_dict() for c in companies]
+        return companies
 
     @login_required
     @company_bp.arguments(CompanyInputSchema())
