@@ -7,12 +7,13 @@ It is dedicated to managing task progress data for internal systems.
 
 ## 🚀 Features
 
-- Flask RESTful API
+- Flask-Smorest API with OpenAPI docs
 - SQLAlchemy ORM + Flask-Migrate
 - MySQL support (migrated from SQLite)
 - Scheduled tasks using APScheduler (optional)
 - `.env` based configuration
 - Modular project structure (blueprints)
+- Schema-based validation and serialization (see `app/schemas/`)
 - Export tasks as Excel or YAML
 
 ---
@@ -21,6 +22,7 @@ It is dedicated to managing task progress data for internal systems.
 
 - Python 3.10+
 - Flask 3.x
+- Flask-Smorest
 - MySQL 8.x
 - SQLAlchemy 2.x
 - Flask-Migrate
@@ -99,7 +101,8 @@ flask db upgrade
 
 ## 📚 API Documentation
 
-Coming soon.
+The API spec is automatically generated via Flask-Smorest.
+Start the server and visit `/swagger-ui` for the interactive docs or access `/openapi.json` for the raw spec.
 
 ---
 
