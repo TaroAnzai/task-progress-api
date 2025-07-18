@@ -4,7 +4,7 @@ class MessageSchema(Schema):
     message = fields.Str()
 
 class ErrorResponseSchema(Schema):
-    error = fields.Str()
+    message = fields.Str()
 
 class YAMLResponseSchema(Schema):
     yaml = fields.Str()

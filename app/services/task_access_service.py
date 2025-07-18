@@ -1,7 +1,10 @@
-from flask import jsonify
 from app.models import db, Task, User, Organization, TaskAccessUser, TaskAccessOrganization
 from app.utils import check_task_access, access_level_sufficient
 from app.constants import TaskAccessLevelEnum
+from app.service_errors import (
+    ServicePermissionError,
+    ServiceNotFoundError,
+)
 
 
 def get_task_by_id(task_id):
@@ -17,9 +20,9 @@ ACCESS_LEVELS = list(TaskAccessLevelEnum)
 def update_access_level(task_id, data, user):
     task = get_task_by_id(task_id)
     if not task:
-        return jsonify({'error': 'タスクが見つかりません'}), 404
+        raise ServiceNotFoundError('タスクが見つかりません')
     if not check_task_access(user, task, TaskAccessLevelEnum.FULL):
-        return jsonify({'error': 'スコープ権限を変更する権限がありません'}), 403
+        raise ServicePermissionError('スコープ権限を変更する権限がありません')
 
     # --- ユーザーアクセス処理 ---
     input_user_access = data.get('user_access', [])
@@ -56,7 +59,7 @@ def update_access_level(task_id, data, user):
         db.session.delete(existing_org_map[org_id])
 
     db.session.commit()
-    return jsonify({'message': 'アクセス設定を更新しました'})
+    return {'message': 'アクセス設定を更新しました'}
 
 def get_task_users(task_id):
     # "edit" 以上のアクセスレベルを持つユーザーを返す
@@ -89,7 +92,7 @@ def get_task_users(task_id):
     if creator and creator.id not in [u["id"] for u in result]:
         result.append({"id": creator.id, "name": creator.name, "email": creator.email})
 
-    return jsonify(result)
+    return result
 
 def get_task_access_users(task_id):
     entries = db.session.query(
@@ -105,7 +108,7 @@ def get_task_access_users(task_id):
         "access_level": u.access_level.value
     } for u in entries]
 
-    return jsonify(result)
+    return result
 
 def get_task_access_organizations(task_id):
     entries = db.session.query(
@@ -120,4 +123,4 @@ def get_task_access_organizations(task_id):
         "access_level": o.access_level.value
     } for o in entries]
 
-    return jsonify(result)
+    return result

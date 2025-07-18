@@ -1,8 +1,14 @@
-from flask import jsonify, current_app
+from flask import current_app
 from datetime import datetime
 from app.models import db, Task, Objective, UserTaskOrder, TaskAccessUser, TaskAccessOrganization
 from app.utils import check_task_access, is_valid_status_id
 from app.constants import TaskAccessLevelEnum
+from app.service_errors import (
+    ServiceValidationError,
+    ServicePermissionError,
+    ServiceAuthenticationError,
+    ServiceNotFoundError,
+)
 from sqlalchemy import and_, or_
 
 
@@ -16,14 +22,14 @@ def get_task_by_id_with_deleted(task_id):
 def create_task(data, user):
     title = data.get('title')
     if not title:
-        return jsonify({'error': 'タイトルは必須です'}), 400
+        raise ServiceValidationError('タイトルは必須です')
 
     due_date = None
     if data.get('due_date'):
         try:
             due_date = datetime.strptime(data['due_date'], '%Y-%m-%d')
         except ValueError:
-            return jsonify({'error': '日付の形式が正しくありません（YYYY-MM-DD）'}), 400
+            raise ServiceValidationError('日付の形式が正しくありません（YYYY-MM-DD）')
 
     task = Task(
         title=title,
@@ -42,19 +48,19 @@ def create_task(data, user):
     db.session.add(UserTaskOrder(user_id=user.id, task_id=task.id, display_order=0))
     db.session.commit()
 
-    return jsonify({'message': 'タスクを追加しました', 'task': task.to_dict()}), 201
+    return {'message': 'タスクを追加しました', 'task': task.to_dict()}
 
 
 def update_task(task_id, data, user):
     task = get_task_by_id(task_id)
     if not task:
-        return jsonify({'error': 'タスクが見つかりません'}), 404
+        raise ServiceNotFoundError('タスクが見つかりません')
     if not check_task_access(user, task, TaskAccessLevelEnum.FULL):
-        return jsonify({'error': 'このタスクを編集する権限がありません'}), 403
+        raise ServicePermissionError('このタスクを編集する権限がありません')
 
     if 'status_id' in data:
         if not is_valid_status_id(data['status_id']):
-            return jsonify({'error': 'ステータスIDが不正です'}), 400
+            raise ServiceValidationError('ステータスIDが不正です')
         task.status_id = data['status_id']
     if 'title' in data:
         task.title = data['title']
@@ -64,19 +70,19 @@ def update_task(task_id, data, user):
         try:
             task.due_date = datetime.strptime(data['due_date'], '%Y-%m-%d')
         except ValueError:
-            return jsonify({'error': '日付の形式が正しくありません（YYYY-MM-DD）'}), 400
+            raise ServiceValidationError('日付の形式が正しくありません（YYYY-MM-DD）')
     if 'display_order' in data:
         task.display_order = data['display_order']
 
     db.session.commit()
-    return jsonify({'message': 'タスクを更新しました'})
+    return {'message': 'タスクを更新しました'}
 
 def delete_task(task_id, user):
     task = get_task_by_id(task_id)
     if not task:
-        return jsonify({'error': 'タスクが見つかりません'}), 404
+        raise ServiceNotFoundError('タスクが見つかりません')
     if not check_task_access(user, task, TaskAccessLevelEnum.FULL):
-        return jsonify({'error': 'このタスクを削除する権限がありません'}), 403
+        raise ServicePermissionError('このタスクを削除する権限がありません')
 
     orders = UserTaskOrder.query.filter_by(task_id=task_id).all()
     for order in orders:
@@ -88,13 +94,13 @@ def delete_task(task_id, user):
 
     task.soft_delete()
     db.session.commit()
-    return jsonify({'message': 'タスクを削除しました'})
+    return {'message': 'タスクを削除しました'}
 
 def get_tasks(user):
     current_app.logger.info("[START] get_tasks called")
 
     if not user or not user.is_authenticated:
-        return jsonify({'error': 'ログインが必要です'}), 401
+        raise ServiceAuthenticationError('ログインが必要です')
 
     org_id = user.organization_id
     user_id = user.id
@@ -159,12 +165,12 @@ def get_tasks(user):
 
         result.append(task_dict)
 
-    return {'tasks': result}, 200
+    return {'tasks': result}
 
 def update_objective_order(task_id, data):
     new_order = data.get('order')
     if not new_order or not isinstance(new_order, list):
-        return jsonify({'error': 'order はオブジェクティブIDのリストである必要があります'}), 400
+        raise ServiceValidationError('order はオブジェクティブIDのリストである必要があります')
 
     objectives = Objective.query.filter_by(task_id=task_id).filter(Objective.is_deleted != True).all()
     obj_dict = {obj.id: obj for obj in objectives}
@@ -174,7 +180,7 @@ def update_objective_order(task_id, data):
         if obj:
             obj.display_order = index
         else:
-            return jsonify({'error': f'Objective ID {obj_id} が見つかりません'}), 404
+            raise ServiceNotFoundError(f'Objective ID {obj_id} が見つかりません')
 
     db.session.commit()
-    return jsonify({'message': '表示順を更新しました'})
+    return {'message': '表示順を更新しました'}
