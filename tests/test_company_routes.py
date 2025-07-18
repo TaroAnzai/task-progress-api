@@ -50,6 +50,7 @@ def test_delete_and_restore_company(superuser_login):
 
     # 通常取得で見えない
     get_response = superuser_login.get(f"/companies/{company_id}")
+    print(get_response.get_json())
     assert get_response.status_code == 404
 
     # 削除済も含む取得で確認
