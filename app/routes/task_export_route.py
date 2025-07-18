@@ -1,6 +1,6 @@
 from flask_smorest import Blueprint
 from flask.views import MethodView
-from flask import send_file, jsonify
+from flask import send_file
 from flask_login import login_required, current_user
 
 from app.services.task_export_service import TaskDataExporter
@@ -28,7 +28,11 @@ class ExportExcelResource(MethodView):
 class ExportYAMLResource(MethodView):
     @login_required
     @task_export_bp.response(200, YAMLResponseSchema)
-    @task_export_bp.response(401, ErrorResponseSchema)
+    @task_export_bp.alt_response(401, {
+        "description": "Unauthorized",
+        "schema": ErrorResponseSchema,
+        "content_type": "application/json"
+    })
     def get(self):
         """タスクをYAMLでエクスポート"""
         exporter = TaskDataExporter(current_user.id, db)
