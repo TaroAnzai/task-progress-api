@@ -2,21 +2,15 @@ from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask import request, jsonify, send_file
 from flask_login import login_required, current_user
-from marshmallow import Schema, fields
 
 from app.services import company_service
 from app.utils import require_superuser
-
-class CompanySchema(Schema):
-    id = fields.Int()
-    name = fields.Str()
-
-class CompanyInputSchema(Schema):
-    name = fields.Str(required=True)
-
-class MessageSchema(Schema):
-    message = fields.Str()
-    error = fields.Str(load_default=None)
+from app.schemas import (
+    CompanySchema,
+    CompanyInputSchema,
+    MessageSchema,
+    ErrorResponseSchema,
+)
 
 company_bp = Blueprint("Companies", __name__, url_prefix="/companies", description="会社管理")
 
@@ -24,6 +18,7 @@ company_bp = Blueprint("Companies", __name__, url_prefix="/companies", descripti
 class CompanyListResource(MethodView):
     @login_required
     @company_bp.response(200, CompanySchema(many=True))
+    @company_bp.response(403, ErrorResponseSchema)
     def get(self):
         """会社一覧取得"""
         require_superuser(current_user)
@@ -33,6 +28,8 @@ class CompanyListResource(MethodView):
     @login_required
     @company_bp.arguments(CompanyInputSchema)
     @company_bp.response(201, CompanySchema)
+    @company_bp.response(400, ErrorResponseSchema)
+    @company_bp.response(403, ErrorResponseSchema)
     def post(self, data):
         """会社作成"""
         require_superuser(current_user)
@@ -46,6 +43,8 @@ class CompanyListResource(MethodView):
 class CompanyResource(MethodView):
     @login_required
     @company_bp.response(200, CompanySchema)
+    @company_bp.response(404, ErrorResponseSchema)
+    @company_bp.response(403, ErrorResponseSchema)
     def get(self, company_id):
         """会社詳細取得"""
         require_superuser(current_user)
@@ -57,6 +56,9 @@ class CompanyResource(MethodView):
     @login_required
     @company_bp.arguments(CompanyInputSchema)
     @company_bp.response(200, CompanySchema)
+    @company_bp.response(400, ErrorResponseSchema)
+    @company_bp.response(404, ErrorResponseSchema)
+    @company_bp.response(403, ErrorResponseSchema)
     def put(self, data, company_id):
         """会社更新"""
         require_superuser(current_user)
@@ -73,6 +75,8 @@ class CompanyResource(MethodView):
 
     @login_required
     @company_bp.response(200, MessageSchema)
+    @company_bp.response(404, ErrorResponseSchema)
+    @company_bp.response(403, ErrorResponseSchema)
     def delete(self, company_id):
         """会社の論理削除"""
         require_superuser(current_user)
@@ -85,6 +89,8 @@ class CompanyResource(MethodView):
 class CompanyWithDeletedResource(MethodView):
     @login_required
     @company_bp.response(200, CompanySchema)
+    @company_bp.response(404, ErrorResponseSchema)
+    @company_bp.response(403, ErrorResponseSchema)
     def get(self, company_id):
         """削除済み含む会社詳細取得"""
         require_superuser(current_user)
@@ -97,6 +103,8 @@ class CompanyWithDeletedResource(MethodView):
 class CompanyRestoreResource(MethodView):
     @login_required
     @company_bp.response(200, MessageSchema)
+    @company_bp.response(404, ErrorResponseSchema)
+    @company_bp.response(403, ErrorResponseSchema)
     def post(self, company_id):
         """会社復元"""
         require_superuser(current_user)
@@ -109,6 +117,8 @@ class CompanyRestoreResource(MethodView):
 class CompanyPermanentDeleteResource(MethodView):
     @login_required
     @company_bp.response(200, MessageSchema)
+    @company_bp.response(404, ErrorResponseSchema)
+    @company_bp.response(403, ErrorResponseSchema)
     def delete(self, company_id):
         """会社物理削除"""
         require_superuser(current_user)

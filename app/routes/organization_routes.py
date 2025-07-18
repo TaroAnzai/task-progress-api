@@ -2,33 +2,17 @@ from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask import request
 from flask_login import login_required, current_user
-from marshmallow import Schema, fields
 
 from app.services import organization_service
+from app.schemas import (
+    OrganizationSchema,
+    OrganizationInputSchema,
+    OrganizationUpdateSchema,
+    MessageSchema,
+    ErrorResponseSchema,
+)
 
 organization_bp = Blueprint("Organizations", __name__, url_prefix="/organizations", description="組織管理")
-
-class OrganizationSchema(Schema):
-    id = fields.Int()
-    name = fields.Str()
-    org_code = fields.Str()
-    company_id = fields.Int()
-    parent_id = fields.Int(allow_none=True)
-    level = fields.Int()
-
-class OrganizationInputSchema(Schema):
-    name = fields.Str(required=True)
-    org_code = fields.Str(required=True)
-    company_id = fields.Int(load_default=None)
-    parent_id = fields.Int(load_default=None)
-
-class OrganizationUpdateSchema(Schema):
-    name = fields.Str()
-    parent_id = fields.Int(allow_none=True)
-
-class MessageSchema(Schema):
-    message = fields.Str()
-    error = fields.Str(load_default=None)
 
 
 def resolve_company_id(provided_company_id):
@@ -43,6 +27,7 @@ class OrganizationListResource(MethodView):
     @login_required
     @organization_bp.arguments(OrganizationInputSchema)
     @organization_bp.response(201, OrganizationSchema)
+    @organization_bp.response(400, ErrorResponseSchema)
     def post(self, data):
         """組織作成"""
         name = data.get("name")
@@ -63,6 +48,7 @@ class OrganizationListResource(MethodView):
 
     @login_required
     @organization_bp.response(200, OrganizationSchema(many=True))
+    @organization_bp.response(400, ErrorResponseSchema)
     def get(self):
         """組織一覧取得"""
         company_id = request.args.get("company_id", type=int)
@@ -77,6 +63,7 @@ class OrganizationListResource(MethodView):
 class OrganizationResource(MethodView):
     @login_required
     @organization_bp.response(200, OrganizationSchema)
+    @organization_bp.response(404, ErrorResponseSchema)
     def get(self, org_id):
         """組織取得"""
         org = organization_service.get_organization_by_id(org_id)
@@ -87,6 +74,8 @@ class OrganizationResource(MethodView):
     @login_required
     @organization_bp.arguments(OrganizationUpdateSchema)
     @organization_bp.response(200, OrganizationSchema)
+    @organization_bp.response(400, ErrorResponseSchema)
+    @organization_bp.response(404, ErrorResponseSchema)
     def put(self, data, org_id):
         """組織更新"""
         try:
@@ -99,6 +88,7 @@ class OrganizationResource(MethodView):
 
     @login_required
     @organization_bp.response(200, MessageSchema)
+    @organization_bp.response(400, ErrorResponseSchema)
     def delete(self, org_id):
         """組織削除"""
         success, message = organization_service.delete_organization(org_id)
@@ -110,6 +100,7 @@ class OrganizationResource(MethodView):
 class OrganizationTreeResource(MethodView):
     @login_required
     @organization_bp.response(200, fields.List(fields.Nested(OrganizationSchema)))
+    @organization_bp.response(400, ErrorResponseSchema)
     def get(self):
         """組織ツリー取得"""
         company_id = request.args.get("company_id", type=int)
@@ -124,6 +115,7 @@ class OrganizationTreeResource(MethodView):
 class OrganizationChildrenResource(MethodView):
     @login_required
     @organization_bp.response(200, OrganizationSchema(many=True))
+    @organization_bp.response(400, ErrorResponseSchema)
     def get(self):
         """子組織取得"""
         parent_id = request.args.get("parent_id", type=int)

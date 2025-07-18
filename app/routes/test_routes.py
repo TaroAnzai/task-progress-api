@@ -1,9 +1,6 @@
 from flask_smorest import Blueprint
 from flask.views import MethodView
-from marshmallow import Schema, fields
-
-class MessageSchema(Schema):
-    message = fields.Str()
+from app.schemas import MessageSchema
 
 test_bp = Blueprint('Test', __name__, description="テスト用エンドポイント")
 
