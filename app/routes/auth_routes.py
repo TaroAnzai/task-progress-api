@@ -1,4 +1,4 @@
-from flask_smorest import Blueprint
+from flask_smorest import Blueprint, abort
 from flask.views import MethodView
 from flask_login import login_required
 from app.services import auth_service
