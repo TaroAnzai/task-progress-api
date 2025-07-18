@@ -24,7 +24,7 @@ class TaskListResource(MethodView):
     def post(self, data):
         """タスク作成"""
         resp, status = task_core_service.create_task(data, current_user)
-        return resp.get_json(), status
+        return resp, status
 
     @login_required
     @task_core_bp.response(200, TaskListResponseSchema)

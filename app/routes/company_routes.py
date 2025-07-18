@@ -35,7 +35,9 @@ class CompanyListResource(MethodView):
         require_superuser(current_user)
         try:
             company = company_service.create_company(data.get("name"))
-            return company.to_dict(), 201
+            print("DEBUG company:", company, company.__dict__)
+            print("DEBUG company.to_dict():", company.to_dict())
+            return company, 201  # ← ここが重要
         except ValueError as e:
             return {"error": str(e)}, 400
 

@@ -2,7 +2,7 @@ from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask import request
 from flask_login import login_required, current_user
-
+from marshmallow import fields
 from app.services import organization_service
 from app.schemas import (
     OrganizationSchema,
