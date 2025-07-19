@@ -19,19 +19,19 @@ ai_bp = Blueprint("AI", __name__, url_prefix="/ai", description="AI 提案")
 
 @ai_bp.errorhandler(ServiceValidationError)
 def ai_validation_error(e):
-    abort(400, message=str(e))
+    return {"message": str(e)}, 400
 
 @ai_bp.errorhandler(ServiceAuthenticationError)
 def ai_auth_error(e):
-    abort(401, message=str(e))
+    return {"message": str(e)}, 401
 
 @ai_bp.errorhandler(ServicePermissionError)
 def ai_permission_error(e):
-    abort(403, message=str(e))
+    return {"message": str(e)}, 403
 
 @ai_bp.errorhandler(ServiceNotFoundError)
 def ai_not_found_error(e):
-    abort(404, message=str(e))
+    return {"message": str(e)}, 404
 
 
 @ai_bp.route("/suggest")

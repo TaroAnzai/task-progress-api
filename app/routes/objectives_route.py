@@ -23,19 +23,19 @@ objectives_bp = Blueprint("Objectives", __name__, description="オブジェク�
 
 @objectives_bp.errorhandler(ServiceValidationError)
 def objectives_validation_error(e):
-    abort(400, message=str(e))
+    return {"message": str(e)}, 400
 
 @objectives_bp.errorhandler(ServiceAuthenticationError)
 def objectives_auth_error(e):
-    abort(401, message=str(e))
+    return {"message": str(e)}, 401
 
 @objectives_bp.errorhandler(ServicePermissionError)
 def objectives_permission_error(e):
-    abort(403, message=str(e))
+    return {"message": str(e)}, 403
 
 @objectives_bp.errorhandler(ServiceNotFoundError)
 def objectives_not_found_error(e):
-    abort(404, message=str(e))
+    return {"message": str(e)}, 404
 
 
 @objectives_bp.route('/objectives')

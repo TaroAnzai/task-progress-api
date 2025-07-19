@@ -20,19 +20,19 @@ progress_bp = Blueprint("Progress", __name__, description="進捗更新")
 
 @progress_bp.errorhandler(ServiceValidationError)
 def progress_validation_error(e):
-    abort(400, message=str(e))
+    return {"message": str(e)}, 400
 
 @progress_bp.errorhandler(ServiceAuthenticationError)
 def progress_auth_error(e):
-    abort(401, message=str(e))
+    return {"message": str(e)}, 401
 
 @progress_bp.errorhandler(ServicePermissionError)
 def progress_permission_error(e):
-    abort(403, message=str(e))
+    return {"message": str(e)}, 403
 
 @progress_bp.errorhandler(ServiceNotFoundError)
 def progress_not_found_error(e):
-    abort(404, message=str(e))
+    return {"message": str(e)}, 404
 
 
 @progress_bp.route("/objectives/<int:objective_id>/progress")

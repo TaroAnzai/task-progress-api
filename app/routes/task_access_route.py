@@ -21,19 +21,19 @@ task_access_bp = Blueprint("TaskAccess", __name__, url_prefix="/tasks/<int:task_
 
 @task_access_bp.errorhandler(ServiceValidationError)
 def task_access_validation_error(e):
-    abort(400, message=str(e))
+    return {"message": str(e)}, 400
 
 @task_access_bp.errorhandler(ServiceAuthenticationError)
 def task_access_auth_error(e):
-    abort(401, message=str(e))
+    return {"message": str(e)}, 401
 
 @task_access_bp.errorhandler(ServicePermissionError)
 def task_access_permission_error(e):
-    abort(403, message=str(e))
+    return {"message": str(e)}, 403
 
 @task_access_bp.errorhandler(ServiceNotFoundError)
 def task_access_not_found_error(e):
-    abort(404, message=str(e))
+    return {"message": str(e)}, 404
 
 
 @task_access_bp.route('/access_levels')
