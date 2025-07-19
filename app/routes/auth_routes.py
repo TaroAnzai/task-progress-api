@@ -22,19 +22,19 @@ auth_bp = Blueprint("Auth", __name__, url_prefix="/auth", description="認証")
 
 @auth_bp.errorhandler(ServiceValidationError)
 def auth_validation_error(e):
-    abort(400, message=str(e))
+    return {"message": str(e)}, 400
 
 @auth_bp.errorhandler(ServiceAuthenticationError)
 def auth_auth_error(e):
-    abort(401, message=str(e))
+    return {"message": str(e)}, 401
 
 @auth_bp.errorhandler(ServicePermissionError)
 def auth_permission_error(e):
-    abort(403, message=str(e))
+    return {"message": str(e)}, 403
 
 @auth_bp.errorhandler(ServiceNotFoundError)
 def auth_not_found_error(e):
-    abort(404, message=str(e))
+    return {"message": str(e)}, 404
 
 
 @auth_bp.route("/login")

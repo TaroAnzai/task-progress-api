@@ -21,22 +21,22 @@ access_scope_bp = Blueprint("AccessScopes", __name__, description="アクセス�
 
 @access_scope_bp.errorhandler(ServiceValidationError)
 def access_scope_validation_error(e):
-    abort(400, message=str(e))
+    return {"message": str(e)}, 400
 
 
 @access_scope_bp.errorhandler(ServiceAuthenticationError)
 def access_scope_auth_error(e):
-    abort(401, message=str(e))
+    return {"message": str(e)}, 401
 
 
 @access_scope_bp.errorhandler(ServicePermissionError)
 def access_scope_permission_error(e):
-    abort(403, message=str(e))
+    return {"message": str(e)}, 403
 
 
 @access_scope_bp.errorhandler(ServiceNotFoundError)
 def access_scope_not_found_error(e):
-    abort(404, message=str(e))
+    return {"message": str(e)}, 404
 
 @access_scope_bp.route("/users/<int:user_id>/access-scopes")
 class UserAccessScopeResource(MethodView):

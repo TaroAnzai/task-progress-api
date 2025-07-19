@@ -22,19 +22,19 @@ task_core_bp = Blueprint("Tasks", __name__, url_prefix="/tasks", description="ã‚
 
 @task_core_bp.errorhandler(ServiceValidationError)
 def task_core_validation_error(e):
-    abort(400, message=str(e))
+    return {"message": str(e)}, 400
 
 @task_core_bp.errorhandler(ServiceAuthenticationError)
 def task_core_auth_error(e):
-    abort(401, message=str(e))
+    return {"message": str(e)}, 401
 
 @task_core_bp.errorhandler(ServicePermissionError)
 def task_core_permission_error(e):
-    abort(403, message=str(e))
+    return {"message": str(e)}, 403
 
 @task_core_bp.errorhandler(ServiceNotFoundError)
 def task_core_not_found_error(e):
-    abort(404, message=str(e))
+    return {"message": str(e)}, 404
 
 
 @task_core_bp.route("")

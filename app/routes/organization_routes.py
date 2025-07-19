@@ -22,19 +22,19 @@ organization_bp = Blueprint("Organizations", __name__, url_prefix="/organization
 
 @organization_bp.errorhandler(ServiceValidationError)
 def organization_validation_error(e):
-     return {"message": str(e)}, 400
+    return {"message": str(e)}, 400
 
 @organization_bp.errorhandler(ServiceAuthenticationError)
 def organization_auth_error(e):
-    abort(401, message=str(e))
+    return {"message": str(e)}, 401
 
 @organization_bp.errorhandler(ServicePermissionError)
 def organization_permission_error(e):
-    abort(403, message=str(e))
+    return {"message": str(e)}, 403
 
 @organization_bp.errorhandler(ServiceNotFoundError)
 def organization_not_found_error(e):
-    abort(404, message=str(e))
+    return {"message": str(e)}, 404
 
 
 
