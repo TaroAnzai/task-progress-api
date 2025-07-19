@@ -87,10 +87,10 @@ class TestTaskCreation:
      
         # タイトルなしでタスク作成
         res = client.post("/tasks", json={"description": "Test"})
-        assert res.status_code == 400
+        assert res.status_code == 422
         
         data = res.get_json()
-        assert data["error"] == "タイトルは必須です"
+        assert 'title' in data["errors"]['json']
     
     def test_create_task_invalid_date(self, system_admin_client):
         client = system_admin_client
@@ -104,7 +104,7 @@ class TestTaskCreation:
         assert res.status_code == 400
         
         data = res.get_json()
-        assert data["error"] == "日付の形式が正しくありません（YYYY-MM-DD）"
+        assert data["message"] == "日付の形式が正しくありません（YYYY-MM-DD）"
     
     def test_create_task_without_login(self, client, test_task_data):
         """ログインなしでタスク作成（エラー）"""
@@ -125,7 +125,6 @@ class TestTaskUpdate:
         
         res = client.put(f"/tasks/{created_task['id']}", json=update_data)
         assert res.status_code == 200
-        
         data = res.get_json()
         assert data["message"] == "タスクを更新しました"
     
@@ -155,7 +154,7 @@ class TestTaskUpdate:
         assert res.status_code == 400
         
         data = res.get_json()
-        assert data["error"] == "ステータスIDが不正です"
+        assert data["message"] == "ステータスIDが不正です"
     
     def test_update_task_invalid_date(self, client, created_task):
         """不正な日付でタスク更新（エラー）"""
@@ -165,7 +164,7 @@ class TestTaskUpdate:
         assert res.status_code == 400
         
         data = res.get_json()
-        assert data["error"] == "日付の形式が正しくありません（YYYY-MM-DD）"
+        assert data["message"] == "日付の形式が正しくありません（YYYY-MM-DD）"
     
     def test_update_nonexistent_task(self, system_admin_client):
         client = system_admin_client
@@ -175,7 +174,7 @@ class TestTaskUpdate:
         assert res.status_code == 404
         
         data = res.get_json()
-        assert data["error"] == "タスクが見つかりません"
+        assert data["message"] == "タスクが見つかりません"
 
 
 class TestTaskDeletion:

@@ -11,6 +11,7 @@ from app.services import task_core_service
 from app.schemas import (
     TaskSchema,
     TaskInputSchema,
+    TaskUpdateSchema,
     TaskCreateResponseSchema,
     TaskListResponseSchema,
     OrderSchema,
@@ -50,7 +51,7 @@ class TaskListResource(MethodView):
     def post(self, data):
         """タスク作成"""
         resp = task_core_service.create_task(data, current_user)
-        return resp
+        return {"message":"タスクを追加しました", "task":resp}
 
     @login_required
     @task_core_bp.response(200, TaskListResponseSchema)
@@ -67,7 +68,7 @@ class TaskListResource(MethodView):
 @task_core_bp.route("/<int:task_id>")
 class TaskResource(MethodView):
     @login_required
-    @task_core_bp.arguments(TaskInputSchema)
+    @task_core_bp.arguments(TaskUpdateSchema)
     @task_core_bp.response(200, MessageSchema)
     @task_core_bp.alt_response(400, {
         "description": "Bad Request",
@@ -87,7 +88,7 @@ class TaskResource(MethodView):
     def put(self, data, task_id):
         """タスク更新"""
         resp = task_core_service.update_task(task_id, data, current_user)
-        return resp
+        return {'message':'タスクを更新しました', 'task':resp}
 
     @login_required
     @task_core_bp.response(200, MessageSchema)
@@ -103,8 +104,8 @@ class TaskResource(MethodView):
     })
     def delete(self, task_id):
         """タスク削除"""
-        resp = task_core_service.delete_task(task_id, current_user)
-        return resp
+        task_core_service.delete_task(task_id, current_user)
+        return {'message':'タスクを削除しました'}
 
 @task_core_bp.route("/<int:task_id>/objectives/order")
 class ObjectiveOrderResource(MethodView):

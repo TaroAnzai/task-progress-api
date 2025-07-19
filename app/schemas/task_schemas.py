@@ -22,6 +22,20 @@ class TaskInputSchema(SQLAlchemyAutoSchema):
     status_id = fields.Int(load_default=None)
     display_order = fields.Int(load_default=None)
 
+class TaskUpdateSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Task
+        load_instance = False
+        include_fk = True
+        exclude = ("id", "created_by", "created_at", "is_deleted")
+
+    title = fields.Str(required=False)
+    description = fields.Str()
+    due_date = fields.Str()
+    status_id = fields.Int()
+    display_order = fields.Int()
+
+
 class TaskCreateResponseSchema(Schema):
     message = fields.Str()
     task = fields.Nested(TaskSchema)

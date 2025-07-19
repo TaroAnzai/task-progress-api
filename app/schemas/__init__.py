@@ -2,6 +2,7 @@ from .common_schemas import MessageSchema, ErrorResponseSchema, YAMLResponseSche
 from .task_schemas import (
     TaskSchema,
     TaskInputSchema,
+    TaskUpdateSchema,
     TaskCreateResponseSchema,
     TaskListResponseSchema,
     OrderSchema,
@@ -42,7 +43,7 @@ from .ai_schemas import AISuggestInputSchema, JobIdSchema, AIResultSchema
 
 __all__ = [
     'MessageSchema', 'ErrorResponseSchema', 'YAMLResponseSchema',
-    'TaskSchema', 'TaskInputSchema', 'TaskCreateResponseSchema', 'TaskListResponseSchema',
+    'TaskSchema', 'TaskInputSchema', 'TaskUpdateSchema', 'TaskCreateResponseSchema', 'TaskListResponseSchema',
     'OrderSchema', 'TaskOrderSchema', 'TaskOrderInputSchema',
     'UserSchema', 'UserInputSchema', 'UserUpdateSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
     'CompanySchema', 'CompanyInputSchema',

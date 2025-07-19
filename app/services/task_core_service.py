@@ -48,7 +48,7 @@ def create_task(data, user):
     db.session.add(UserTaskOrder(user_id=user.id, task_id=task.id, display_order=0))
     db.session.commit()
 
-    return {'message': 'タスクを追加しました', 'task': task.to_dict()}
+    return task
 
 
 def update_task(task_id, data, user):
@@ -75,7 +75,7 @@ def update_task(task_id, data, user):
         task.display_order = data['display_order']
 
     db.session.commit()
-    return {'message': 'タスクを更新しました'}
+    return task
 
 def delete_task(task_id, user):
     task = get_task_by_id(task_id)
@@ -94,7 +94,6 @@ def delete_task(task_id, user):
 
     task.soft_delete()
     db.session.commit()
-    return {'message': 'タスクを削除しました'}
 
 def get_tasks(user):
     current_app.logger.info("[START] get_tasks called")

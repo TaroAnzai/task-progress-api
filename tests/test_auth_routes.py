@@ -53,7 +53,7 @@ def test_login_with_email_invalid_email(client):
     response = client.post("/auth/login", json=login_data)
     assert response.status_code == 401
     data = response.get_json()
-    assert "無効" in data["error"]
+    assert "無効" in data["message"]
 
 def test_login_with_email_invalid_password(client, system_related_users):
     user = system_related_users['member']
@@ -65,22 +65,22 @@ def test_login_with_email_invalid_password(client, system_related_users):
     response = client.post("/auth/login", json=login_data)
     assert response.status_code == 401
     data = response.get_json()
-    assert "無効" in data["error"]
+    assert "無効" in data["message"]
 
 
 def test_login_with_email_missing_fields(client):
     """必須フィールドが不足している場合のテスト"""
     # emailが不足
     response = client.post("/auth/login", json={"password": "testpassword"})
-    assert response.status_code == 400
+    assert response.status_code == 422
     data = response.get_json()
-    assert "必須" in data["error"]
+    assert 'email' in data['errors']['json']
 
     # passwordが不足
     response = client.post("/auth/login", json={"email": "test@example.com"})
-    assert response.status_code == 400
+    assert response.status_code == 422
     data = response.get_json()
-    assert "必須" in data["error"]
+    assert "password" in data["errors"]['json']
 
 def test_login_with_wp_user_id_success(client, superuser, login_as_user, wp_user_data):
     login_as_user(superuser['email'], superuser["password"])
@@ -106,14 +106,14 @@ def test_login_with_wp_user_id_not_found(client):
     response = client.post("/auth/login/by-id", json=login_data)
     assert response.status_code == 404
     data = response.get_json()
-    assert "見つかりません" in data["error"]
+    assert "見つかりません" in data["message"]
 
 def test_login_with_wp_user_id_missing_field(client):
     """wp_user_idが不足している場合のテスト"""
     response = client.post("/auth/login/by-id", json={})
-    assert response.status_code == 400
+    assert response.status_code == 422
     data = response.get_json()
-    assert "必須" in data["error"]
+    assert "wp_user_id" in data["errors"]['json']
 
 @pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
 def test_get_current_user_authenticated(client, system_related_users, role):
