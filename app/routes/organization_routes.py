@@ -91,8 +91,6 @@ class OrganizationResource(MethodView):
     def get(self, org_id):
         """組織取得"""
         org = organization_service.get_organization_by_id(org_id)
-        if not org:
-            abort(404, message="組織が見つかりません")
         return org
 
     @login_required
@@ -110,15 +108,10 @@ class OrganizationResource(MethodView):
     })
     def put(self, data, org_id):
         """組織更新"""
-        try:
-            org = organization_service.update_organization(
-                org_id, data.get("name"), data.get("parent_id")
-            )
-            if not org:
-                abort(404, message="組織が見つかりません")
-            return org
-        except ValueError as e:
-            abort(400, message=str(e))
+        org = organization_service.update_organization(
+            org_id, data.get("name"), data.get("parent_id")
+        )
+        return org
 
     @login_required
     @organization_bp.response(200, MessageSchema)
@@ -130,8 +123,6 @@ class OrganizationResource(MethodView):
     def delete(self, org_id):
         """組織削除"""
         success, message = organization_service.delete_organization(org_id)
-        if not success:
-            abort(400, message=message)
         return {"message": message}
 
 @organization_bp.route("/tree")
@@ -146,12 +137,9 @@ class OrganizationTreeResource(MethodView):
     def get(self):
         """組織ツリー取得"""
         company_id = request.args.get("company_id", type=int)
-        try:
-            resolved_company_id = resolve_company_id(company_id)
-            tree = organization_service.get_organization_tree(resolved_company_id)
-            return tree
-        except ValueError as e:
-            abort(400, message=str(e))
+        resolved_company_id = resolve_company_id(company_id)
+        tree = organization_service.get_organization_tree(resolved_company_id)
+        return tree
 
 @organization_bp.route("/children")
 class OrganizationChildrenResource(MethodView):
@@ -165,8 +153,6 @@ class OrganizationChildrenResource(MethodView):
     def get(self):
         """子組織取得"""
         parent_id = request.args.get("parent_id", type=int)
-        if parent_id is None:
-            abort(400, message="parent_id パラメータが必要です")
         children = organization_service.get_children(parent_id)
         return children
 

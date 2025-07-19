@@ -50,11 +50,8 @@ class CompanyListResource(MethodView):
     def post(self, data):
         """会社作成"""
         require_superuser(current_user)
-        try:
-            company = company_service.create_company(data.get("name"))
-            return company
-        except ValueError as e:
-            abort(400, str(e))
+        company = company_service.create_company(data.get("name"))
+        return company
 
 @company_bp.route("/<int:company_id>")
 class CompanyResource(MethodView):
@@ -74,8 +71,6 @@ class CompanyResource(MethodView):
         """会社詳細取得"""
         require_superuser(current_user)
         company = company_service.get_company_by_id(company_id)
-        if not company:
-            abort(404, message="Company not found")
         return company
 
     @login_required
@@ -100,15 +95,8 @@ class CompanyResource(MethodView):
         """会社更新"""
         require_superuser(current_user)
         new_name = data.get("name")
-        if not new_name:
-            abort(400, message="New name is required")
-        try:
-            company = company_service.update_company(company_id, new_name)
-            if not company:
-                abort(404, message="Company not found")
-            return company
-        except ValueError as e:
-            abort(400, str(e))
+        company = company_service.update_company(company_id, new_name)
+        return company
 
     @login_required
     @company_bp.response(200, MessageSchema)
@@ -126,8 +114,6 @@ class CompanyResource(MethodView):
         """会社の論理削除"""
         require_superuser(current_user)
         success = company_service.delete_company(company_id)
-        if not success:
-            abort(404, message="Company not found")
         return {"message": "Company deleted (soft)"}
 
 @company_bp.route("/with_deleted/<int:company_id>")
@@ -148,8 +134,6 @@ class CompanyWithDeletedResource(MethodView):
         """削除済み含む会社詳細取得"""
         require_superuser(current_user)
         company = company_service.get_company_by_id_with_deleted(company_id)
-        if not company:
-            abort(404, message="Company not found")
         return company
 
 @company_bp.route("/restore/<int:company_id>")
@@ -170,8 +154,6 @@ class CompanyRestoreResource(MethodView):
         """会社復元"""
         require_superuser(current_user)
         success = company_service.restore_company(company_id)
-        if not success:
-            abort(404, message="Company not found")
         return {"message": "Company restored"}
 
 @company_bp.route("/permanent/<int:company_id>")
@@ -192,7 +174,5 @@ class CompanyPermanentDeleteResource(MethodView):
         """会社物理削除"""
         require_superuser(current_user)
         success = company_service.delete_company_permanently(company_id)
-        if not success:
-            abort(404, message="Company not found or cannot be deleted")
         return {"message": "Company permanently deleted"}
 
