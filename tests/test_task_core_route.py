@@ -285,7 +285,6 @@ class TestObjectiveOrder:
         res = client.post(f"/tasks/{created_task['id']}/objectives/order", json={
             "order": []
         })
-        print(res.get_data(as_text=True))  # デバッグ用
         assert res.status_code == 400
         
    

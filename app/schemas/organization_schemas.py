@@ -25,3 +25,13 @@ class OrganizationInputSchema(SQLAlchemyAutoSchema):
 class OrganizationUpdateSchema(Schema):
     name = fields.Str()
     parent_id = fields.Int(allow_none=True)
+
+class OrganizationTreeSchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
+    org_code = fields.Str()
+    company_id = fields.Int()
+    company_name = fields.Str()
+    parent_id = fields.Int(allow_none=True)
+    level = fields.Int()
+    children = fields.List(fields.Nested(lambda: OrganizationTreeSchema()))

@@ -11,8 +11,32 @@ from app.schemas import (
     MessageSchema,
     ErrorResponseSchema,
 )
+from app.service_errors import (
+    ServiceValidationError,
+    ServiceAuthenticationError,
+    ServicePermissionError,
+    ServiceNotFoundError,
+)
 
 company_bp = Blueprint("Companies", __name__, url_prefix="/companies", description="会社管理")
+@company_bp.errorhandler(ServiceValidationError)
+def access_scope_validation_error(e):
+    return {"message": str(e)}, 400
+
+
+@company_bp.errorhandler(ServiceAuthenticationError)
+def access_scope_auth_error(e):
+    return {"message": str(e)}, 401
+
+
+@company_bp.errorhandler(ServicePermissionError)
+def access_scope_permission_error(e):
+    return {"message": str(e)}, 403
+
+
+@company_bp.errorhandler(ServiceNotFoundError)
+def access_scope_not_found_error(e):
+    return {"message": str(e)}, 404
 
 @company_bp.route("")
 class CompanyListResource(MethodView):

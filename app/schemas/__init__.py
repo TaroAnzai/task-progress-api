@@ -21,6 +21,7 @@ from .organization_schemas import (
     OrganizationSchema,
     OrganizationInputSchema,
     OrganizationUpdateSchema,
+    OrganizationTreeSchema,
 )
 from .objective_schemas import (
     ObjectiveSchema,
@@ -44,7 +45,7 @@ __all__ = [
     'OrderSchema', 'TaskOrderSchema', 'TaskOrderInputSchema',
     'UserSchema', 'UserInputSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
     'CompanySchema', 'CompanyInputSchema',
-    'OrganizationSchema', 'OrganizationInputSchema', 'OrganizationUpdateSchema',
+    'OrganizationSchema', 'OrganizationInputSchema', 'OrganizationUpdateSchema','OrganizationTreeSchema',
     'ObjectiveSchema', 'ObjectiveInputSchema', 'ObjectiveResponseSchema', 'ObjectivesListSchema', 'StatusSchema',
     'ProgressSchema', 'ProgressInputSchema',
     'AccessScopeSchema', 'AccessScopeInputSchema',

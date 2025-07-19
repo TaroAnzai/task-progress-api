@@ -14,6 +14,7 @@ from app.schemas import (
     OrganizationSchema,
     OrganizationInputSchema,
     OrganizationUpdateSchema,
+    OrganizationTreeSchema,
     MessageSchema,
     ErrorResponseSchema,
 )
@@ -76,7 +77,8 @@ class OrganizationListResource(MethodView):
     def get(self):
         """組織一覧取得"""
         resolved_company_id = resolve_company_id(request.args.get("company_id", type=int))
-        return organization_service.get_organizations(resolved_company_id)
+        orgs =organization_service.get_organizations(resolved_company_id)
+        return orgs
 
 
 @organization_bp.route("/<int:org_id>")
@@ -128,7 +130,8 @@ class OrganizationResource(MethodView):
 @organization_bp.route("/tree")
 class OrganizationTreeResource(MethodView):
     @login_required
-    @organization_bp.response(200, fields.List(fields.Nested(OrganizationSchema)))
+    #@organization_bp.response(200, fields.List(fields.Nested(OrganizationSchema)))
+    @organization_bp.response(200, OrganizationTreeSchema(many=True))
     @organization_bp.alt_response(400, {
         "description": "Bad Request",
         "schema": ErrorResponseSchema,

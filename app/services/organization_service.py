@@ -1,6 +1,11 @@
 from app.models import db, Organization
 from sqlalchemy.exc import IntegrityError
-from app.service_errors import ServiceValidationError
+from app.service_errors import (
+    ServiceValidationError,
+    ServiceAuthenticationError,
+    ServicePermissionError,
+    ServiceNotFoundError,
+)
 
 
 def can_create_root_organization(company_id):
@@ -49,6 +54,8 @@ def create_organization(name, org_code, company_id=None, parent_id=None):
 
 def get_organization_by_id(org_id):
     org = db.session.get(Organization, org_id)
+    if not org:
+        raise ServiceNotFoundError("organization not found")
     return org if org else None
 
 
@@ -62,7 +69,7 @@ def get_organizations(company_id=None):
 def update_organization(org_id, name=None, parent_id=None):
     org = db.session.get(Organization, org_id)
     if not org:
-        return None
+        raise ServiceNotFoundError("organization not found")
 
     if name:
         org.name = name
@@ -71,7 +78,7 @@ def update_organization(org_id, name=None, parent_id=None):
         if parent_id:
             parent = db.session.get(Organization, parent_id)
             if not parent:
-                raise ValueError("指定された親組織が存在しません。")
+                raise ServiceNotFoundError("指定された親組織が存在しません。")
             org.level = parent.level + 1
         else:
             org.level = 1
@@ -84,11 +91,11 @@ def update_organization(org_id, name=None, parent_id=None):
 def delete_organization(org_id):
     org = db.session.get(Organization, org_id)
     if not org:
-        return False, "組織が存在しません。"
+        raise ServiceNotFoundError("組織が存在しません。")
 
     has_children = Organization.query.filter_by(parent_id=org_id).first()
     if has_children:
-        return False, "子組織が存在するため削除できません。"
+        raise ServiceValidationError("子組織が存在するため削除できません。")
 
     db.session.delete(org)
     db.session.commit()
@@ -127,4 +134,5 @@ def get_children(parent_id):
     """
     指定された親組織IDに属する子組織を返す（モデルオブジェクト）
     """
-    return Organization.query.filter_by(parent_id=parent_id).all()
+    children = Organization.query.filter_by(parent_id=parent_id).all()
+    return children

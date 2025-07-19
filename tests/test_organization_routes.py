@@ -40,8 +40,7 @@ def test_create_root_organization_twice(login_as_user, superuser):
 def test_get_organizations(login_as_user, test_company, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
     client = login_as_user(system_admin['email'], system_admin['password'])
-    res = client.get(f'/organizations/?company_id={test_company['id']}')
-    print(res.get_json())
+    res = client.get(f'/organizations?company_id={test_company['id']}')
     assert res.status_code == 200
     data = res.get_json()
     assert isinstance(data, list)
@@ -83,7 +82,7 @@ def test_delete_organization_with_children(login_as_user, root_org, system_relat
     # 2. ルート組織の削除（失敗するはず）
     res_delete_root = client.delete(f'/organizations/{parent_id}')
     assert res_delete_root.status_code == 400
-    assert '削除できません' in res_delete_root.get_json()['error'] or '子' in res_delete_root.get_json()['error']
+    assert '削除できません' in res_delete_root.get_json()['message'] or '子' in res_delete_root.get_json()['message']
 
     # 3. 子組織を削除（成功するはず）
     res_delete_child = client.delete(f'/organizations/{child_id}')
