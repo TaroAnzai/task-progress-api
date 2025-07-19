@@ -22,8 +22,23 @@ class UserInputSchema(SQLAlchemyAutoSchema):
 
     name = fields.Str(required=True)
     email = fields.Str(required=True)
-    password = fields.Str(load_default=None)
+    password = fields.Str(required=True, load_only=True)
     role = fields.Str(load_default=None)
+    organization_id=fields.Int(required=True)
+
+class UserUpdateSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = User
+        load_instance = False
+        include_fk = True
+        exclude = ("id", "password_hash", "is_superuser")
+
+    # すべて任意。ただし形式は検証する
+    name = fields.Str(required=False)
+    email = fields.Email(required=False)
+    password = fields.Str(required=False, load_only=True)
+    role = fields.Str(required=False)
+    organization_id=fields.Int(required=False)
 
 class UserCreateResponseSchema(Schema):
     message = fields.Str()

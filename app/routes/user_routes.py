@@ -13,6 +13,7 @@ from app.services import user_service
 from app.schemas import (
     UserSchema,
     UserInputSchema,
+    UserUpdateSchema,
     UserCreateResponseSchema,
     MessageSchema,
     ErrorResponseSchema,
@@ -96,7 +97,7 @@ class UserResource(MethodView):
         return result
 
     @login_required
-    @user_bp.arguments(UserInputSchema)
+    @user_bp.arguments(UserUpdateSchema)
     @user_bp.response(200, UserSchema)
     @user_bp.alt_response(403, {
         "description": "Forbidden",

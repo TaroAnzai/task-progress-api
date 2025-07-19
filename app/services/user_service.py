@@ -38,12 +38,6 @@ def create_user(data, current_user):
     role = data.get('role', OrgRoleEnum.MEMBER)  # ← デフォルトはMEMBER
 
     # 必須項目チェック
-    if not name or not email or not org_id:
-        raise ServiceValidationError('name、emailは必須です')
-
-    if not password:
-        raise ServiceValidationError('password は必須です')
-
     if not is_valid_email(email):
         raise ServiceValidationError('無効なメールアドレス形式です')
 
@@ -106,15 +100,32 @@ def update_user(user_id, data, current_user):
 
     if 'name' in data:
         user.name = data['name']
+
     if 'wp_user_id' in data:
+        # 重複チェック（必要なら追加）
+        if User.query.filter(User.wp_user_id == data['wp_user_id'], User.id != user_id).first():
+            raise ServiceValidationError('この wp_user_id は既に使用されています')
         user.wp_user_id = data['wp_user_id']
+
     if 'email' in data:
+        # メール重複チェック
+        if User.query.filter(User.email == data['email'], User.id != user_id).first():
+            raise ServiceValidationError('このメールアドレスは既に使用されています')
         user.email = data['email']
+
     if 'organization_id' in data:
+        org = db.session.get(Organization, data['organization_id'])
+        if not org:
+            raise ServiceValidationError('指定された組織IDが存在しません')
         user.organization_id = data['organization_id']
+
+    if 'password' in data and data['password']:
+        # 空文字は無視、パスワードがあれば更新
+        user.set_password(data['password'])
 
     db.session.commit()
     return user
+
 
 def delete_user(user_id, current_user):
     user = db.session.get(User, user_id)

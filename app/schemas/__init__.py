@@ -11,6 +11,7 @@ from .task_schemas import (
 from .user_schemas import (
     UserSchema,
     UserInputSchema,
+    UserUpdateSchema,
     UserCreateResponseSchema,
     LoginResponseSchema,
     LoginSchema,
@@ -43,7 +44,7 @@ __all__ = [
     'MessageSchema', 'ErrorResponseSchema', 'YAMLResponseSchema',
     'TaskSchema', 'TaskInputSchema', 'TaskCreateResponseSchema', 'TaskListResponseSchema',
     'OrderSchema', 'TaskOrderSchema', 'TaskOrderInputSchema',
-    'UserSchema', 'UserInputSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
+    'UserSchema', 'UserInputSchema', 'UserUpdateSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
     'CompanySchema', 'CompanyInputSchema',
     'OrganizationSchema', 'OrganizationInputSchema', 'OrganizationUpdateSchema','OrganizationTreeSchema',
     'ObjectiveSchema', 'ObjectiveInputSchema', 'ObjectiveResponseSchema', 'ObjectivesListSchema', 'StatusSchema',

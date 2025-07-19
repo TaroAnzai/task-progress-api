@@ -25,11 +25,12 @@ def assert_user_created(response, expected_name: str = None):
     return user
 
 def assert_error_response(response, expected_status: int, expected_message: str = None):
+    print("assert_error_response",response.get_json() )
     """エラーレスポンスの共通アサーション"""
     assert response.status_code == expected_status
     error_data = response.get_json()
     if expected_message:
-        assert expected_message in error_data.get('error', '')
+        assert expected_message in error_data.get('message', '')
     return error_data
 
 # --- Fixtures ---
@@ -62,7 +63,7 @@ class TestUserCreation:
         client = login_as_user(system_admin['email'], system_admin['password'])
         """必須フィールド不足でユーザー作成失敗"""
         res = client.post('/users', json={'email': 'incomplete@example.com'})
-        assert_error_response(res, 400)
+        assert_error_response(res, 422)
     
     def test_create_user_duplicate_email(self, login_as_user, system_related_users, root_org):
         system_admin = system_related_users['system_admin']
@@ -195,8 +196,8 @@ class TestUserCreationParameterized:
         del payload[missing_field]
         
         res = client.post('/users', json=payload)
-        error_data = assert_error_response(res, 400)
-        assert missing_field in error_data['error']
+        error_data = assert_error_response(res, 422)
+        assert missing_field in error_data['errors']['json']
     
     @pytest.mark.parametrize("invalid_email", [
         'invalid-email',
