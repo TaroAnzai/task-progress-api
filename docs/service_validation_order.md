@@ -1,17 +1,16 @@
----
-
 # Service Layer Validation Order
 
-本ドキュメントは、**Flask-Smorest + Marshmallow** を用いたRESTful API開発において、
+本ドキュメントは、**Flask-Smorest + Marshmallow** を用いたRESTful API開発において、  
 **サービス層（Service Layer）で実施すべきバリデーションの理想的な順序**をまとめたものです。
 
 ---
 
 ## ✅ バリデーションの基本方針
 
-* **早期終了（Fail Fast）**：判定可能なものから順に検証することで無駄な処理を防ぐ。
-* **RESTful APIのステータスコード標準**に準拠する。
-* **スキーマ層（Marshmallow）では型・形式の基本バリデーションを実施済み**と仮定する。
+- **早期終了（Fail Fast）**：判定可能なものから順に検証することで無駄な処理を防ぐ。
+- **RESTful APIのステータスコード標準**に準拠する。
+- **422 Unprocessable Entity は Marshmallow（スキーマバリデーション）のみで使用**し、  
+  サービス層では使用しない。
 
 ---
 
@@ -66,22 +65,6 @@
 
 ---
 
-### **④ 422 Unprocessable Entity（ビジネスルール違反）**
-
-* **目的**：最後にビジネスロジック上の妥当性を確認する。
-* **例**：
-
-  * 締め切り日が過去日付
-  * 組織の階層構造に違反する親子関係設定
-* **サンプルコード**：
-
-  ```python
-  if data["due_date"] < date.today():
-      raise ServiceValidationError("期日は今日以降である必要があります")  # → HTTP 422
-  ```
-
----
-
 ### **⑤ 500 Internal Server Error（想定外例外）**
 
 * **目的**：上記以外の想定外エラーは、ルート層の`@errorhandler`で一括処理。
@@ -110,7 +93,7 @@
 ┌─────────────┐
 │④ ビジネスルール確認│
 └─────┬───────┘
-      │違反あり → 422
+      │違反あり → 400
       ▼
     （処理続行）
 ```

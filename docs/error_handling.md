@@ -1,11 +1,11 @@
-了解しました！
-以下に、**`/docs/error_handling.md`** として保存できるMarkdownファイルの内容を提示します。
-
 ---
 
+# ✅ **`docs/error_handling.md`（修正版）**
+
+```markdown
 # Error Handling Policy
 
-本ドキュメントは、**Flask-Smorest + Marshmallow** を用いたRESTful API開発における
+本ドキュメントは、**Flask-Smorest + Marshmallow** を用いたRESTful API開発における  
 **エラーハンドリングとステータスコード運用の標準方針**をまとめたものです。
 
 ---
@@ -13,39 +13,37 @@
 ## ✅ 基本方針
 
 1. **RESTful API標準に準拠**したステータスコードを使用する。
-2. \*\*スキーマ層（Marshmallow）\*\*は入力形式エラーのみ、
+2. **スキーマ層（Marshmallow）**は入力形式エラーのみ、  
    **サービス層**はビジネスロジック・権限・整合性エラーを担当。
-3. **エラーレスポンス形式は統一**し、クライアントが容易に解釈可能とする。
-4. **想定外エラー**はルート層（Flask-Smorest）で一括補足する。
+3. **422 Unprocessable Entity はスキーマ専用**とし、  
+   サービス層では使用せず **400/409** を使用する。
+4. **エラーレスポンス形式は統一**する。
 
 ---
 
 ## ✅ ステータスコード運用表
 
-| ステータスコード                      | 使用タイミング             | 例                  | サービス層での例外クラス                     |
-| ----------------------------- | ------------------- | ------------------ | -------------------------------- |
-| **400 Bad Request**           | JSONパース不可・不正リクエスト形式 | JSONでない、必須ヘッダ不足    | （Marshmallowで自動処理、サービス層では通常使わない） |
-| **401 Unauthorized**          | 未ログイン、トークン無効        | ログイン必須APIへの未認証アクセス | （ルート層の@`login_required`で自動処理）    |
-| **403 Forbidden**             | 認証済みだが権限不足          | 組織外リソースへの操作        | `ServicePermissionError`         |
-| **404 Not Found**             | リソースが存在しない          | ID指定リソースが未登録       | `ServiceNotFoundError`           |
-| **409 Conflict**              | 状態が既存データと衝突         | 重複登録、既に削除済み        | `ServiceConflictError`           |
-| **422 Unprocessable Entity**  | ビジネスルール違反           | 期日が過去日付、階層構造違反     | `ServiceValidationError`         |
-| **500 Internal Server Error** | 想定外エラー              | DB障害、未捕捉例外         | （ルート層で自動処理、ログ出力必須）               |
+| ステータスコード | 使用タイミング | 例 | サービス層での例外クラス |
+|------------------|--------------|----|------------------------|
+| **400 Bad Request** | ビジネスロジック上の不正リクエスト | 期日が過去日付、階層構造違反 | `ServiceValidationError` |
+| **401 Unauthorized** | 未ログイン、トークン無効 | ログイン必須APIへの未認証アクセス |（ルート層で自動処理）|
+| **403 Forbidden** | 認証済みだが権限不足 | 組織外リソースへの操作 | `ServicePermissionError` |
+| **404 Not Found** | リソースが存在しない | ID指定リソースが未登録 | `ServiceNotFoundError` |
+| **409 Conflict** | 状態が既存データと衝突 | 重複登録、既に削除済み | `ServiceConflictError` |
+| **422 Unprocessable Entity** | **Marshmallowのスキーマバリデーション専用** | 型不一致、必須項目不足 |（サービス層では使用しない）|
+| **500 Internal Server Error** | 想定外エラー | DB障害、未捕捉例外 |（ルート層で自動処理）|
 
 ---
 
 ## ✅ エラーレスポンス形式（統一仕様）
 
-全てのエラーは以下のJSON構造で返却する。
-
 ```json
 {
   "status": "error",
-  "code": 404,
-  "message": "タスクが見つかりません",
+  "code": 400,
+  "message": "期日は今日以降である必要があります",
   "details": {
-    "field": "id",
-    "info": "指定されたIDのタスクは存在しません"
+    "field": "due_date"
   }
 }
 ```
