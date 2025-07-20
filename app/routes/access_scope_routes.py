@@ -1,6 +1,7 @@
 from flask_smorest import Blueprint
 from flask.views import MethodView
-from flask import request
+from app.service_errors import format_error_response
+from flask import jsonify
 from flask_login import login_required
 from app.services import access_scope_service
 from app.service_errors import ServiceError
@@ -17,7 +18,7 @@ access_scope_bp = Blueprint("AccessScopes", __name__, description="アクセス�
 
 @access_scope_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
-    return {"message": str(e)}, e.status_code
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 @access_scope_bp.route("/users/<int:user_id>/access-scopes")
 class UserAccessScopeResource(MethodView):

@@ -1,3 +1,5 @@
+from app.service_errors import format_error_response
+from flask import jsonify
 from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask_login import login_required
@@ -16,7 +18,7 @@ task_order_bp = Blueprint("TaskOrder", __name__, url_prefix="/task_order", descr
 
 @task_order_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
-    return {"message": str(e)}, e.status_code
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
 @task_order_bp.route('/<int:user_id>')

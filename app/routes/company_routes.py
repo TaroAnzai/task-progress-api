@@ -1,8 +1,8 @@
 from flask_smorest import Blueprint, abort
 from flask.views import MethodView
-from flask import request, jsonify, send_file
+from app.service_errors import format_error_response
+from flask import jsonify
 from flask_login import login_required, current_user
-
 from app.services import company_service
 from app.utils import require_superuser
 from app.schemas import (
@@ -17,7 +17,7 @@ company_bp = Blueprint("Companies", __name__, url_prefix="/companies", descripti
 
 @company_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
-    return {"message": str(e)}, e.status_code
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 @company_bp.route("")
 class CompanyListResource(MethodView):

@@ -1,3 +1,5 @@
+from app.service_errors import format_error_response
+from flask import jsonify
 from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask import request
@@ -18,7 +20,7 @@ user_bp = Blueprint("Users", __name__, description="ユーザー管理")
 
 @user_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
-    return {"message": str(e)}, e.status_code
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
 @user_bp.route("/users")

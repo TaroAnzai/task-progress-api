@@ -1,6 +1,7 @@
 from flask_smorest import Blueprint, abort
 from flask.views import MethodView
-from flask import request
+from flask import request, jsonify
+from app.service_errors import format_error_response
 from flask_login import login_required, current_user
 from marshmallow import fields
 from app.service_errors import ServiceError,ServiceValidationError
@@ -19,7 +20,7 @@ organization_bp = Blueprint("Organizations", __name__, url_prefix="/organization
 
 @organization_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
-    return {"message": str(e)}, e.status_code
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
 

@@ -3,7 +3,8 @@ from flask.views import MethodView
 from flask_login import login_required, current_user
 from app.service_errors import ServiceError
 from app.decorators import with_common_error_responses
-
+from app.service_errors import format_error_response
+from flask import jsonify
 from app.services import objectives_service
 from app.schemas import (
     ObjectiveSchema,
@@ -19,7 +20,7 @@ objectives_bp = Blueprint("Objectives", __name__, description="オブジェク�
 
 @objectives_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
-    return {"message": str(e)}, e.status_code
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
 @objectives_bp.route('/objectives')

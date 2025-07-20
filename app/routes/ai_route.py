@@ -1,3 +1,5 @@
+from app.service_errors import format_error_response
+from flask import jsonify
 from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask_login import login_required
@@ -15,7 +17,7 @@ ai_bp = Blueprint("AI", __name__, url_prefix="/ai", description="AI 提案")
 
 @ai_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
-    return {"message": str(e)}, e.status_code
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
 @ai_bp.route("/suggest")

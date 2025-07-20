@@ -1,3 +1,5 @@
+from app.service_errors import format_error_response
+from flask import jsonify
 from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask_login import login_required, current_user
@@ -16,7 +18,7 @@ task_access_bp = Blueprint("TaskAccess", __name__, url_prefix="/tasks/<int:task_
 
 @task_access_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
-    return {"message": str(e)}, e.status_code
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
 @task_access_bp.route('/access_levels')

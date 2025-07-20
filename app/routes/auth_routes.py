@@ -1,5 +1,7 @@
 from flask_smorest import Blueprint, abort
 from flask.views import MethodView
+from flask import jsonify
+from app.service_errors import format_error_response
 from flask_login import login_required
 from app.services import auth_service
 from app.schemas import (
@@ -18,7 +20,7 @@ auth_bp = Blueprint("Auth", __name__, url_prefix="/auth", description="認証")
 
 @auth_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
-    return {"message": str(e)}, e.status_code
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
 @auth_bp.route("/login")

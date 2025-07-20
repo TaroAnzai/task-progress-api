@@ -104,7 +104,8 @@ class TestTaskCreation:
         assert res.status_code == 400
         
         data = res.get_json()
-        assert data["message"] == "日付の形式が正しくありません（YYYY-MM-DD）"
+        print('data',data)
+        assert  "日付の形式が正しくありません（YYYY-MM-DD）" in data['errors']["message"] 
     
     def test_create_task_without_login(self, client, test_task_data):
         """ログインなしでタスク作成（エラー）"""
@@ -126,7 +127,7 @@ class TestTaskUpdate:
         res = client.put(f"/tasks/{created_task['id']}", json=update_data)
         assert res.status_code == 200
         data = res.get_json()
-        assert data["message"] == "タスクを更新しました"
+        assert "タスクを更新しました" in data['message']
     
     def test_update_task_status(self, client, created_task):
         """タスクのステータス更新"""
@@ -142,9 +143,8 @@ class TestTaskUpdate:
         
         res = client.put(f"/tasks/{created_task['id']}", json=update_data)
         assert res.status_code == 200
-        
         data = res.get_json()
-        assert data["message"] == "タスクを更新しました"
+        assert "タスクを更新しました" in data['message']
     
     def test_update_task_invalid_status(self, client, created_task):
         """不正なステータスIDでタスク更新（エラー）"""
@@ -154,7 +154,8 @@ class TestTaskUpdate:
         assert res.status_code == 400
         
         data = res.get_json()
-        assert data["message"] == "ステータスIDが不正です"
+        print(data)
+        assert "ステータスIDが不正です" in data['errors']['message']
     
     def test_update_task_invalid_date(self, client, created_task):
         """不正な日付でタスク更新（エラー）"""
@@ -164,7 +165,7 @@ class TestTaskUpdate:
         assert res.status_code == 400
         
         data = res.get_json()
-        assert data["message"] == "日付の形式が正しくありません（YYYY-MM-DD）"
+        assert "日付の形式が正しくありません（YYYY-MM-DD）" in data['errors']['message']
     
     def test_update_nonexistent_task(self, system_admin_client):
         client = system_admin_client
@@ -174,7 +175,7 @@ class TestTaskUpdate:
         assert res.status_code == 404
         
         data = res.get_json()
-        assert data["message"] == "タスクが見つかりません"
+        assert "タスクが見つかりません" in data['errors']['message']
 
 
 class TestTaskDeletion:
@@ -195,8 +196,8 @@ class TestTaskDeletion:
        
         res = client.delete("/tasks/999")
         assert res.status_code == 404
-        
         data = res.get_json()
+        print("data",data)
         assert data["error"] == "タスクが見つかりません"
 
 
@@ -291,6 +292,7 @@ class TestObjectiveOrder:
     def test_update_objective_order_without_order_field(self, client, created_task):
         """orderフィールドなしでオブジェクティブ順序更新（エラー）"""
         res = client.post(f"/tasks/{created_task['id']}/objectives/order", json={})
+        print('res',res.get_json())
         assert res.status_code == 400
         
         data = res.get_json()

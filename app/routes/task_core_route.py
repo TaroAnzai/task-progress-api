@@ -1,3 +1,5 @@
+from app.service_errors import format_error_response
+from flask import jsonify
 from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask_login import login_required, current_user
@@ -19,7 +21,7 @@ task_core_bp = Blueprint("Tasks", __name__, url_prefix="/tasks", description="�
 
 @task_core_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
-    return {"message": str(e)}, e.status_code
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
 @task_core_bp.route("")
@@ -45,7 +47,7 @@ class TaskListResource(MethodView):
 class TaskResource(MethodView):
     @login_required
     @task_core_bp.arguments(TaskUpdateSchema)
-    @task_core_bp.response(200, MessageSchema)
+    @task_core_bp.response(200, TaskCreateResponseSchema)
     @with_common_error_responses(task_core_bp)
     def put(self, data, task_id):
         """タスク更新"""
