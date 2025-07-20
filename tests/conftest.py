@@ -9,31 +9,26 @@ from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 
 DB_FILE = "test.db"
-
+env_file = ".env.test"
+if os.path.exists(env_file):
+    print(f"\n[pytest] Loading environment from {env_file} ...")
+    load_dotenv(env_file, override=True)
 
 class TestConfig(BaseConfig):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{DB_FILE}"
     WTF_CSRF_ENABLED = False
     SECRET_KEY = "test"
+    # ✅ 環境変数DATABASE_URLがあれば優先、なければtest.db
+    print(f"[configtest] DATABASE_URL :{os.environ.get('DATABASE_URL')}")
 
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", f"sqlite:///{DB_FILE}")
     
-# ✅ pytest実行時のみ .env.test を自動で読み込む
-def pytest_configure(config):
-    # すでに本番用 .env が読み込まれている場合は上書きする
-    env_file = ".env.test"
-    if os.path.exists(env_file):
-        print(f"\n[pytest] Loading environment from {env_file} ...")
-        load_dotenv(env_file, override=True)
-    else:
-        print("\n[pytest] WARNING: .env.test file not found!")
-
-
 @pytest.fixture(scope='session')
 def app():
     app = create_app(TestConfig)
 
     with app.app_context():
+        print(f"[pytest] Using DB: {_db.engine.url}") 
         _db.create_all()
         yield app
         _db.drop_all()

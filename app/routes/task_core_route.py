@@ -39,7 +39,7 @@ class TaskListResource(MethodView):
     def get(self):
         """タスク一覧"""
         resp = task_core_service.get_tasks(current_user)
-        return resp
+        return {"tasks": resp} 
 
 @task_core_bp.route("/<int:task_id>")
 class TaskResource(MethodView):

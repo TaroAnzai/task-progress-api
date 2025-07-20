@@ -63,7 +63,7 @@ def create_objective(data, user):
 
     return {
         'message': 'オブジェクティブを追加しました',
-        'objective': objective.to_dict(),
+        'objective': objective,
     }
 
 
@@ -94,7 +94,7 @@ def update_objective(objective_id, data, user):
     db.session.commit()
     return {
         'message': 'オブジェクティブを更新しました',
-        'objective': objective.to_dict()
+        'objective': objective
         }
 
 
@@ -108,9 +108,7 @@ def get_objectives_for_task(task_id, user):
     objectives = Objective.query.filter_by(task_id=task_id, is_deleted=False) \
                                  .order_by(Objective.display_order).all()
     
-    # to_dictで一括変換
-    objective_list = [obj.to_dict() for obj in objectives]
-    return {'objectives': objective_list}
+    return {'objectives': objectives}
 
 
 def get_objective(objective_id, user):
@@ -124,7 +122,7 @@ def get_objective(objective_id, user):
     if not check_task_access(user, task, TaskAccessLevelEnum.VIEW):
         raise ServicePermissionError('閲覧権限がありません')
 
-    return {'objective': objective.to_dict()}
+    return objective
 
 
 def delete_objective(objective_id, user):

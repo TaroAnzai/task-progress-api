@@ -3,7 +3,13 @@ from celery import Celery
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # .envファイルの読み込み
+if os.getenv("PYTEST_CURRENT_TEST"):
+    # ✅ pytest実行中ならテスト用.envを読み込む
+    env_file = ".env.test"
+else:
+    env_file = ".env"
+
+load_dotenv(env_file, override=True)
 
 celery = Celery(
     "progress_ai_tasks",

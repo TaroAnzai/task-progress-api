@@ -1,6 +1,8 @@
 from marshmallow import Schema, fields
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from app.models import Task
+from app.constants import TaskAccessLevelEnum
+from app.models import TaskAccessUser, TaskAccessOrganization
 
 class TaskSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -8,6 +10,8 @@ class TaskSchema(SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         exclude = ("is_deleted",)
+
+    user_access_level = fields.Str()
 
 class TaskInputSchema(SQLAlchemyAutoSchema):
     class Meta:

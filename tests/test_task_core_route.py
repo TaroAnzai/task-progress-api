@@ -206,6 +206,7 @@ class TestTaskList:
     def test_get_tasks_success(self, client, created_task):
         """正常なタスク一覧取得"""
         res = client.get("/tasks")
+        print(res.get_json())
         assert res.status_code == 200
         
         data = res.get_json()['tasks']

@@ -5,9 +5,15 @@ from config import Config
 from flask_smorest import Api 
 from dotenv import load_dotenv
 from app.extensions import db, login_manager, migrate
+import os
 
 def create_app(config_class=Config):
-    load_dotenv()
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        # ✅ pytest実行中ならテスト用.envを読み込む
+        env_file = ".env.test"
+    else:
+        env_file = ".env"
+    load_dotenv(env_file, override=True)
 
     app = Flask(__name__)
     app.config.from_object(config_class)

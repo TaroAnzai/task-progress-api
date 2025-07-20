@@ -150,21 +150,19 @@ def get_tasks(user):
 
     result = []
     for task, user_order in visible_tasks:
-        task_dict = task.to_dict()
-        task_dict['display_order'] = user_order if user_order is not None else task.display_order
+        task.user_access_level = _calc_user_access_level(task, user_id, org_id)
+        task.display_order = user_order if user_order is not None else task.display_order
+        result.append(task)
+    return result
 
-        if task.created_by == user_id:
-            task_dict['user_access_level'] = TaskAccessLevelEnum.FULL.value
-        elif (entry := TaskAccessUser.query.filter_by(task_id=task.id, user_id=user_id).first()):
-            task_dict['user_access_level'] = entry.access_level.value
-        elif (entry := TaskAccessOrganization.query.filter_by(task_id=task.id, organization_id=org_id).first()):
-            task_dict['user_access_level'] = entry.access_level.value
-        else:
-            task_dict['user_access_level'] = TaskAccessLevelEnum.VIEW.value
-
-        result.append(task_dict)
-
-    return {'tasks': result}
+def _calc_user_access_level(task, user_id, org_id):
+    if task.created_by == user_id:
+        return TaskAccessLevelEnum.FULL.value
+    if (entry := TaskAccessUser.query.filter_by(task_id=task.id, user_id=user_id).first()):
+        return entry.access_level.value
+    if (entry := TaskAccessOrganization.query.filter_by(task_id=task.id, organization_id=org_id).first()):
+        return entry.access_level.value
+    return TaskAccessLevelEnum.VIEW.value
 
 def update_objective_order(task_id, data):
     new_order = data.get('order')
