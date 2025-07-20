@@ -6,7 +6,7 @@ from app import create_app, db as _db
 from app.models import User
 from config import Config as BaseConfig
 from werkzeug.security import generate_password_hash
-
+from dotenv import load_dotenv
 
 DB_FILE = "test.db"
 
@@ -16,6 +16,17 @@ class TestConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{DB_FILE}"
     WTF_CSRF_ENABLED = False
     SECRET_KEY = "test"
+
+    
+# ✅ pytest実行時のみ .env.test を自動で読み込む
+def pytest_configure(config):
+    # すでに本番用 .env が読み込まれている場合は上書きする
+    env_file = ".env.test"
+    if os.path.exists(env_file):
+        print(f"\n[pytest] Loading environment from {env_file} ...")
+        load_dotenv(env_file, override=True)
+    else:
+        print("\n[pytest] WARNING: .env.test file not found!")
 
 
 @pytest.fixture(scope='session')
