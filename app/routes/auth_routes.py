@@ -13,7 +13,6 @@ from app.schemas import (
 )
 from app.service_errors import (
     ServiceValidationError,
-    ServiceAuthenticationError,
     ServicePermissionError,
     ServiceNotFoundError,
 )
@@ -23,10 +22,6 @@ auth_bp = Blueprint("Auth", __name__, url_prefix="/auth", description="認証")
 @auth_bp.errorhandler(ServiceValidationError)
 def auth_validation_error(e):
     return {"message": str(e)}, 400
-
-@auth_bp.errorhandler(ServiceAuthenticationError)
-def auth_auth_error(e):
-    return {"message": str(e)}, 401
 
 @auth_bp.errorhandler(ServicePermissionError)
 def auth_permission_error(e):

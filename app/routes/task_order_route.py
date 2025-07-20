@@ -3,7 +3,6 @@ from flask.views import MethodView
 from flask_login import login_required
 from app.service_errors import (
     ServiceValidationError,
-    ServiceAuthenticationError,
     ServicePermissionError,
     ServiceNotFoundError,
 )
@@ -23,9 +22,6 @@ task_order_bp = Blueprint("TaskOrder", __name__, url_prefix="/task_order", descr
 def task_order_validation_error(e):
     return {"message": str(e)}, 400
 
-@task_order_bp.errorhandler(ServiceAuthenticationError)
-def task_order_auth_error(e):
-    return {"message": str(e)}, 401
 
 @task_order_bp.errorhandler(ServicePermissionError)
 def task_order_permission_error(e):

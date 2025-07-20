@@ -4,7 +4,6 @@ from flask import request
 from flask_login import login_required, current_user
 from app.service_errors import (
     ServiceValidationError,
-    ServiceAuthenticationError,
     ServicePermissionError,
     ServiceNotFoundError,
 )
@@ -25,9 +24,6 @@ user_bp = Blueprint("Users", __name__, description="ユーザー管理")
 def user_validation_error(e):
     return {"message": str(e)}, 400
 
-@user_bp.errorhandler(ServiceAuthenticationError)
-def user_auth_error(e):
-    return {"message": str(e)}, 401
 
 @user_bp.errorhandler(ServicePermissionError)
 def user_permission_error(e):

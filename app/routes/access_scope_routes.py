@@ -5,7 +5,6 @@ from flask_login import login_required
 from app.services import access_scope_service
 from app.service_errors import (
     ServiceValidationError,
-    ServiceAuthenticationError,
     ServicePermissionError,
     ServiceNotFoundError,
 )
@@ -22,11 +21,6 @@ access_scope_bp = Blueprint("AccessScopes", __name__, description="アクセス�
 @access_scope_bp.errorhandler(ServiceValidationError)
 def access_scope_validation_error(e):
     return {"message": str(e)}, 400
-
-
-@access_scope_bp.errorhandler(ServiceAuthenticationError)
-def access_scope_auth_error(e):
-    return {"message": str(e)}, 401
 
 
 @access_scope_bp.errorhandler(ServicePermissionError)

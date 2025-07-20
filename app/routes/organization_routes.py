@@ -5,7 +5,6 @@ from flask_login import login_required, current_user
 from marshmallow import fields
 from app.service_errors import (
     ServiceValidationError,
-    ServiceAuthenticationError,
     ServicePermissionError,
     ServiceNotFoundError,
 )
@@ -24,10 +23,6 @@ organization_bp = Blueprint("Organizations", __name__, url_prefix="/organization
 @organization_bp.errorhandler(ServiceValidationError)
 def organization_validation_error(e):
     return {"message": str(e)}, 400
-
-@organization_bp.errorhandler(ServiceAuthenticationError)
-def organization_auth_error(e):
-    return {"message": str(e)}, 401
 
 @organization_bp.errorhandler(ServicePermissionError)
 def organization_permission_error(e):

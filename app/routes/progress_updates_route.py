@@ -3,7 +3,6 @@ from flask.views import MethodView
 from flask_login import login_required, current_user
 from app.service_errors import (
     ServiceValidationError,
-    ServiceAuthenticationError,
     ServicePermissionError,
     ServiceNotFoundError,
 )
@@ -22,9 +21,6 @@ progress_bp = Blueprint("Progress", __name__, description="進捗更新")
 def progress_validation_error(e):
     return {"message": str(e)}, 400
 
-@progress_bp.errorhandler(ServiceAuthenticationError)
-def progress_auth_error(e):
-    return {"message": str(e)}, 401
 
 @progress_bp.errorhandler(ServicePermissionError)
 def progress_permission_error(e):

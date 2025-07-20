@@ -13,7 +13,6 @@ from app.schemas import (
 )
 from app.service_errors import (
     ServiceValidationError,
-    ServiceAuthenticationError,
     ServicePermissionError,
     ServiceNotFoundError,
 )
@@ -23,10 +22,6 @@ company_bp = Blueprint("Companies", __name__, url_prefix="/companies", descripti
 def access_scope_validation_error(e):
     return {"message": str(e)}, 400
 
-
-@company_bp.errorhandler(ServiceAuthenticationError)
-def access_scope_auth_error(e):
-    return {"message": str(e)}, 401
 
 
 @company_bp.errorhandler(ServicePermissionError)

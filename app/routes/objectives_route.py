@@ -3,7 +3,6 @@ from flask.views import MethodView
 from flask_login import login_required, current_user
 from app.service_errors import (
     ServiceValidationError,
-    ServiceAuthenticationError,
     ServicePermissionError,
     ServiceNotFoundError,
 )
@@ -25,9 +24,6 @@ objectives_bp = Blueprint("Objectives", __name__, description="オブジェク�
 def objectives_validation_error(e):
     return {"message": str(e)}, 400
 
-@objectives_bp.errorhandler(ServiceAuthenticationError)
-def objectives_auth_error(e):
-    return {"message": str(e)}, 401
 
 @objectives_bp.errorhandler(ServicePermissionError)
 def objectives_permission_error(e):

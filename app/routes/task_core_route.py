@@ -3,7 +3,6 @@ from flask.views import MethodView
 from flask_login import login_required, current_user
 from app.service_errors import (
     ServiceValidationError,
-    ServiceAuthenticationError,
     ServicePermissionError,
     ServiceNotFoundError,
 )
@@ -25,9 +24,6 @@ task_core_bp = Blueprint("Tasks", __name__, url_prefix="/tasks", description="ã‚
 def task_core_validation_error(e):
     return {"message": str(e)}, 400
 
-@task_core_bp.errorhandler(ServiceAuthenticationError)
-def task_core_auth_error(e):
-    return {"message": str(e)}, 401
 
 @task_core_bp.errorhandler(ServicePermissionError)
 def task_core_permission_error(e):
