@@ -26,7 +26,6 @@ def test_full_user_creation_flow(superuser_login, superuser):
         'email': 'testuser1@example.com',
         'password': 'testpass123',
         'organization_id': org['id'],
-        'is_superuser': False
     }
     user_res = superuser_login.post('/users', json=user_payload)
     assert user_res.status_code == 201

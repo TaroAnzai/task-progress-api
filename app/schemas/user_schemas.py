@@ -23,7 +23,7 @@ class UserInputSchema(SQLAlchemyAutoSchema):
     name = fields.Str(required=True)
     email = fields.Str(required=True)
     password = fields.Str(required=True, load_only=True)
-    role = fields.Str(load_default=None)
+    role = fields.Str()
     organization_id=fields.Int(required=True)
 
 class UserUpdateSchema(SQLAlchemyAutoSchema):
