@@ -9,44 +9,21 @@ from app.schemas import (
     CompanySchema,
     CompanyInputSchema,
     MessageSchema,
-    ErrorResponseSchema,
 )
-from app.service_errors import (
-    ServiceValidationError,
-    ServicePermissionError,
-    ServiceNotFoundError,
-)
+from app.service_errors import ServiceError
+from app.decorators import with_common_error_responses
 
 company_bp = Blueprint("Companies", __name__, url_prefix="/companies", description="会社管理")
-@company_bp.errorhandler(ServiceValidationError)
-def access_scope_validation_error(e):
-    return {"message": str(e)}, 400
 
-
-
-@company_bp.errorhandler(ServicePermissionError)
-def access_scope_permission_error(e):
-    return {"message": str(e)}, 403
-
-
-@company_bp.errorhandler(ServiceNotFoundError)
-def access_scope_not_found_error(e):
-    return {"message": str(e)}, 404
+@company_bp.errorhandler(ServiceError)
+def handle_service_error(e: ServiceError):
+    return {"message": str(e)}, e.status_code
 
 @company_bp.route("")
 class CompanyListResource(MethodView):
     @login_required
     @company_bp.response(200, CompanySchema(many=True))
-    @company_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
-    @company_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
+    @with_common_error_responses(company_bp)
     def get(self):
         """会社一覧取得"""
         require_superuser(current_user)
@@ -56,16 +33,7 @@ class CompanyListResource(MethodView):
     @login_required
     @company_bp.arguments(CompanyInputSchema())
     @company_bp.response(201, CompanySchema())
-    @company_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
-    @company_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
+    @with_common_error_responses(company_bp)
     def post(self, data):
         """会社作成"""
         require_superuser(current_user)
@@ -76,16 +44,7 @@ class CompanyListResource(MethodView):
 class CompanyResource(MethodView):
     @login_required
     @company_bp.response(200, CompanySchema)
-    @company_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
-    @company_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
+    @with_common_error_responses(company_bp)
     def get(self, company_id):
         """会社詳細取得"""
         require_superuser(current_user)
@@ -95,21 +54,7 @@ class CompanyResource(MethodView):
     @login_required
     @company_bp.arguments(CompanyInputSchema)
     @company_bp.response(200, CompanySchema)
-    @company_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
-    @company_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
-    @company_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
+    @with_common_error_responses(company_bp)
     def put(self, data, company_id):
         """会社更新"""
         require_superuser(current_user)
@@ -119,16 +64,7 @@ class CompanyResource(MethodView):
 
     @login_required
     @company_bp.response(200, MessageSchema)
-    @company_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
-    @company_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
+    @with_common_error_responses(company_bp)
     def delete(self, company_id):
         """会社の論理削除"""
         require_superuser(current_user)
@@ -139,16 +75,7 @@ class CompanyResource(MethodView):
 class CompanyWithDeletedResource(MethodView):
     @login_required
     @company_bp.response(200, CompanySchema)
-    @company_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
-    @company_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
+    @with_common_error_responses(company_bp)
     def get(self, company_id):
         """削除済み含む会社詳細取得"""
         require_superuser(current_user)
@@ -159,16 +86,7 @@ class CompanyWithDeletedResource(MethodView):
 class CompanyRestoreResource(MethodView):
     @login_required
     @company_bp.response(200, MessageSchema)
-    @company_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
-    @company_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
+    @with_common_error_responses(company_bp)
     def post(self, company_id):
         """会社復元"""
         require_superuser(current_user)
@@ -179,16 +97,7 @@ class CompanyRestoreResource(MethodView):
 class CompanyPermanentDeleteResource(MethodView):
     @login_required
     @company_bp.response(200, MessageSchema)
-    @company_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
-    @company_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json" 
-    })
+    @with_common_error_responses(company_bp)
     def delete(self, company_id):
         """会社物理削除"""
         require_superuser(current_user)

@@ -3,11 +3,8 @@ from flask.views import MethodView
 from flask import request
 from flask_login import login_required, current_user
 from marshmallow import fields
-from app.service_errors import (
-    ServiceValidationError,
-    ServicePermissionError,
-    ServiceNotFoundError,
-)
+from app.service_errors import ServiceError,ServiceValidationError
+from app.decorators import with_common_error_responses
 from app.services import organization_service
 from app.schemas import (
     OrganizationSchema,
@@ -20,17 +17,9 @@ from app.schemas import (
 
 organization_bp = Blueprint("Organizations", __name__, url_prefix="/organizations", description="組織管理")
 
-@organization_bp.errorhandler(ServiceValidationError)
-def organization_validation_error(e):
-    return {"message": str(e)}, 400
-
-@organization_bp.errorhandler(ServicePermissionError)
-def organization_permission_error(e):
-    return {"message": str(e)}, 403
-
-@organization_bp.errorhandler(ServiceNotFoundError)
-def organization_not_found_error(e):
-    return {"message": str(e)}, 404
+@organization_bp.errorhandler(ServiceError)
+def handle_service_error(e: ServiceError):
+    return {"message": str(e)}, e.status_code
 
 
 
@@ -46,11 +35,7 @@ class OrganizationListResource(MethodView):
     @login_required
     @organization_bp.arguments(OrganizationInputSchema)
     @organization_bp.response(201, OrganizationSchema)
-    @organization_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(organization_bp)
     def post(self, data):
         """組織作成"""
         resolved_company_id = resolve_company_id(data.get("company_id"))
@@ -64,11 +49,7 @@ class OrganizationListResource(MethodView):
 
     @login_required
     @organization_bp.response(200, OrganizationSchema(many=True))
-    @organization_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(organization_bp)
     def get(self):
         """組織一覧取得"""
         resolved_company_id = resolve_company_id(request.args.get("company_id", type=int))
@@ -80,11 +61,7 @@ class OrganizationListResource(MethodView):
 class OrganizationResource(MethodView):
     @login_required
     @organization_bp.response(200, OrganizationSchema)
-    @organization_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(organization_bp)
     def get(self, org_id):
         """組織取得"""
         org = organization_service.get_organization_by_id(org_id)
@@ -93,16 +70,7 @@ class OrganizationResource(MethodView):
     @login_required
     @organization_bp.arguments(OrganizationUpdateSchema)
     @organization_bp.response(200, OrganizationSchema)
-    @organization_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @organization_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(organization_bp)
     def put(self, data, org_id):
         """組織更新"""
         org = organization_service.update_organization(
@@ -112,11 +80,7 @@ class OrganizationResource(MethodView):
 
     @login_required
     @organization_bp.response(200, MessageSchema)
-    @organization_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(organization_bp)
     def delete(self, org_id):
         """組織削除"""
         success, message = organization_service.delete_organization(org_id)
@@ -127,11 +91,7 @@ class OrganizationTreeResource(MethodView):
     @login_required
     #@organization_bp.response(200, fields.List(fields.Nested(OrganizationSchema)))
     @organization_bp.response(200, OrganizationTreeSchema(many=True))
-    @organization_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(organization_bp)
     def get(self):
         """組織ツリー取得"""
         company_id = request.args.get("company_id", type=int)
@@ -143,11 +103,7 @@ class OrganizationTreeResource(MethodView):
 class OrganizationChildrenResource(MethodView):
     @login_required
     @organization_bp.response(200, OrganizationSchema(many=True))
-    @organization_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(organization_bp)
     def get(self):
         """子組織取得"""
         parent_id = request.args.get("parent_id", type=int)

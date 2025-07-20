@@ -6,7 +6,8 @@ from flask_login import login_required, current_user
 from app.services.task_export_service import TaskDataExporter
 from app.models import db
 from app.schemas import YAMLResponseSchema, ErrorResponseSchema
-
+from app.service_errors import ServiceError
+from app.decorators import with_common_error_responses
 
 task_export_bp = Blueprint("TaskExport", __name__, description="タスクエクスポート")
 
@@ -28,11 +29,7 @@ class ExportExcelResource(MethodView):
 class ExportYAMLResource(MethodView):
     @login_required
     @task_export_bp.response(200, YAMLResponseSchema)
-    @task_export_bp.alt_response(401, {
-        "description": "Unauthorized",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(task_export_bp)
     def get(self):
         """タスクをYAMLでエクスポート"""
         exporter = TaskDataExporter(current_user.id, db)

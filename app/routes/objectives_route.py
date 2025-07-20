@@ -1,11 +1,8 @@
 from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask_login import login_required, current_user
-from app.service_errors import (
-    ServiceValidationError,
-    ServicePermissionError,
-    ServiceNotFoundError,
-)
+from app.service_errors import ServiceError
+from app.decorators import with_common_error_responses
 
 from app.services import objectives_service
 from app.schemas import (
@@ -20,18 +17,9 @@ from app.schemas import (
 
 objectives_bp = Blueprint("Objectives", __name__, description="オブジェクティブ管理")
 
-@objectives_bp.errorhandler(ServiceValidationError)
-def objectives_validation_error(e):
-    return {"message": str(e)}, 400
-
-
-@objectives_bp.errorhandler(ServicePermissionError)
-def objectives_permission_error(e):
-    return {"message": str(e)}, 403
-
-@objectives_bp.errorhandler(ServiceNotFoundError)
-def objectives_not_found_error(e):
-    return {"message": str(e)}, 404
+@objectives_bp.errorhandler(ServiceError)
+def handle_service_error(e: ServiceError):
+    return {"message": str(e)}, e.status_code
 
 
 @objectives_bp.route('/objectives')
@@ -39,21 +27,7 @@ class ObjectiveListResource(MethodView):
     @login_required
     @objectives_bp.arguments(ObjectiveInputSchema)
     @objectives_bp.response(201, ObjectiveResponseSchema)
-    @objectives_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @objectives_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @objectives_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(objectives_bp)
     def post(self, data):
         """オブジェクティブ作成"""
         objective = objectives_service.create_objective(data, current_user)
@@ -64,21 +38,7 @@ class ObjectiveResource(MethodView):
     @login_required
     @objectives_bp.arguments(ObjectiveInputSchema)
     @objectives_bp.response(200, ObjectiveResponseSchema)
-    @objectives_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @objectives_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @objectives_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(objectives_bp)
     def put(self, data, objective_id):
         """オブジェクティブ更新"""
         objective = objectives_service.update_objective(objective_id, data, current_user)
@@ -86,16 +46,7 @@ class ObjectiveResource(MethodView):
 
     @login_required
     @objectives_bp.response(200, MessageSchema)
-    @objectives_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @objectives_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(objectives_bp)
     def delete(self, objective_id):
         """オブジェクティブ削除"""
         message = objectives_service.delete_objective(objective_id, current_user)
@@ -103,16 +54,7 @@ class ObjectiveResource(MethodView):
 
     @login_required
     @objectives_bp.response(200, ObjectiveSchema)
-    @objectives_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @objectives_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(objectives_bp)
     def get(self, objective_id):
         """オブジェクティブ詳細取得"""
         objective = objectives_service.get_objective(objective_id, current_user)
@@ -122,16 +64,7 @@ class ObjectiveResource(MethodView):
 class TaskObjectivesResource(MethodView):
     @login_required
     @objectives_bp.response(200, ObjectivesListSchema)
-    @objectives_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @objectives_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(objectives_bp)
     def get(self, task_id):
         """タスクのオブジェクティブ一覧"""
         objectives = objectives_service.get_objectives_for_task(task_id, current_user)
@@ -140,6 +73,7 @@ class TaskObjectivesResource(MethodView):
 @objectives_bp.route('/statuses')
 class StatusListResource(MethodView):
     @objectives_bp.response(200, StatusSchema(many=True))
+    @with_common_error_responses(objectives_bp)
     def get(self):
         """ステータス一覧"""
         result = objectives_service.get_statuses()
