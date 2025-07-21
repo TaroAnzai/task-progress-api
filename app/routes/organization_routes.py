@@ -100,14 +100,13 @@ class OrganizationTreeResource(MethodView):
         tree = organization_service.get_organization_tree(resolved_company_id)
         return tree
 
-@organization_bp.route("/children")
+@organization_bp.route("<int:parent_id>/children")
 class OrganizationChildrenResource(MethodView):
     @login_required
     @organization_bp.response(200, OrganizationSchema(many=True))
     @with_common_error_responses(organization_bp)
-    def get(self):
+    def get(self,parent_id):
         """子組織取得"""
-        parent_id = request.args.get("parent_id", type=int)
         children = organization_service.get_children(parent_id)
         return children
 

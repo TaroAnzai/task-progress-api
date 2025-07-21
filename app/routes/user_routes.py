@@ -71,7 +71,7 @@ class UserResource(MethodView):
         result = user_service.delete_user(user_id, current_user)
         return result
 
-@user_bp.route("/by-email")
+@user_bp.route("/email")
 class UserByEmailResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)
@@ -82,7 +82,7 @@ class UserByEmailResource(MethodView):
         result = user_service.get_user_by_email(email, current_user)
         return result
 
-@user_bp.route("/id-lookup")
+@user_bp.route("/wp")
 class UserByWPIDResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)

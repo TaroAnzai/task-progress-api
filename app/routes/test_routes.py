@@ -2,7 +2,7 @@ from flask_smorest import Blueprint
 from flask.views import MethodView
 from app.schemas import MessageSchema
 
-test_bp = Blueprint('Test', __name__, url_prefix ="/test", description="テスト用エンドポイント")
+test_bp = Blueprint('Test', __name__, url_prefix ="", description="テスト用エンドポイント")
 
 @test_bp.route('/ping')
 class PingResource(MethodView):

@@ -14,7 +14,7 @@ from app.schemas import (
     ErrorResponseSchema,
 )
 
-task_access_bp = Blueprint("TaskAccess", __name__, url_prefix="/tasks/<int:task_id>/scope", description="タスクアクセス")
+task_access_bp = Blueprint("TaskAccess", __name__, url_prefix="/tasks/<int:task_id>", description="タスクアクセス")
 
 @task_access_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):

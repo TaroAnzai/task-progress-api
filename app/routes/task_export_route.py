@@ -9,7 +9,7 @@ from app.schemas import YAMLResponseSchema, ErrorResponseSchema
 from app.service_errors import ServiceError
 from app.decorators import with_common_error_responses
 
-task_export_bp = Blueprint("TaskExport", __name__, url_prefix="/export", description="タスクエクスポート")
+task_export_bp = Blueprint("TaskExport", __name__, url_prefix="/exports", description="タスクエクスポート")
 
 @task_export_bp.route('/excel')
 class ExportExcelResource(MethodView):

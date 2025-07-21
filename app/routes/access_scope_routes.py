@@ -13,14 +13,14 @@ from app.schemas import (
     ErrorResponseSchema,
 )
 
-access_scope_bp = Blueprint("AccessScopes", __name__, description="アクセススコープ管理")
+access_scope_bp = Blueprint("AccessScopes", __name__, url_prefix="/access-scopes", description="アクセススコープ管理")
 
 
 @access_scope_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
     return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
-@access_scope_bp.route("/users/<int:user_id>/access-scopes")
+@access_scope_bp.route("/users/<int:user_id>")
 class UserAccessScopeResource(MethodView):
     @login_required
     @access_scope_bp.response(200, AccessScopeSchema(many=True))
@@ -39,7 +39,7 @@ class UserAccessScopeResource(MethodView):
         message = access_scope_service.add_access_scope_to_user(user_id, data)
         return message
 
-@access_scope_bp.route("/access-scopes/<int:scope_id>")
+@access_scope_bp.route("/<int:scope_id>")
 class AccessScopeResource(MethodView):
     @login_required
     @access_scope_bp.response(200, MessageSchema)

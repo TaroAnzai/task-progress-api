@@ -17,7 +17,7 @@ from app.schemas import (
     ErrorResponseSchema,
 )
 
-objectives_bp = Blueprint("Objectives", __name__, url_prefix="objectives", description="オブジェクティブ管理")
+objectives_bp = Blueprint("Objectives", __name__, url_prefix="/objectives", description="オブジェクティブ管理")
 
 @objectives_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):

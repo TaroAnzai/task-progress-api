@@ -13,14 +13,14 @@ from app.schemas import (
     ErrorResponseSchema,
 )
 
-progress_bp = Blueprint("Progress", __name__, description="進捗更新")
+progress_bp = Blueprint("Progress", __name__, url_prefix = "/updates", description="進捗更新")
 
 @progress_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
     return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
-@progress_bp.route("/objectives/<int:objective_id>/progress")
+@progress_bp.route("/<int:objective_id>")
 class ProgressListResource(MethodView):
     @login_required
     @progress_bp.arguments(ProgressInputSchema)
@@ -39,7 +39,7 @@ class ProgressListResource(MethodView):
         progress_list = progress_updates_service.get_progress_list(objective_id, current_user)
         return progress_list
 
-@progress_bp.route("/objectives/<int:objective_id>/latest-progress")
+@progress_bp.route("/<int:objective_id>/latest-progress")
 class LatestProgressResource(MethodView):
     @login_required
     @progress_bp.response(200, ProgressSchema)
@@ -49,7 +49,7 @@ class LatestProgressResource(MethodView):
         progress = progress_updates_service.get_latest_progress(objective_id, current_user)
         return progress
 
-@progress_bp.route("/progress/<int:progress_id>")
+@progress_bp.route("/<int:progress_id>")
 class ProgressResource(MethodView):
     @login_required
     @progress_bp.response(200, MessageSchema)
