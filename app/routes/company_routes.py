@@ -1,7 +1,7 @@
 from flask_smorest import Blueprint, abort
 from flask.views import MethodView
 from app.service_errors import format_error_response
-from flask import jsonify, request
+from flask import jsonify
 from flask_login import login_required, current_user
 from app.services import company_service
 from app.utils import require_superuser
@@ -9,6 +9,8 @@ from app.schemas import (
     CompanySchema,
     CompanyInputSchema,
     MessageSchema,
+    DeleteCompanyQuerySchema,
+    CompanyQuerySchema,
 )
 from app.service_errors import ServiceError
 from app.decorators import with_common_error_responses
@@ -43,12 +45,13 @@ class CompanyListResource(MethodView):
 @company_bp.route("/<int:company_id>")
 class CompanyResource(MethodView):
     @login_required
+    @company_bp.arguments(CompanyQuerySchema, location="query")
     @company_bp.response(200, CompanySchema)
     @with_common_error_responses(company_bp)
-    def get(self, company_id):
+    def get(self, args, company_id):
         """会社詳細取得"""
         require_superuser(current_user)
-        with_delete = request.args.get("with_deleted", "false").lower() == "true"
+        with_delete = args['with_deleted']
         if with_delete:
             company = company_service.get_company_by_id_with_deleted(company_id)
         else:
@@ -67,12 +70,17 @@ class CompanyResource(MethodView):
         return company
 
     @login_required
+    @company_bp.arguments(DeleteCompanyQuerySchema, location="query")
     @company_bp.response(200, MessageSchema)
     @with_common_error_responses(company_bp)
-    def delete(self, company_id):
-        """会社の論理削除"""
+    def delete(self, args, company_id):
+        """会社の削除(論理・物理)"""
         require_superuser(current_user)
-        success = company_service.delete_company(company_id)
+        force = args["force"] 
+        if force:
+            success = company_service.delete_company_permanently(company_id)
+        else:
+            success = company_service.delete_company(company_id)
         return {"message": "Company deleted (soft)"}
 
 @company_bp.route("/<int:company_id>/restore")
@@ -86,17 +94,4 @@ class CompanyRestoreResource(MethodView):
         success = company_service.restore_company(company_id)
         return {"message": "Company restored"}
 
-@company_bp.route("/<int:company_id>")
-class CompanyPermanentDeleteResource(MethodView):
-    @login_required
-    @company_bp.response(200, MessageSchema)
-    @with_common_error_responses(company_bp)
-    def delete(self, company_id):
-        """会社物理削除"""
-        require_superuser(current_user)
-        force = request.args.get("force", "false").lower() == "true"
-        if not force:
-            abort(400, description="Force delete requires ?force=true")
-        success = company_service.delete_company_permanently(company_id)
-        return {"message": "Company permanently deleted"}
 

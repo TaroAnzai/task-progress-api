@@ -61,7 +61,7 @@ def superuser(app):
 @pytest.fixture(scope="session")
 def test_company(client, superuser):
     # スーパーユーザーでログイン
-    res = client.post("/progress/auth/login", json={"email": superuser["email"], "password": superuser["password"]})
+    res = client.post("/progress/sessions", json={"email": superuser["email"], "password": superuser["password"]})
     assert res.status_code == 200
     res = client.post("/progress/companies", json={"name": "TestCompany"})
     assert res.status_code == 201
@@ -70,7 +70,7 @@ def test_company(client, superuser):
 # 3. テスト用ルート組織の登録（エンドポイント）
 @pytest.fixture(scope="session")
 def root_org(client, test_company):
-    res = client.post("/progress/companies", json={
+    res = client.post("/progress/organizations", json={
         "name": "RootOrg",
         "org_code": "root",
         "company_id": test_company["id"]
@@ -82,7 +82,7 @@ def root_org(client, test_company):
 @pytest.fixture(scope="session")
 def systemadmin_user(client, root_org, superuser):
         # スーパーユーザーでログイン
-    res = client.post("/progress/auth/login", json={"email": superuser["email"], "password": superuser["password"]})
+    res = client.post("/progress/sessions", json={"email": superuser["email"], "password": superuser["password"]})
     assert res.status_code == 200
     res = client.post("/progress/users", json={
         "name": "SystemAdmin",
@@ -96,7 +96,7 @@ def systemadmin_user(client, root_org, superuser):
 
 @pytest.fixture(scope="session")
 def task_access_users(client, systemadmin_user, root_org):
-    res = client.post("/progress/auth/login", json={"email": systemadmin_user['user']['email'], "password": 'adminpass'})
+    res = client.post("/progress/sessions", json={"email": systemadmin_user['user']['email'], "password": 'adminpass'})
     assert res.status_code == 200
     access_levels = ["view", "edit", "full", "owner"]
     created_users = {}
@@ -155,24 +155,24 @@ def system_related_users(client, root_org):
 @pytest.fixture(scope="module")
 def superuser_login(client, superuser):
     """スーパーユーザーでログインした状態を返す"""
-    res = client.post("/progress/auth/login", json={
+    res = client.post("/progress/sessions", json={
         "email": superuser["email"],
         "password": superuser["password"]
     })
     assert res.status_code == 200
     yield client
-    client.post("/progress/auth/logout")
+    client.post("/progress/sessions/current")
 
 @pytest.fixture(scope="function")
 def login_as_user(client):
     """任意ユーザーでログインするためのヘルパー"""
     def _login(email, password):
-        client.post("/progress/auth/logout")  # 念のためログアウト
-        res = client.post("/progress/auth/login", json={"email": email, "password": password})
+        client.post("/progress/sessions/current")  # 念のためログアウト
+        res = client.post("/progress/sessions", json={"email": email, "password": password})
         assert res.status_code == 200
         return client
     yield _login
-    client.post("/progress/auth/logout")
+    client.post("/progress/sessions/current")
 
 @pytest.fixture(scope="function")
 def system_admin_client(systemadmin_user, login_as_user):

@@ -2,7 +2,7 @@
 
 def test_create_company(client, superuser):
     # スーパーユーザーでログイン
-    res = client.post("/progress/auth/login", json={"email": superuser["email"], "password": superuser["password"]})
+    res = client.post("/progress/sessions", json={"email": superuser["email"], "password": superuser["password"]})
     assert res.status_code == 200
     payload = {'name': 'TestCompany_test_company'}
     response = client.post('/progress/companies', json=payload)

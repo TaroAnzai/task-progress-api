@@ -18,7 +18,12 @@ from .user_schemas import (
     LoginSchema,
     WPLoginSchema,
 )
-from .company_schemas import CompanySchema, CompanyInputSchema
+from .company_schemas import (
+    CompanySchema,
+    CompanyInputSchema, 
+    DeleteCompanyQuerySchema, 
+    CompanyQuerySchema,
+)
 from .organization_schemas import (
     OrganizationSchema,
     OrganizationInputSchema,
@@ -47,7 +52,7 @@ __all__ = [
     'TaskSchema', 'TaskInputSchema', 'TaskUpdateSchema', 'TaskCreateResponseSchema', 'TaskListResponseSchema',
     'OrderSchema', 'TaskOrderSchema', 'TaskOrderInputSchema',
     'UserSchema', 'UserInputSchema', 'UserUpdateSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
-    'CompanySchema', 'CompanyInputSchema',
+    'CompanySchema', 'CompanyInputSchema','DeleteCompanyQuerySchema', 'CompanyQuerySchema',
     'OrganizationSchema', 'OrganizationInputSchema', 'OrganizationUpdateSchema','OrganizationTreeSchema',
     'ObjectiveSchema', 'ObjectiveInputSchema', 'ObjectiveResponseSchema', 'ObjectivesListSchema', 'StatusSchema',
     'ProgressSchema', 'ProgressInputSchema',
