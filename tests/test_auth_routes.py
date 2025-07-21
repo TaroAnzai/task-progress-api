@@ -1,6 +1,7 @@
 import pytest
+
 from app import db
-from app.models import User, Company, Organization
+from app.models import Company, Organization, User
 from tests.utils import check_response_message
 
 @pytest.fixture
