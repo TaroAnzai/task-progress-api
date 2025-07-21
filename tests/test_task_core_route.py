@@ -41,7 +41,7 @@ def created_objective(client, created_task):
         "due_date": "2024-12-25"
     }
     
-    res = client.post("/progressobjectives", json=objective_data)
+    res = client.post("/progress/objectives", json=objective_data)
     assert res.status_code == 201
     
     objective_result = res.get_json()
@@ -60,7 +60,7 @@ def multiple_objectives(client, created_task):
             "due_date": "2024-12-25"
         }
         
-        res = client.post("/progressobjectives", json=objective_data)
+        res = client.post("/progress/objectives", json=objective_data)
         assert res.status_code == 201
         
         objective_result = res.get_json()
@@ -134,7 +134,7 @@ class TestTaskUpdate:
     def test_update_task_status(self, client, created_task):
         """タスクのステータス更新"""
         # ステータス一覧を取得
-        status_res = client.get("/progressobjectives/statuses")
+        status_res = client.get("/progress/objectives/statuses")
         assert status_res.status_code == 200
         statuses = status_res.get_json()
         
@@ -219,7 +219,7 @@ class TestTaskList:
     
     def test_get_tasks_without_login(self, client):
         """ログインなしでタスク一覧取得（エラー）"""
-        client.post("/progress/auth/logout")  # ログアウト
+        client.post("/progress/sessions/current")  # ログアウト
         
         res = client.get("/progress/tasks")
         assert res.status_code == 401
@@ -336,7 +336,7 @@ class TestIntegration:
             "title": "Integration Objective"
         }
         
-        obj_res = client.post("/progressobjectives", json=objective_data)
+        obj_res = client.post("/progress/objectives", json=objective_data)
         assert obj_res.status_code == 201
         
         objective = obj_res.get_json()['objective']

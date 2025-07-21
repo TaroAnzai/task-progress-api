@@ -11,6 +11,7 @@ from app.schemas import (
     TaskOrderInputSchema,
     MessageSchema,
     ErrorResponseSchema,
+    TaskOrderQuerySchema
 )
 
 
@@ -24,16 +25,18 @@ def handle_service_error(e: ServiceError):
 @task_order_bp.route('')
 class TaskOrderResource(MethodView):
     @login_required
+    @task_order_bp.arguments(TaskOrderQuerySchema, location="query")
     @task_order_bp.response(200, TaskOrderSchema(many=True))
     @with_common_error_responses(task_order_bp)
-    def get(self):
+    def get(self, args):
         """タスク並び順取得"""
-        user_id = request.args.get("user_id", type=int)
-        if not user_id:
-            abort(400, description='user_id requires ?user_id=user_id')
+        user_id = args["user_id"]
         resp = task_order_service.get_task_order(user_id)
         return resp
 
+# POST用：保存（特定ユーザーのタスク並び順を保存する）
+@task_order_bp.route("/<int:user_id>")
+class TaskOrderResource(MethodView):
     @login_required
     @task_order_bp.arguments(TaskOrderInputSchema)
     @task_order_bp.response(200, MessageSchema)
@@ -42,4 +45,3 @@ class TaskOrderResource(MethodView):
         """タスク並び順保存"""
         resp = task_order_service.save_task_order(user_id, data)
         return resp
-

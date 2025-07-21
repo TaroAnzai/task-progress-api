@@ -13,7 +13,8 @@ from app.schemas import (
     UserUpdateSchema,
     UserCreateResponseSchema,
     MessageSchema,
-    ErrorResponseSchema,
+    UserByEmailQuerySchema,
+    UserByWPIDQuerySchema,
 )
 
 user_bp = Blueprint("Users", __name__, url_prefix="/users", description="ユーザー管理")
@@ -74,22 +75,24 @@ class UserResource(MethodView):
 @user_bp.route("/email")
 class UserByEmailResource(MethodView):
     @login_required
+    @user_bp.arguments(UserByEmailQuerySchema, location="query")
     @user_bp.response(200, UserSchema)
     @with_common_error_responses(user_bp)
-    def get(self):
+    def get(self, args):
         """メールアドレスでユーザー取得"""
-        email = request.args.get("email")
+        email = args["email"]
         result = user_service.get_user_by_email(email, current_user)
         return result
 
 @user_bp.route("/wp")
 class UserByWPIDResource(MethodView):
     @login_required
+    @user_bp.arguments(UserByWPIDQuerySchema, location="query")
     @user_bp.response(200, UserSchema)
     @with_common_error_responses(user_bp)
-    def get(self):
+    def get(self, args):
         """WordPress IDでユーザー取得"""
-        wp_user_id = request.args.get("wp_user_id", type=int)
+        wp_user_id = args["wp_user_id"]
         result = user_service.get_user_by_wp_user_id(wp_user_id, current_user)
         return result
 

@@ -9,6 +9,7 @@ from .task_schemas import (
     TaskOrderSchema,
     TaskOrderInputSchema,
 )
+from .task_order_schemas import TaskOrderQuerySchema
 from .user_schemas import (
     UserSchema,
     UserInputSchema,
@@ -17,6 +18,8 @@ from .user_schemas import (
     LoginResponseSchema,
     LoginSchema,
     WPLoginSchema,
+    UserByEmailQuerySchema,
+    UserByWPIDQuerySchema,
 )
 from .company_schemas import (
     CompanySchema,
@@ -51,7 +54,9 @@ __all__ = [
     'MessageSchema', 'ErrorResponseSchema', 'YAMLResponseSchema',
     'TaskSchema', 'TaskInputSchema', 'TaskUpdateSchema', 'TaskCreateResponseSchema', 'TaskListResponseSchema',
     'OrderSchema', 'TaskOrderSchema', 'TaskOrderInputSchema',
+    'TaskOrderQuerySchema',
     'UserSchema', 'UserInputSchema', 'UserUpdateSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
+    'UserByEmailQuerySchema', 'UserByWPIDQuerySchema',
     'CompanySchema', 'CompanyInputSchema','DeleteCompanyQuerySchema', 'CompanyQuerySchema',
     'OrganizationSchema', 'OrganizationInputSchema', 'OrganizationUpdateSchema','OrganizationTreeSchema',
     'ObjectiveSchema', 'ObjectiveInputSchema', 'ObjectiveResponseSchema', 'ObjectivesListSchema', 'StatusSchema',

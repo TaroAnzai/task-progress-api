@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture(scope="function")
 def valid_status_id(client):
-    res = client.get("/progressobjectives/statuses")
+    res = client.get("/progress/objectives/statuses")
     assert res.status_code == 200
     return res.get_json()[0]["id"]
 
@@ -18,7 +18,7 @@ def objective_for_progress(system_admin_client, setup_task_access):
     setup_task_access(task)
     # create objective under the task
     obj_res = system_admin_client.post(
-        "/progressobjectives", json={"task_id": task["id"], "title": "Progress Objective"}
+        "/progress/objectives", json={"task_id": task["id"], "title": "Progress Objective"}
     )
     assert obj_res.status_code == 201
     objective_id = obj_res.get_json()["objective"]["id"]
@@ -38,11 +38,11 @@ def progress_payload(valid_status_id):
 def created_progress(system_admin_client, objective_for_progress, progress_payload):
     obj_id = objective_for_progress["objective_id"]
     res = system_admin_client.post(
-        f"/progress/organizations/objectives/{obj_id}/progress", json=progress_payload
+        f"/progress/updates/{obj_id}", json=progress_payload
     )
     assert res.status_code == 201
     list_res = system_admin_client.get(
-        f"/progress/organizations/objectives/{obj_id}/progress"
+        f"/progress/updates/{obj_id}"
     )
     assert list_res.status_code == 200
     progress_id = list_res.get_json()[-1]["id"]
@@ -64,7 +64,7 @@ def test_add_progress_permission(
     user = task_access_users[level]
     client = login_as_user(user["email"], user["password"])
     res = client.post(
-        f"/progress/organizations/objectives/{objective_for_progress['objective_id']}/progress",
+        f"/progress/updates/{objective_for_progress['objective_id']}",
         json=progress_payload,
     )
     assert res.status_code == expected
@@ -74,7 +74,7 @@ def test_get_progress_list_view(login_as_user, task_access_users, created_progre
     user = task_access_users["view"]
     client = login_as_user(user["email"], user["password"])
     res = client.get(
-        f"/progress/organizations/objectives/{created_progress['objective_id']}/progress"
+        f"/progress/updates/{created_progress['objective_id']}"
     )
     assert res.status_code == 200
     assert isinstance(res.get_json(), list)
@@ -85,14 +85,14 @@ def test_get_latest_progress(login_as_user, task_access_users, objective_for_pro
     user = task_access_users["full"]
     client = login_as_user(user["email"], user["password"])
     client.post(
-        f"/progress/organizations/objectives/{obj_id}/progress",
+        f"/progress/updates/{obj_id}",
         json={"status_id": valid_status_id, "detail": "old", "report_date": "2024-01-01"},
     )
     client.post(
-        f"/progress/organizations/objectives/{obj_id}/progress",
+        f"/progress/updates/{obj_id}",
         json={"status_id": valid_status_id, "detail": "new", "report_date": "2024-02-01"},
     )
-    res = client.get(f"/progress/organizations/objectives/{obj_id}/latest-progress")
+    res = client.get(f"/progress/updates/{obj_id}/latest-progress")
     assert res.status_code == 200
     assert res.get_json()["detail"] == "new"
 
@@ -112,13 +112,13 @@ def test_delete_progress_permission(
     user = task_access_users[level]
     client = login_as_user(user["email"], user["password"])
     res = client.delete(
-        f"/progress/organizations/progress/{created_progress['id']}"
+        f"/progress/updates/{created_progress['id']}"
     )
     assert res.status_code == expected
 
 
 def test_delete_progress_not_found(system_admin_client):
     res = system_admin_client.delete(
-        "/progress/organizations/progress/99999"
+        "/progress/updates/99999"
     )
     assert res.status_code == 404

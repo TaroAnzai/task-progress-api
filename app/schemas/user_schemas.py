@@ -54,3 +54,15 @@ class LoginSchema(Schema):
 
 class WPLoginSchema(Schema):
     wp_user_id = fields.Int(required=True)
+
+class UserByEmailQuerySchema(Schema):
+    email = fields.Email(
+        required=True,
+        metadata={"description": "取得対象のユーザーのメールアドレス"}
+    )
+
+class UserByWPIDQuerySchema(Schema):
+    wp_user_id = fields.Int(
+        required=True,
+        metadata={"description": "取得対象のユーザーのWordPressユーザーID"}
+    )
