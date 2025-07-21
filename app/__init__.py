@@ -63,19 +63,19 @@ def create_app(config_class=Config):
     from app.routes.test_routes import test_bp
     from app.routes.user_routes import user_bp
 
-    api.register_blueprint(access_scope_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(ai_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(auth_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(company_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(objectives_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(organization_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(progress_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(task_access_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(task_core_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(task_export_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(task_order_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(test_bp, url_prefix=URL_PREFIX)
-    api.register_blueprint(user_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(access_scope_bp, url_prefix=f"{URL_PREFIX}{company_bp.url_prefix}")
+    api.register_blueprint(ai_bp, url_prefix=f"{URL_PREFIX}{ai_bp.url_prefix}")
+    api.register_blueprint(auth_bp, url_prefix=f"{URL_PREFIX}{auth_bp.url_prefix}")
+    api.register_blueprint(company_bp, url_prefix=f"{URL_PREFIX}{company_bp.url_prefix}")
+    api.register_blueprint(objectives_bp, url_prefix=f"{URL_PREFIX}{objectives_bp.url_prefix}")
+    api.register_blueprint(organization_bp, url_prefix=f"{URL_PREFIX}{company_bp.url_prefix}")
+    api.register_blueprint(progress_bp, url_prefix=f"{URL_PREFIX}{organization_bp.url_prefix}")
+    api.register_blueprint(task_access_bp, url_prefix=f"{URL_PREFIX}{task_access_bp.url_prefix}")
+    api.register_blueprint(task_core_bp, url_prefix=f"{URL_PREFIX}{task_core_bp.url_prefix}")
+    api.register_blueprint(task_export_bp, url_prefix=f"{URL_PREFIX}{task_export_bp.url_prefix}")
+    api.register_blueprint(task_order_bp, url_prefix=f"{URL_PREFIX}{task_order_bp.url_prefix}")
+    api.register_blueprint(test_bp, url_prefix=f"{URL_PREFIX}{test_bp.url_prefix}")
+    api.register_blueprint(user_bp, url_prefix=f"{URL_PREFIX}{user_bp.url_prefix}")
 
     return app
 

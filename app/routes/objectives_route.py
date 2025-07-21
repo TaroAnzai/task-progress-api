@@ -17,14 +17,14 @@ from app.schemas import (
     ErrorResponseSchema,
 )
 
-objectives_bp = Blueprint("Objectives", __name__, description="オブジェクティブ管理")
+objectives_bp = Blueprint("Objectives", __name__, url_prefix="objectives", description="オブジェクティブ管理")
 
 @objectives_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
     return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
-@objectives_bp.route('/objectives')
+@objectives_bp.route('/')
 class ObjectiveListResource(MethodView):
     @login_required
     @objectives_bp.arguments(ObjectiveInputSchema)
@@ -35,7 +35,7 @@ class ObjectiveListResource(MethodView):
         objective = objectives_service.create_objective(data, current_user)
         return objective
 
-@objectives_bp.route('/objectives/<int:objective_id>')
+@objectives_bp.route('/<int:objective_id>')
 class ObjectiveResource(MethodView):
     @login_required
     @objectives_bp.arguments(ObjectiveUpdateSchema)
@@ -62,7 +62,7 @@ class ObjectiveResource(MethodView):
         objective = objectives_service.get_objective(objective_id, current_user)
         return objective
 
-@objectives_bp.route('/tasks/<int:task_id>/objectives')
+@objectives_bp.route('/tasks/<int:task_id>')
 class TaskObjectivesResource(MethodView):
     @login_required
     @objectives_bp.response(200, ObjectivesListSchema)

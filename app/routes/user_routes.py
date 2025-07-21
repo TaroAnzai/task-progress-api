@@ -16,14 +16,14 @@ from app.schemas import (
     ErrorResponseSchema,
 )
 
-user_bp = Blueprint("Users", __name__, description="ユーザー管理")
+user_bp = Blueprint("Users", __name__, url_prefix="/users", description="ユーザー管理")
 
 @user_bp.errorhandler(ServiceError)
 def handle_service_error(e: ServiceError):
     return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
-@user_bp.route("/users")
+@user_bp.route("")
 class UsersResource(MethodView):
     @login_required
     @user_bp.arguments(UserInputSchema)
@@ -44,7 +44,7 @@ class UsersResource(MethodView):
         result = user_service.get_users(user_id, org_id)
         return result
 
-@user_bp.route("/users/<int:user_id>")
+@user_bp.route("/<int:user_id>")
 class UserResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)
@@ -71,7 +71,7 @@ class UserResource(MethodView):
         result = user_service.delete_user(user_id, current_user)
         return result
 
-@user_bp.route("/users/by-email")
+@user_bp.route("/by-email")
 class UserByEmailResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)
@@ -82,7 +82,7 @@ class UserByEmailResource(MethodView):
         result = user_service.get_user_by_email(email, current_user)
         return result
 
-@user_bp.route("/users/id-lookup")
+@user_bp.route("/id-lookup")
 class UserByWPIDResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)
@@ -93,7 +93,7 @@ class UserByWPIDResource(MethodView):
         result = user_service.get_user_by_wp_user_id(wp_user_id, current_user)
         return result
 
-@user_bp.route("/users/by-org-tree/<int:org_id>")
+@user_bp.route("/by-org-tree/<int:org_id>")
 class UsersByOrgTreeResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema(many=True))

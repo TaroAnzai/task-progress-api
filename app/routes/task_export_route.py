@@ -9,9 +9,9 @@ from app.schemas import YAMLResponseSchema, ErrorResponseSchema
 from app.service_errors import ServiceError
 from app.decorators import with_common_error_responses
 
-task_export_bp = Blueprint("TaskExport", __name__, description="タスクエクスポート")
+task_export_bp = Blueprint("TaskExport", __name__, url_prefix="/export", description="タスクエクスポート")
 
-@task_export_bp.route('/export/excel')
+@task_export_bp.route('/excel')
 class ExportExcelResource(MethodView):
     @login_required
     def get(self):
@@ -25,7 +25,7 @@ class ExportExcelResource(MethodView):
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-@task_export_bp.route('/export/yaml')
+@task_export_bp.route('/yaml')
 class ExportYAMLResource(MethodView):
     @login_required
     @task_export_bp.response(200, YAMLResponseSchema)
