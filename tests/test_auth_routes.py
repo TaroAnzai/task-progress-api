@@ -27,7 +27,7 @@ def wp_user_data2(root_org):
 @pytest.fixture(scope='function')
 def created_wp_user_data2(client, wp_user_data2, superuser,login_as_user):
     login_as_user(superuser['email'], superuser["password"])
-    res = client.post('/users', json=wp_user_data2)
+    res = client.post('/progress/users', json=wp_user_data2)
     assert res.status_code == 201
 
 
@@ -39,7 +39,7 @@ def test_login_with_email_success(client, system_related_users, role):
         "email": user["email"],
         "password": user["password"]
     }
-    response = client.post("/auth/login", json=login_data)
+    response = client.post("/progress/auth/login", json=login_data)
     assert response.status_code == 200
     data = response.get_json()
     assert data["message"] == "ログイン成功"
@@ -52,7 +52,7 @@ def test_login_with_email_invalid_email(client):
         "email": "nonexistent@example.com",
         "password": "anypassword"
     }
-    response = client.post("/auth/login", json=login_data)
+    response = client.post("/progress/auth/login", json=login_data)
     assert response.status_code == 401
     data = response.get_json()
     assert check_response_message("無効",data)
@@ -64,7 +64,7 @@ def test_login_with_email_invalid_password(client, system_related_users):
         "email": user["email"],
         "password": "wrongpassword"
     }
-    response = client.post("/auth/login", json=login_data)
+    response = client.post("/progress/auth/login", json=login_data)
     assert response.status_code == 401
     data = response.get_json()
     assert check_response_message("無効", data)
@@ -73,27 +73,27 @@ def test_login_with_email_invalid_password(client, system_related_users):
 def test_login_with_email_missing_fields(client):
     """必須フィールドが不足している場合のテスト"""
     # emailが不足
-    response = client.post("/auth/login", json={"password": "testpassword"})
+    response = client.post("/progress/auth/login", json={"password": "testpassword"})
     assert response.status_code == 422
     data = response.get_json()
     assert check_response_message('Missing data for required field.', data, 'email')
 
     # passwordが不足
-    response = client.post("/auth/login", json={"email": "test@example.com"})
+    response = client.post("/progress/auth/login", json={"email": "test@example.com"})
     assert response.status_code == 422
     data = response.get_json()
     assert check_response_message("Missing data for required field.", data, 'password')
 
 def test_login_with_wp_user_id_success(client, superuser, login_as_user, wp_user_data):
     login_as_user(superuser['email'], superuser["password"])
-    res = client.post('/users', json=wp_user_data)
+    res = client.post('/progress/users', json=wp_user_data)
     assert res.status_code == 201
 
     """wp_user_idでのログイン成功テスト"""
     login_data = {
         "wp_user_id": wp_user_data["wp_user_id"]
     }
-    response = client.post("/auth/login/by-id", json=login_data)
+    response = client.post("/progress/auth/login/by-id", json=login_data)
     assert response.status_code == 200
     data = response.get_json()
     assert data["message"] == "ログイン成功"
@@ -105,14 +105,14 @@ def test_login_with_wp_user_id_not_found(client):
     login_data = {
         "wp_user_id": 99999
     }
-    response = client.post("/auth/login/by-id", json=login_data)
+    response = client.post("/progress/auth/login/by-id", json=login_data)
     assert response.status_code == 404
     data = response.get_json()
     assert check_response_message("見つかりません", data)
 
 def test_login_with_wp_user_id_missing_field(client):
     """wp_user_idが不足している場合のテスト"""
-    response = client.post("/auth/login/by-id", json={})
+    response = client.post("/progress/auth/login/by-id", json={})
     assert response.status_code == 422
     data = response.get_json()
     assert check_response_message("Missing data for required field.", data, 'wp_user_id')
@@ -126,11 +126,11 @@ def test_get_current_user_authenticated(client, system_related_users, role):
         "email": user["email"],
         "password": user["password"]
     }
-    login_response = client.post("/auth/login", json=login_data)
+    login_response = client.post("/progress/auth/login", json=login_data)
     assert login_response.status_code == 200
 
     # 現在のユーザー情報を取得
-    response = client.get("/auth/current_user")
+    response = client.get("/progress/auth/current_user")
     assert response.status_code == 200
     data = response.get_json()
     assert data["email"] == user["email"]
@@ -141,10 +141,10 @@ def test_get_current_user_authenticated(client, system_related_users, role):
 def test_get_current_user_unauthenticated(client):
     """未認証状態での現在のユーザー情報取得テスト"""
     # 念のためログアウトしてセッションを初期化
-    client.post("/auth/logout")
+    client.post("/progress/auth/logout")
     """未認証状態での現在のユーザー情報取得テスト"""
 
-    response = client.get("/auth/current_user")
+    response = client.get("/progress/auth/current_user")
     assert response.status_code == 401
     data = response.get_json()
     assert check_response_message("ログインが必要です", data)
@@ -158,22 +158,22 @@ def test_logout_authenticated(client, system_related_users, role):
         "email": user["email"],
         "password": user["password"]
     }
-    login_response = client.post("/auth/login", json=login_data)
+    login_response = client.post("/progress/auth/login", json=login_data)
     assert login_response.status_code == 200
 
     # ログアウト
-    response = client.post("/auth/logout")
+    response = client.post("/progress/auth/logout")
     assert response.status_code == 200
     data = response.get_json()
     assert "ログアウト" in data["message"]
 
     # ログアウト後は現在のユーザー情報が取得できない
-    response = client.get("/auth/current_user")
+    response = client.get("/progress/auth/current_user")
     assert response.status_code == 401
 
 def test_logout_unauthenticated(client):
     """未認証状態でのログアウトテスト"""
-    response = client.post("/auth/logout")
+    response = client.post("/progress/auth/logout")
     assert response.status_code == 401
     data = response.get_json()
     assert check_response_message("ログインが必要", data)
@@ -187,21 +187,21 @@ def test_login_logout_flow(client,  system_related_users, role):
         "email": user["email"],
         "password": user["password"]
     }
-    login_response = client.post("/auth/login", json=login_data)
+    login_response = client.post("/progress/auth/login", json=login_data)
     assert login_response.status_code == 200
 
     # 2. 現在のユーザー情報取得
-    current_user_response = client.get("/auth/current_user")
+    current_user_response = client.get("/progress/auth/current_user")
     assert current_user_response.status_code == 200
     user_data = current_user_response.get_json()
     assert user_data["email"] == user["email"]
 
     # 3. ログアウト
-    logout_response = client.post("/auth/logout")
+    logout_response = client.post("/progress/auth/logout")
     assert logout_response.status_code == 200
 
     # 4. ログアウト後は認証が必要なエンドポイントにアクセスできない
-    current_user_response = client.get("/auth/current_user")
+    current_user_response = client.get("/progress/auth/current_user")
     assert current_user_response.status_code == 401
 
 @pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
@@ -215,7 +215,7 @@ def test_multiple_login_attempts(client,  system_related_users, role):
     
     # 複数回ログインしても成功する
     for i in range(3):
-        response = client.post("/auth/login", json=login_data)
+        response = client.post("/progress/auth/login", json=login_data)
         assert response.status_code == 200
         data = response.get_json()
         assert data["message"] == "ログイン成功"
@@ -227,11 +227,11 @@ def test_login_with_different_methods(client, created_wp_user_data2, wp_user_dat
     wp_login_data = {
         "wp_user_id": user["wp_user_id"]
     }
-    wp_response = client.post("/auth/login/by-id", json=wp_login_data)
+    wp_response = client.post("/progress/auth/login/by-id", json=wp_login_data)
     assert wp_response.status_code == 200
 
     # ログアウト
-    logout_response = client.post("/auth/logout")
+    logout_response = client.post("/progress/auth/logout")
     assert logout_response.status_code == 200
 
     # 今度はメールアドレスでログイン
@@ -239,5 +239,5 @@ def test_login_with_different_methods(client, created_wp_user_data2, wp_user_dat
         "email": user["email"],
         "password": user["password"]
     }
-    email_response = client.post("/auth/login", json=email_login_data)
+    email_response = client.post("/progress/auth/login", json=email_login_data)
     assert email_response.status_code == 200

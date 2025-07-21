@@ -24,7 +24,7 @@ def created_task(system_admin_client, test_task_data):
     """エンドポイント経由でテスト用タスクを作成"""
     
     # タスクを作成
-    res = client.post("/tasks", json=test_task_data)
+    res = client.post("/progress/tasks", json=test_task_data)
     assert res.status_code == 201
     
     task_data = res.get_json()['task']
@@ -41,7 +41,7 @@ def created_objective(client, created_task):
         "due_date": "2024-12-25"
     }
     
-    res = client.post("/objectives", json=objective_data)
+    res = client.post("/progressobjectives", json=objective_data)
     assert res.status_code == 201
     
     objective_result = res.get_json()
@@ -60,7 +60,7 @@ def multiple_objectives(client, created_task):
             "due_date": "2024-12-25"
         }
         
-        res = client.post("/objectives", json=objective_data)
+        res = client.post("/progressobjectives", json=objective_data)
         assert res.status_code == 201
         
         objective_result = res.get_json()
@@ -77,7 +77,7 @@ class TestTaskCreation:
         """正常なタスク作成"""
        
         # タスク作成
-        res = client.post("/tasks", json=test_task_data)
+        res = client.post("/progress/tasks", json=test_task_data)
         assert res.status_code == 201
         
         data = res.get_json()
@@ -89,7 +89,7 @@ class TestTaskCreation:
         """タイトルなしでタスク作成（エラー）"""
      
         # タイトルなしでタスク作成
-        res = client.post("/tasks", json={"description": "Test"})
+        res = client.post("/progress/tasks", json={"description": "Test"})
         assert res.status_code == 422
         
         data = res.get_json()
@@ -100,7 +100,7 @@ class TestTaskCreation:
         """不正な日付でタスク作成（エラー）"""
        
         # 不正な日付でタスク作成
-        res = client.post("/tasks", json={
+        res = client.post("/progress/tasks", json={
             "title": "Test Task",
             "due_date": "invalid-date"
         })
@@ -111,7 +111,7 @@ class TestTaskCreation:
     
     def test_create_task_without_login(self, client, test_task_data):
         """ログインなしでタスク作成（エラー）"""
-        res = client.post("/tasks", json=test_task_data)
+        res = client.post("/progress/tasks", json=test_task_data)
         assert res.status_code == 401
 
 
@@ -126,7 +126,7 @@ class TestTaskUpdate:
             "due_date": "2025-01-15"
         }
         
-        res = client.put(f"/tasks/{created_task['id']}", json=update_data)
+        res = client.put(f"/progress/tasks/{created_task['id']}", json=update_data)
         assert res.status_code == 200
         data = res.get_json()
         assert "タスクを更新しました" in data['message']
@@ -134,7 +134,7 @@ class TestTaskUpdate:
     def test_update_task_status(self, client, created_task):
         """タスクのステータス更新"""
         # ステータス一覧を取得
-        status_res = client.get("/statuses")
+        status_res = client.get("/progressobjectives/statuses")
         assert status_res.status_code == 200
         statuses = status_res.get_json()
         
@@ -143,7 +143,7 @@ class TestTaskUpdate:
         
         update_data = {"status_id": first_status_id}
         
-        res = client.put(f"/tasks/{created_task['id']}", json=update_data)
+        res = client.put(f"/progress/tasks/{created_task['id']}", json=update_data)
         assert res.status_code == 200
         data = res.get_json()
         assert "タスクを更新しました" in data['message']
@@ -152,7 +152,7 @@ class TestTaskUpdate:
         """不正なステータスIDでタスク更新（エラー）"""
         update_data = {"status_id": 999}  # 存在しないステータスID
         
-        res = client.put(f"/tasks/{created_task['id']}", json=update_data)
+        res = client.put(f"/progress/tasks/{created_task['id']}", json=update_data)
         assert res.status_code == 400
         
         data = res.get_json()
@@ -162,7 +162,7 @@ class TestTaskUpdate:
         """不正な日付でタスク更新（エラー）"""
         update_data = {"due_date": "invalid-date"}
         
-        res = client.put(f"/tasks/{created_task['id']}", json=update_data)
+        res = client.put(f"/progress/tasks/{created_task['id']}", json=update_data)
         assert res.status_code == 400
         
         data = res.get_json()
@@ -172,7 +172,7 @@ class TestTaskUpdate:
         client = system_admin_client
         """存在しないタスクの更新（エラー）"""
        
-        res = client.put("/tasks/999", json={"title": "Updated"})
+        res = client.put("/progress/tasks/999", json={"title": "Updated"})
         assert res.status_code == 404
         
         data = res.get_json()
@@ -184,7 +184,7 @@ class TestTaskDeletion:
     
     def test_delete_task_success(self, client, created_task):
         """正常なタスク削除"""
-        res = client.delete(f"/tasks/{created_task['id']}")
+        res = client.delete(f"/progress/tasks/{created_task['id']}")
         assert res.status_code == 200
         
         data = res.get_json()
@@ -195,7 +195,7 @@ class TestTaskDeletion:
 
         """存在しないタスクの削除（エラー）"""
        
-        res = client.delete("/tasks/999")
+        res = client.delete("/progress/tasks/999")
         assert res.status_code == 404
         data = res.get_json()
         assert check_response_message("タスクが見つかりません", data)
@@ -206,7 +206,7 @@ class TestTaskList:
     
     def test_get_tasks_success(self, client, created_task):
         """正常なタスク一覧取得"""
-        res = client.get("/tasks")
+        res = client.get("/progress/tasks")
         assert res.status_code == 200
         
         data = res.get_json()['tasks']
@@ -219,16 +219,16 @@ class TestTaskList:
     
     def test_get_tasks_without_login(self, client):
         """ログインなしでタスク一覧取得（エラー）"""
-        client.post("/auth/logout")  # ログアウト
+        client.post("/progress/auth/logout")  # ログアウト
         
-        res = client.get("/tasks")
+        res = client.get("/progress/tasks")
         assert res.status_code == 401
     
     def test_get_tasks_empty_list(self, system_admin_client):
         client = system_admin_client
         """タスクがない場合の一覧取得"""
        
-        res = client.get("/tasks")
+        res = client.get("/progress/tasks")
         assert res.status_code == 200
         
         data = res.get_json()['tasks']
@@ -246,7 +246,7 @@ class TestObjectiveOrder:
         objective_ids = [obj['objective']["id"] for obj in multiple_objectives]
         reversed_order = list(reversed(objective_ids))
         
-        res = client.post(f"/tasks/{task_id}/objectives/order", json={
+        res = client.post(f"/progress/tasks/{task_id}/objectives/order", json={
             "order": reversed_order
         })
         assert res.status_code == 200
@@ -259,7 +259,7 @@ class TestObjectiveOrder:
         task_id = multiple_objectives[0]["task_id"]
         
         # orderが文字列（不正）
-        res = client.post(f"/tasks/{task_id}/objectives/order", json={
+        res = client.post(f"/progress/tasks/{task_id}/objectives/order", json={
             "order": "invalid"
         })
         assert res.status_code == 422
@@ -272,7 +272,7 @@ class TestObjectiveOrder:
         task_id = multiple_objectives[0]["task_id"]
         
         # 存在しないオブジェクティブIDを含む
-        res = client.post(f"/tasks/{task_id}/objectives/order", json={
+        res = client.post(f"/progress/tasks/{task_id}/objectives/order", json={
             "order": [999, 1000, 1001]
         })
         assert res.status_code == 404
@@ -282,7 +282,7 @@ class TestObjectiveOrder:
     
     def test_update_objective_order_empty_list(self, client, created_task):
         """空のリストでオブジェクティブ順序更新"""
-        res = client.post(f"/tasks/{created_task['id']}/objectives/order", json={
+        res = client.post(f"/progress/tasks/{created_task['id']}/objectives/order", json={
             "order": []
         })
         assert res.status_code == 400
@@ -290,7 +290,7 @@ class TestObjectiveOrder:
    
     def test_update_objective_order_without_order_field(self, client, created_task):
         """orderフィールドなしでオブジェクティブ順序更新（エラー）"""
-        res = client.post(f"/tasks/{created_task['id']}/objectives/order", json={})
+        res = client.post(f"/progress/tasks/{created_task['id']}/objectives/order", json={})
         assert res.status_code == 422
         
         data = res.get_json()
@@ -311,14 +311,14 @@ class TestIntegration:
             "due_date": "2024-12-31"
         }
         
-        create_res = client.post("/tasks", json=task_data)
+        create_res = client.post("/progress/tasks", json=task_data)
         assert create_res.status_code == 201
         
         created_task = create_res.get_json()['task']
         task_id = created_task["id"]
         
         # 2. タスク一覧で確認
-        list_res = client.get("/tasks")
+        list_res = client.get("/progress/tasks")
         assert list_res.status_code == 200
         
         tasks = list_res.get_json()['tasks']
@@ -327,7 +327,7 @@ class TestIntegration:
         
         # 3. タスク更新
         update_data = {"title": "Updated Integration Task"}
-        update_res = client.put(f"/tasks/{task_id}", json=update_data)
+        update_res = client.put(f"/progress/tasks/{task_id}", json=update_data)
         assert update_res.status_code == 200
         
         # 4. オブジェクティブ作成
@@ -336,24 +336,24 @@ class TestIntegration:
             "title": "Integration Objective"
         }
         
-        obj_res = client.post("/objectives", json=objective_data)
+        obj_res = client.post("/progressobjectives", json=objective_data)
         assert obj_res.status_code == 201
         
         objective = obj_res.get_json()['objective']
         objective_id = objective["id"]
         
         # 5. オブジェクティブ順序更新
-        order_res = client.post(f"/tasks/{task_id}/objectives/order", json={
+        order_res = client.post(f"/progress/tasks/{task_id}/objectives/order", json={
             "order": [objective_id]
         })
         assert order_res.status_code == 200
         
         # 6. タスク削除
-        delete_res = client.delete(f"/tasks/{task_id}")
+        delete_res = client.delete(f"/progress/tasks/{task_id}")
         assert delete_res.status_code == 200
         
         # 7. 削除後の一覧確認
-        final_list_res = client.get("/tasks")
+        final_list_res = client.get("/progress/tasks")
         assert final_list_res.status_code == 200
         
         final_tasks = final_list_res.get_json()['tasks']

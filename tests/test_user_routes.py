@@ -39,7 +39,7 @@ def sample_user(system_related_users, login_as_user, root_org_data):
         root_org_data['id'],
         email='sample@example.com'  # 他のテストと重複しないメール
     )
-    res = client.post('/users', json=payload)
+    res = client.post('/progress/users', json=payload)
     return assert_user_created(res)
 
 # --- Test Classes ---
@@ -50,14 +50,14 @@ class TestUserCreation:
         client = login_as_user(system_admin['email'], system_admin['password'])
         """有効なデータでユーザー作成"""
         payload = create_user_payload(root_org['id'])
-        res = client.post('/users', json=payload)
+        res = client.post('/progress/users', json=payload)
         assert_user_created(res, 'ValidUser')
     
     def test_create_user_missing_fields(self, login_as_user, system_related_users):
         system_admin = system_related_users['system_admin']
         client = login_as_user(system_admin['email'], system_admin['password'])
         """必須フィールド不足でユーザー作成失敗"""
-        res = client.post('/users', json={'email': 'incomplete@example.com'})
+        res = client.post('/progress/users', json={'email': 'incomplete@example.com'})
         assert res.status_code == 422
         data = res.get_json()
         for field in ['name', 'password', 'organization_id']:
@@ -73,7 +73,7 @@ class TestUserCreation:
             name='FirstUser',
             email='duplicate@example.com'
         )
-        first_res = client.post('/users', json=first_payload)
+        first_res = client.post('/progress/users', json=first_payload)
         assert_user_created(first_res)
         
         # 同じメールアドレスで2回目の登録を試行
@@ -82,7 +82,7 @@ class TestUserCreation:
             name='SecondUser',
             email='duplicate@example.com'  # 重複メール
         )
-        res = client.post('/users', json=second_payload)
+        res = client.post('/progress/users', json=second_payload)
         assert res.status_code == 400
         assert check_response_message('既に使用されています', res.get_json())
 
@@ -93,7 +93,7 @@ class TestUserRetrieval:
         system_admin = system_related_users['system_admin']
         client = login_as_user(system_admin['email'], system_admin['password'])
         """存在しないユーザーの取得"""
-        res = client.get('/users/999999')
+        res = client.get('/progress/users/999999')
         assert res.status_code == 404
     
     def test_get_user_by_email(self, login_as_user, system_related_users, root_org):
@@ -103,10 +103,10 @@ class TestUserRetrieval:
         # テスト用ユーザーを作成
         email = 'email_lookup@example.com'
         payload = create_user_payload(root_org['id'], email=email)
-        client.post('/users', json=payload)
+        client.post('/progress/users', json=payload)
         
         # メールアドレスでユーザー取得
-        res = client.get(f'/users/by-email?email={email}')
+        res = client.get(f'/progress/users/by-email?email={email}')
         assert res.status_code == 200
         responce_data = res.get_json()
         assert responce_data['email'] == email
@@ -122,9 +122,9 @@ class TestUserRetrieval:
             email='wpid@example.com',
             wp_user_id=wp_user_id
         )
-        client.post('/users', json=payload)
+        client.post('/progress/users', json=payload)
         
-        res = client.get(f'/users/id-lookup?wp_user_id={wp_user_id}')
+        res = client.get(f'/progress/users/id-lookup?wp_user_id={wp_user_id}')
         assert res.status_code == 200
         responce_data= res.get_json()
         assert responce_data['wp_user_id'] == wp_user_id
@@ -133,7 +133,7 @@ class TestUserRetrieval:
         system_admin = system_related_users['system_admin']
         client = login_as_user(system_admin['email'], system_admin['password'])
         """組織ツリーでユーザー一覧取得"""
-        res = client.get(f'/users/by-org-tree/{root_org["id"]}')
+        res = client.get(f'/progress/users/by-org-tree/{root_org["id"]}')
         assert res.status_code == 200
         users = res.get_json()
         assert isinstance(users, list)
@@ -151,12 +151,12 @@ class TestUserModification:
             name='ToUpdate',
             email='update_me@example.com'
         )
-        create_res = client.post('/users', json=payload)
+        create_res = client.post('/progress/users', json=payload)
         user_id = assert_user_created(create_res)['id']
         
         # 更新実行
         update_data = {'name': 'UpdatedName'}
-        res = client.put(f'/users/{user_id}', json=update_data)
+        res = client.put(f'/progress/users/{user_id}', json=update_data)
         assert res.status_code == 200
         updated_user = res.get_json()
         assert updated_user['name'] == 'UpdatedName'
@@ -171,11 +171,11 @@ class TestUserModification:
             name='ToDelete',
             email='delete_me@example.com'
         )
-        create_res = client.post('/users', json=payload)
+        create_res = client.post('/progress/users', json=payload)
         user_id = assert_user_created(create_res)['id']
         
         # 削除実行
-        res = client.delete(f'/users/{user_id}')
+        res = client.delete(f'/progress/users/{user_id}')
         assert res.status_code == 200
         message = res.get_json()['message']
         assert '削除' in message
@@ -194,7 +194,7 @@ class TestUserCreationParameterized:
         payload = create_user_payload(root_org['id'])
         del payload[missing_field]
         
-        res = client.post('/users', json=payload)
+        res = client.post('/progress/users', json=payload)
         assert res.status_code == 422
         data = res.get_json()
         assert check_response_message('Missing data for required field.', data, missing_field)
@@ -210,6 +210,6 @@ class TestUserCreationParameterized:
         client = login_as_user(system_admin['email'], system_admin['password'])
         """無効なメールアドレス形式のテスト"""
         payload = create_user_payload(root_org['id'], email=invalid_email)
-        res = client.post('/users', json=payload)
+        res = client.post('/progress/users', json=payload)
         assert res.status_code == 400
         assert check_response_message('無効なメールアドレス形式です', res.get_json())
