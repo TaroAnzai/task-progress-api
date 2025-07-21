@@ -14,6 +14,7 @@ def create_app(config_class=Config):
     else:
         env_file = ".env"
     load_dotenv(env_file, override=True)
+    URL_PREFIX = os.getenv('URL_PREFIX')
 
     app = Flask(__name__)
     app.config.from_object(config_class)
@@ -28,11 +29,13 @@ def create_app(config_class=Config):
     # Swagger/OpenAPI用設定
     app.config['API_TITLE'] = 'Task Progress API'
     app.config['API_VERSION'] = 'v1'
-    app.config['OPENAPI_VERSION'] = '3.0.2'
-    app.config['OPENAPI_URL_PREFIX'] = '/'
+    app.config['OPENAPI_VERSION'] = '3.0.3'
+    app.config["OPENAPI_URL_PREFIX"] = URL_PREFIX
+    app.config["OPENAPI_JSON_PATH"] = "openapi.json"
+    app.config["OPENAPI_REDOC_PATH"] = "/redoc"
+    app.config["OPENAPI_REDOC_URL"] = "https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"
     app.config['OPENAPI_SWAGGER_UI_PATH'] = '/swagger-ui'
     app.config['OPENAPI_SWAGGER_UI_URL'] = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist/'
-
 
 
 
@@ -43,6 +46,8 @@ def create_app(config_class=Config):
 
     # Flask-SmorestのApiオブジェクト生成
     api = Api(app)
+
+
     #Blueprint登録
     from app.routes.access_scope_routes import access_scope_bp
     from app.routes.ai_route import ai_bp
@@ -58,19 +63,19 @@ def create_app(config_class=Config):
     from app.routes.test_routes import test_bp
     from app.routes.user_routes import user_bp
 
-    api.register_blueprint(access_scope_bp)
-    api.register_blueprint(ai_bp)
-    api.register_blueprint(auth_bp)
-    api.register_blueprint(company_bp)
-    api.register_blueprint(objectives_bp)
-    api.register_blueprint(organization_bp)
-    api.register_blueprint(progress_bp)
-    api.register_blueprint(task_access_bp)
-    api.register_blueprint(task_core_bp)
-    api.register_blueprint(task_export_bp)
-    api.register_blueprint(task_order_bp)
-    api.register_blueprint(test_bp)
-    api.register_blueprint(user_bp)
+    api.register_blueprint(access_scope_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(ai_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(auth_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(company_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(objectives_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(organization_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(progress_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(task_access_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(task_core_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(task_export_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(task_order_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(test_bp, url_prefix=URL_PREFIX)
+    api.register_blueprint(user_bp, url_prefix=URL_PREFIX)
 
     return app
 
