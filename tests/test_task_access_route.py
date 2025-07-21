@@ -19,7 +19,7 @@ def test_task_data():
 @pytest.fixture(scope="function")
 def created_task_for_access(system_admin_client, test_task_data):
     """アクセス権限テスト用にタスクを作成"""
-    res = system_admin_client.post("/tasks", json=test_task_data)
+    res = system_admin_client.post("/progress/tasks", json=test_task_data)
     assert res.status_code == 201
     return res.get_json()["task"]
 
@@ -36,7 +36,7 @@ def setup_task_access(system_admin_client, task_access_users, created_task_for_a
     org_access = []  # 必要に応じて組織アクセスも設定可能
 
     res = system_admin_client.put(
-        f"/tasks/{task_id}/scope/access_levels",
+        f"/progress/tasks/{task_id}/scope/access_levels",
         json={"user_access": user_access, "organization_access": org_access}
     )
     assert res.status_code == 200
@@ -50,7 +50,7 @@ class TestTaskAccessLevelUpdate:
         task_id = created_task_for_access['id']
         user = task_access_users['full']
         res = system_admin_client.put(
-            f"/tasks/{task_id}/scope/access_levels",
+            f"/progress/tasks/{task_id}/scope/access_levels",
             json={
                 "user_access": [{"user_id": user["id"], "access_level": "full"}],
                 "organization_access": []
@@ -61,7 +61,7 @@ class TestTaskAccessLevelUpdate:
 
     def test_update_access_level_not_found(self, system_admin_client):
         res = system_admin_client.put(
-            "/tasks/9999/scope/access_levels",
+            "/progress/tasks/9999/scope/access_levels",
             json={"user_access": [], "organization_access": []}
         )
         assert res.status_code == 404
@@ -71,7 +71,7 @@ class TestTaskAccessLevelUpdate:
         user = task_access_users["edit"]
         client = login_as_user(user["email"], "testpass")
         res = client.put(
-            f"/tasks/{created_task_for_access['id']}/scope/access_levels",
+            f"/progress/tasks/{created_task_for_access['id']}/scope/access_levels",
             json={"user_access": [], "organization_access": []}
         )
         assert res.status_code == 403
@@ -86,12 +86,12 @@ class TestTaskCorePermission:
         task_id = setup_task_access
 
         # タスク取得は成功
-        res = client.get("/tasks")
+        res = client.get("/progress/tasks")
         assert res.status_code == 200
 
         # 更新・削除は403
-        assert client.put(f"/tasks/{task_id}", json={"title": "x"}).status_code == 403
-        assert client.delete(f"/tasks/{task_id}").status_code == 403
+        assert client.put(f"/progress/tasks/{task_id}", json={"title": "x"}).status_code == 403
+        assert client.delete(f"/progress/tasks/{task_id}").status_code == 403
 
     def test_edit_user_permissions(self, login_as_user, task_access_users, setup_task_access):
         user = task_access_users["edit"]
@@ -99,11 +99,11 @@ class TestTaskCorePermission:
         task_id = setup_task_access
 
         # タスク取得成功
-        assert client.get("/tasks").status_code == 200
+        assert client.get("/progress/tasks").status_code == 200
 
         # 更新・削除は403
-        assert client.put(f"/tasks/{task_id}", json={"title": "x"}).status_code == 403
-        assert client.delete(f"/tasks/{task_id}").status_code == 403
+        assert client.put(f"/progress/tasks/{task_id}", json={"title": "x"}).status_code == 403
+        assert client.delete(f"/progress/tasks/{task_id}").status_code == 403
 
     def test_full_user_permissions(self, login_as_user, task_access_users, setup_task_access):
         user = task_access_users["full"]
@@ -111,10 +111,10 @@ class TestTaskCorePermission:
         task_id = setup_task_access
 
         # 更新成功
-        assert client.put(f"/tasks/{task_id}", json={"title": "updated"}).status_code == 200
+        assert client.put(f"/progress/tasks/{task_id}", json={"title": "updated"}).status_code == 200
 
         # 削除成功
-        assert client.delete(f"/tasks/{task_id}").status_code == 200
+        assert client.delete(f"/progress/tasks/{task_id}").status_code == 200
 
     def test_owner_user_permissions(self, login_as_user, task_access_users, setup_task_access):
         user = task_access_users["owner"]
@@ -122,28 +122,28 @@ class TestTaskCorePermission:
         task_id = setup_task_access
 
         # 更新成功
-        assert client.put(f"/tasks/{task_id}", json={"title": "updated"}).status_code == 200
+        assert client.put(f"/progress/tasks/{task_id}", json={"title": "updated"}).status_code == 200
 
         # 削除成功
-        assert client.delete(f"/tasks/{task_id}").status_code == 200
+        assert client.delete(f"/progress/tasks/{task_id}").status_code == 200
 
 
 class TestTaskAccessList:
     """アクセス情報取得のテスト"""
 
     def test_get_task_users(self, system_admin_client, setup_task_access):
-        res = system_admin_client.get(f"/tasks/{setup_task_access}/scope/users")
+        res = system_admin_client.get(f"/progress/tasks/{setup_task_access}/scope/users")
         assert res.status_code == 200
         data = res.get_json()
         assert any(u for u in data if u["name"].startswith("TaskUser_"))
 
     def test_get_task_access_users(self, system_admin_client, setup_task_access):
-        res = system_admin_client.get(f"/tasks/{setup_task_access}/scope/access_users")
+        res = system_admin_client.get(f"/progress/tasks/{setup_task_access}/scope/access_users")
         assert res.status_code == 200
         data = res.get_json()
         assert all("access_level" in u for u in data)
 
     def test_get_task_access_organizations(self, system_admin_client, setup_task_access):
-        res = system_admin_client.get(f"/tasks/{setup_task_access}/scope/access_organizations")
+        res = system_admin_client.get(f"/progress/tasks/{setup_task_access}/scope/access_organizations")
         assert res.status_code == 200
         assert isinstance(res.get_json(), list)
