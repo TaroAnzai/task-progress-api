@@ -1,5 +1,6 @@
 import pytest
 from typing import Dict, Any
+from tests.utils import check_response_message
 
 # --- Constants ---
 VALID_USER_DATA = {
@@ -85,7 +86,8 @@ class TestUserCreation:
             email='duplicate@example.com'  # 重複メール
         )
         res = client.post('/users', json=second_payload)
-        assert_error_response(res, 400, '既に使用されています')
+        assert res.status_code == 400
+        assert check_response_message('既に使用されています', res.get_json())
 
 class TestUserRetrieval:
     """ユーザー取得に関するテスト"""

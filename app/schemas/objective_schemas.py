@@ -21,6 +21,18 @@ class ObjectiveInputSchema(SQLAlchemyAutoSchema):
     due_date = fields.Str(load_default=None)
     assigned_user_id = fields.Int(load_default=None)
     status_id = fields.Int(load_default=None)
+class ObjectiveUpdateSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Objective
+        load_instance = False
+        include_fk = True
+        exclude = ("id", "created_by", "created_at", "display_order", "is_deleted")
+
+    task_id = fields.Int()
+    title = fields.Str()
+    due_date = fields.Str()
+    assigned_user_id = fields.Int()
+    status_id = fields.Int()
 
 class ObjectiveResponseSchema(Schema):
     message = fields.Str()

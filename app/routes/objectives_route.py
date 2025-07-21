@@ -9,6 +9,7 @@ from app.services import objectives_service
 from app.schemas import (
     ObjectiveSchema,
     ObjectiveInputSchema,
+    ObjectiveUpdateSchema,
     ObjectiveResponseSchema,
     ObjectivesListSchema,
     StatusSchema,
@@ -37,7 +38,7 @@ class ObjectiveListResource(MethodView):
 @objectives_bp.route('/objectives/<int:objective_id>')
 class ObjectiveResource(MethodView):
     @login_required
-    @objectives_bp.arguments(ObjectiveInputSchema)
+    @objectives_bp.arguments(ObjectiveUpdateSchema)
     @objectives_bp.response(200, ObjectiveResponseSchema)
     @with_common_error_responses(objectives_bp)
     def put(self, data, objective_id):

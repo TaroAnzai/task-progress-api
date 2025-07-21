@@ -52,6 +52,8 @@ def format_error_response(code: int, status: str, message: str) -> Dict:
         "code": code,
         "status": status,
         "errors": {
-            "message": [message]
+            "json":{
+                "message": [message]
+            }
         }
     }

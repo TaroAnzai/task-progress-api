@@ -1,6 +1,7 @@
 import pytest
 from app import db
 from app.models import Company, Organization
+from tests.utils import check_response_message
 
 def test_create_organization(login_as_user, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
@@ -35,7 +36,7 @@ def test_create_root_organization_twice(login_as_user, superuser):
         'company_id': company_res['id']
     })
     assert res2.status_code == 400
-    assert 'ルート組織' in res2.get_json()['message']
+    assert check_response_message('ルート組織', res2.get_json())
 
 def test_get_organizations(login_as_user, test_company, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
@@ -82,7 +83,7 @@ def test_delete_organization_with_children(login_as_user, root_org, system_relat
     # 2. ルート組織の削除（失敗するはず）
     res_delete_root = client.delete(f'/organizations/{parent_id}')
     assert res_delete_root.status_code == 400
-    assert '削除できません' in res_delete_root.get_json()['message'] or '子' in res_delete_root.get_json()['message']
+    assert check_response_message('削除できません', res_delete_root.get_json())
 
     # 3. 子組織を削除（成功するはず）
     res_delete_child = client.delete(f'/organizations/{child_id}')

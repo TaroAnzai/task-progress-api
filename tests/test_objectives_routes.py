@@ -77,6 +77,7 @@ class TestObjectivesAPI:
         user = self.users['full']
         client = self.login_as_user(user['email'], user['password'])
         resp = client.put(f"/objectives/{created_objective['id']}", json={"title": "updated"})
+        print(resp.get_json())
         assert resp.status_code == 200
 
     def test_update_objective_edit(self, created_objective):

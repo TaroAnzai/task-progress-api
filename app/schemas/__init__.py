@@ -28,6 +28,7 @@ from .organization_schemas import (
 from .objective_schemas import (
     ObjectiveSchema,
     ObjectiveInputSchema,
+    ObjectiveUpdateSchema,
     ObjectiveResponseSchema,
     ObjectivesListSchema,
     StatusSchema,

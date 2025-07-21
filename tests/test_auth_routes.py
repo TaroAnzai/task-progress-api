@@ -1,6 +1,7 @@
 import pytest
 from app import db
 from app.models import User, Company, Organization
+from tests.utils import check_response_message
 
 @pytest.fixture
 def wp_user_data(root_org):
@@ -53,7 +54,7 @@ def test_login_with_email_invalid_email(client):
     response = client.post("/auth/login", json=login_data)
     assert response.status_code == 401
     data = response.get_json()
-    assert "無効" in data["message"]
+    assert check_response_message("無効",data)
 
 def test_login_with_email_invalid_password(client, system_related_users):
     user = system_related_users['member']
@@ -65,7 +66,7 @@ def test_login_with_email_invalid_password(client, system_related_users):
     response = client.post("/auth/login", json=login_data)
     assert response.status_code == 401
     data = response.get_json()
-    assert "無効" in data["message"]
+    assert check_response_message("無効", data)
 
 
 def test_login_with_email_missing_fields(client):
@@ -74,13 +75,13 @@ def test_login_with_email_missing_fields(client):
     response = client.post("/auth/login", json={"password": "testpassword"})
     assert response.status_code == 422
     data = response.get_json()
-    assert 'email' in data['errors']['json']
+    assert check_response_message('Missing data for required field.', data, 'email')
 
     # passwordが不足
     response = client.post("/auth/login", json={"email": "test@example.com"})
     assert response.status_code == 422
     data = response.get_json()
-    assert "password" in data["errors"]['json']
+    assert check_response_message("Missing data for required field.", data, 'password')
 
 def test_login_with_wp_user_id_success(client, superuser, login_as_user, wp_user_data):
     login_as_user(superuser['email'], superuser["password"])
@@ -106,14 +107,14 @@ def test_login_with_wp_user_id_not_found(client):
     response = client.post("/auth/login/by-id", json=login_data)
     assert response.status_code == 404
     data = response.get_json()
-    assert "見つかりません" in data["message"]
+    assert check_response_message("見つかりません", data)
 
 def test_login_with_wp_user_id_missing_field(client):
     """wp_user_idが不足している場合のテスト"""
     response = client.post("/auth/login/by-id", json={})
     assert response.status_code == 422
     data = response.get_json()
-    assert "wp_user_id" in data["errors"]['json']
+    assert check_response_message("Missing data for required field.", data, 'wp_user_id')
 
 @pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
 def test_get_current_user_authenticated(client, system_related_users, role):
@@ -145,7 +146,7 @@ def test_get_current_user_unauthenticated(client):
     response = client.get("/auth/current_user")
     assert response.status_code == 401
     data = response.get_json()
-    assert "ログインが必要です" in data["error"]
+    assert check_response_message("ログインが必要です", data)
 
 @pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
 def test_logout_authenticated(client, system_related_users, role):
@@ -174,7 +175,7 @@ def test_logout_unauthenticated(client):
     response = client.post("/auth/logout")
     assert response.status_code == 401
     data = response.get_json()
-    assert "ログインが必要" in data["error"]
+    assert check_response_message("ログインが必要", data)
 
 @pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
 def test_login_logout_flow(client,  system_related_users, role):

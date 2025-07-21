@@ -4,6 +4,7 @@ import pytest
 from datetime import datetime, date
 from app.models import Task, Objective, Status
 from app.constants import StatusEnum
+from tests.utils import check_response_message
 
 @pytest.fixture(scope="function")
 def test_task_data():
@@ -90,7 +91,7 @@ class TestTaskCreation:
         assert res.status_code == 422
         
         data = res.get_json()
-        assert 'title' in data["errors"]['json']
+        assert check_response_message('Missing data for required field.', data)
     
     def test_create_task_invalid_date(self, system_admin_client):
         client = system_admin_client
@@ -104,8 +105,7 @@ class TestTaskCreation:
         assert res.status_code == 400
         
         data = res.get_json()
-        print('data',data)
-        assert  "日付の形式が正しくありません（YYYY-MM-DD）" in data['errors']["message"] 
+        assert  check_response_message("日付の形式が正しくありません（YYYY-MM-DD）",data) 
     
     def test_create_task_without_login(self, client, test_task_data):
         """ログインなしでタスク作成（エラー）"""
@@ -154,8 +154,7 @@ class TestTaskUpdate:
         assert res.status_code == 400
         
         data = res.get_json()
-        print(data)
-        assert "ステータスIDが不正です" in data['errors']['message']
+        assert check_response_message("ステータスIDが不正です", data)
     
     def test_update_task_invalid_date(self, client, created_task):
         """不正な日付でタスク更新（エラー）"""
@@ -165,7 +164,7 @@ class TestTaskUpdate:
         assert res.status_code == 400
         
         data = res.get_json()
-        assert "日付の形式が正しくありません（YYYY-MM-DD）" in data['errors']['message']
+        assert check_response_message("日付の形式が正しくありません（YYYY-MM-DD）", data)
     
     def test_update_nonexistent_task(self, system_admin_client):
         client = system_admin_client
@@ -175,7 +174,7 @@ class TestTaskUpdate:
         assert res.status_code == 404
         
         data = res.get_json()
-        assert "タスクが見つかりません" in data['errors']['message']
+        assert check_response_message("タスクが見つかりません", data)
 
 
 class TestTaskDeletion:
@@ -197,8 +196,7 @@ class TestTaskDeletion:
         res = client.delete("/tasks/999")
         assert res.status_code == 404
         data = res.get_json()
-        print("data",data)
-        assert data["error"] == "タスクが見つかりません"
+        assert check_response_message("タスクが見つかりません", data)
 
 
 class TestTaskList:
@@ -207,7 +205,6 @@ class TestTaskList:
     def test_get_tasks_success(self, client, created_task):
         """正常なタスク一覧取得"""
         res = client.get("/tasks")
-        print(res.get_json())
         assert res.status_code == 200
         
         data = res.get_json()['tasks']
@@ -263,10 +260,10 @@ class TestObjectiveOrder:
         res = client.post(f"/tasks/{task_id}/objectives/order", json={
             "order": "invalid"
         })
-        assert res.status_code == 400
+        assert res.status_code == 422
         
         data = res.get_json()
-        assert data["error"] == "order はオブジェクティブIDのリストである必要があります"
+        assert check_response_message("Not a valid list.", data)
     
     def test_update_objective_order_missing_objective(self, client, multiple_objectives):
         """存在しないオブジェクティブIDで順序更新（エラー）"""
@@ -279,7 +276,7 @@ class TestObjectiveOrder:
         assert res.status_code == 404
         
         data = res.get_json()
-        assert "が見つかりません" in data["error"]
+        assert check_response_message('が見つかりません', data)
     
     def test_update_objective_order_empty_list(self, client, created_task):
         """空のリストでオブジェクティブ順序更新"""
@@ -292,11 +289,10 @@ class TestObjectiveOrder:
     def test_update_objective_order_without_order_field(self, client, created_task):
         """orderフィールドなしでオブジェクティブ順序更新（エラー）"""
         res = client.post(f"/tasks/{created_task['id']}/objectives/order", json={})
-        print('res',res.get_json())
-        assert res.status_code == 400
+        assert res.status_code == 422
         
         data = res.get_json()
-        assert data["error"] == "order はオブジェクティブIDのリストである必要があります"
+        assert check_response_message("Missing data for required field.", data)
 
 
 class TestIntegration:

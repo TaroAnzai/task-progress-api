@@ -39,6 +39,8 @@ class TaskUpdateSchema(SQLAlchemyAutoSchema):
     status_id = fields.Int()
     display_order = fields.Int()
 
+    
+
 
 class TaskCreateResponseSchema(Schema):
     message = fields.Str()
