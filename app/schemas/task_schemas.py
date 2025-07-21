@@ -1,23 +1,46 @@
 from marshmallow import Schema, fields
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from app.models import Task
+from app.constants import TaskAccessLevelEnum
+from app.models import TaskAccessUser, TaskAccessOrganization
 
-class TaskSchema(Schema):
-    id = fields.Int()
-    status_id = fields.Int(allow_none=True)
-    title = fields.Str()
-    description = fields.Str()
-    due_date = fields.Str(allow_none=True)
-    assigned_user_id = fields.Int(allow_none=True)
-    created_by = fields.Int()
-    created_at = fields.Str()
-    display_order = fields.Int(allow_none=True)
-    organization_id = fields.Int()
+class TaskSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Task
+        load_instance = True
+        include_fk = True
+        exclude = ("is_deleted",)
 
-class TaskInputSchema(Schema):
+    user_access_level = fields.Str()
+
+class TaskInputSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Task
+        load_instance = False
+        include_fk = True
+        exclude = ("id", "created_by", "created_at", "is_deleted")
+
     title = fields.Str(required=True)
     description = fields.Str(load_default="")
     due_date = fields.Str(load_default=None)
     status_id = fields.Int(load_default=None)
     display_order = fields.Int(load_default=None)
+
+class TaskUpdateSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Task
+        load_instance = False
+        include_fk = True
+        exclude = ("id", "created_by", "created_at", "is_deleted")
+
+    title = fields.Str(required=False)
+    description = fields.Str()
+    due_date = fields.Str()
+    status_id = fields.Int()
+    display_order = fields.Int()
+
+    
+
 
 class TaskCreateResponseSchema(Schema):
     message = fields.Str()

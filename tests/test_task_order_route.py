@@ -1,5 +1,8 @@
-import pytest
 import uuid
+
+import pytest
+
+from tests.utils import check_response_message
 
 @pytest.fixture(scope="function")
 def order_user(system_admin_client, root_org):
@@ -56,8 +59,8 @@ class TestTaskOrderRoutes:
     def test_save_task_order_invalid(self, order_user_client, order_user):
         user_id = order_user["id"]
         res = order_user_client.post(f"/task_order/{user_id}", json={"task_ids": "invalid"})
-        assert res.status_code == 400
-        assert "task_ids" in res.get_json()["error"]
+        assert res.status_code == 422
+        assert check_response_message("Not a valid list.", res.get_json(), "task_ids")
 
     def test_task_order_requires_login(self, client, order_user):
         client.post("/auth/logout")

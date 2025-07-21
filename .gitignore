@@ -136,7 +136,6 @@ celerybeat.pid
 
 # Environments
 .env
-.envrc
 .venv
 env/
 venv/
@@ -207,8 +206,6 @@ marimo/_lsp/
 __marimo__/
 # Flask-specific
 instance/
-.env
-.env.*
 
 # Flask-Migrate
 migrations/versions/
@@ -223,3 +220,4 @@ migrations/versions/
 *.sqlite3
 *.csv
 *.xlsx
+

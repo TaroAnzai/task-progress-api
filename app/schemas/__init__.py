@@ -2,6 +2,7 @@ from .common_schemas import MessageSchema, ErrorResponseSchema, YAMLResponseSche
 from .task_schemas import (
     TaskSchema,
     TaskInputSchema,
+    TaskUpdateSchema,
     TaskCreateResponseSchema,
     TaskListResponseSchema,
     OrderSchema,
@@ -11,6 +12,7 @@ from .task_schemas import (
 from .user_schemas import (
     UserSchema,
     UserInputSchema,
+    UserUpdateSchema,
     UserCreateResponseSchema,
     LoginResponseSchema,
     LoginSchema,
@@ -21,10 +23,12 @@ from .organization_schemas import (
     OrganizationSchema,
     OrganizationInputSchema,
     OrganizationUpdateSchema,
+    OrganizationTreeSchema,
 )
 from .objective_schemas import (
     ObjectiveSchema,
     ObjectiveInputSchema,
+    ObjectiveUpdateSchema,
     ObjectiveResponseSchema,
     ObjectivesListSchema,
     StatusSchema,
@@ -40,11 +44,11 @@ from .ai_schemas import AISuggestInputSchema, JobIdSchema, AIResultSchema
 
 __all__ = [
     'MessageSchema', 'ErrorResponseSchema', 'YAMLResponseSchema',
-    'TaskSchema', 'TaskInputSchema', 'TaskCreateResponseSchema', 'TaskListResponseSchema',
+    'TaskSchema', 'TaskInputSchema', 'TaskUpdateSchema', 'TaskCreateResponseSchema', 'TaskListResponseSchema',
     'OrderSchema', 'TaskOrderSchema', 'TaskOrderInputSchema',
-    'UserSchema', 'UserInputSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
+    'UserSchema', 'UserInputSchema', 'UserUpdateSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
     'CompanySchema', 'CompanyInputSchema',
-    'OrganizationSchema', 'OrganizationInputSchema', 'OrganizationUpdateSchema',
+    'OrganizationSchema', 'OrganizationInputSchema', 'OrganizationUpdateSchema','OrganizationTreeSchema',
     'ObjectiveSchema', 'ObjectiveInputSchema', 'ObjectiveResponseSchema', 'ObjectivesListSchema', 'StatusSchema',
     'ProgressSchema', 'ProgressInputSchema',
     'AccessScopeSchema', 'AccessScopeInputSchema',

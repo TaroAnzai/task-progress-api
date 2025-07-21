@@ -3,6 +3,11 @@ from flask import Blueprint, jsonify
 from app.extensions import login_manager
 from app import db
 from app.models import User
+from app.service_errors import (
+    ServiceValidationError,
+    ServiceAuthenticationError,
+    ServiceNotFoundError,
+)
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -12,4 +17,4 @@ def load_user(user_id):
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    return jsonify({'error': 'ログインが必要です'}), 401
+    raise ServiceAuthenticationError('ログインが必要です')

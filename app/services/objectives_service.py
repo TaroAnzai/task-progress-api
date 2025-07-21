@@ -1,9 +1,13 @@
 # app/services/objectives_service.py
-from flask import jsonify
 from datetime import datetime
 from app.models import db, Objective, Task, Status
 from app.utils import check_task_access, is_valid_status_id
 from app.constants import TaskAccessLevelEnum, StatusEnum, STATUS_LABELS
+from app.service_errors import (
+    ServiceValidationError,
+    ServicePermissionError,
+    ServiceNotFoundError,
+)
 
 
 def get_task_by_id(task_id):
@@ -27,20 +31,20 @@ def create_objective(data, user):
     task_id = data.get('task_id')
 
     if not title or not task_id:
-        return {'error': 'タイトル・タスクIDは必須です'}, 400
+        raise ServiceValidationError('タイトル・タスクIDは必須です')
 
     task = get_task_by_id(task_id)
     if not task:
-        return {'error': 'タスクが見つかりません'}, 404
+        raise ServiceNotFoundError('タスクが見つかりません')
     if not check_task_access(user, task, TaskAccessLevelEnum.EDIT):
-        return {'error': 'このタスクにオブジェクティブを追加する権限がありません'}, 403
+        raise ServicePermissionError('このタスクにオブジェクティブを追加する権限がありません')
 
     due_date = None
     if data.get('due_date'):
         try:
             due_date = datetime.strptime(data['due_date'], '%Y-%m-%d')
         except ValueError:
-            return {'error': '日付の形式が正しくありません（YYYY-MM-DD）'}, 400
+            raise ServiceValidationError('日付の形式が正しくありません（YYYY-MM-DD）')
 
     max_order = db.session.query(db.func.max(Objective.display_order)) \
         .filter_by(task_id=task_id).scalar()
@@ -59,80 +63,78 @@ def create_objective(data, user):
 
     return {
         'message': 'オブジェクティブを追加しました',
-        'objective': objective.to_dict(),
-    }, 201
+        'objective': objective,
+    }
 
 
 def update_objective(objective_id, data, user):
     objective = get_objective_by_id(objective_id)
     if not objective:
-        return {'error': 'オブジェクティブが見つかりません'}, 404
+        raise ServiceNotFoundError('オブジェクティブが見つかりません')
     task = get_task_by_id(objective.task_id)
     if not task:
-        return {'error': 'タスクが見つかりません'}, 404
+        raise ServiceNotFoundError('タスクが見つかりません')
 
     if not check_task_access(user, task, TaskAccessLevelEnum.EDIT):
-        return {'error': '編集権限がありません'}, 403
+        raise ServicePermissionError('編集権限がありません')
 
     objective.title = data.get('title', objective.title)
     if 'due_date' in data:
         try:
             objective.due_date = datetime.strptime(data['due_date'], '%Y-%m-%d')
         except ValueError:
-            return {'error': '日付の形式が正しくありません（YYYY-MM-DD）'}, 400
+            raise ServiceValidationError('日付の形式が正しくありません（YYYY-MM-DD）')
     if 'assigned_user_id' in data:
         objective.assigned_user_id = data['assigned_user_id']
     if 'status_id' in data:
         if not is_valid_status_id(data['status_id']):
-            return {'error': 'ステータスIDが不正です'}, 400
+            raise ServiceValidationError('ステータスIDが不正です')
         objective.status_id = data['status_id']
 
     db.session.commit()
     return {
         'message': 'オブジェクティブを更新しました',
-        'objective': objective.to_dict()
-        }, 200
+        'objective': objective
+        }
 
 
 def get_objectives_for_task(task_id, user):
     task = get_task_by_id(task_id)
     if not task:
-        return {'error': 'タスクが見つかりません'}, 404
+        raise ServiceNotFoundError('タスクが見つかりません')
     if not check_task_access(user, task, TaskAccessLevelEnum.VIEW):
-        return {'error': '閲覧権限がありません'}, 403
+        raise ServicePermissionError('閲覧権限がありません')
 
     objectives = Objective.query.filter_by(task_id=task_id, is_deleted=False) \
                                  .order_by(Objective.display_order).all()
     
-    # to_dictで一括変換
-    objective_list = [obj.to_dict() for obj in objectives]
-    return {'objectives': objective_list}, 200
+    return {'objectives': objectives}
 
 
 def get_objective(objective_id, user):
     objective = get_objective_by_id(objective_id)
     if not objective:
-        return {'error': 'オブジェクティブが見つかりません'}, 404
+        raise ServiceNotFoundError('オブジェクティブが見つかりません')
 
     task = get_task_by_id(objective.task_id)
     if not task:
-        return {'error': 'タスクが見つかりません'}, 404
+        raise ServiceNotFoundError('タスクが見つかりません')
     if not check_task_access(user, task, TaskAccessLevelEnum.VIEW):
-        return {'error': '閲覧権限がありません'}, 403
+        raise ServicePermissionError('閲覧権限がありません')
 
-    return {'objective': objective.to_dict()}, 200
+    return objective
 
 
 def delete_objective(objective_id, user):
     objective = get_objective_by_id(objective_id)
     if not objective:
-        return {'error': 'オブジェクティブが見つかりません'}, 404
+        raise ServiceNotFoundError('オブジェクティブが見つかりません')
     task = get_task_by_id(objective.task_id)
     if not task:
-        return {'error': 'タスクが見つかりません'}, 404
+        raise ServiceNotFoundError('タスクが見つかりません')
 
     if not check_task_access(user, task, TaskAccessLevelEnum.EDIT):
-        return {'error': '削除権限がありません'}, 403
+        raise ServicePermissionError('削除権限がありません')
 
     objective.soft_delete()
     db.session.commit()
@@ -143,7 +145,7 @@ def delete_objective(objective_id, user):
         obj.display_order = idx
     db.session.commit()
 
-    return {'message': 'オブジェクティブを削除し、順序を更新しました'}, 200
+    return {'message': 'オブジェクティブを削除し、順序を更新しました'}
 
 
 def get_statuses():

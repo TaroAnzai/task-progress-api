@@ -47,7 +47,6 @@ class TestObjectivesAPI:
         setup_task_access(task)
 
     def test_get_objectives_for_task_view(self):
-        print(self.task)
         user = self.users['view']
         client = self.login_as_user(user['email'], user['password'])
         resp = client.get(f"/tasks/{self.task['id']}/objectives")

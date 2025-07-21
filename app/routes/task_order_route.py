@@ -1,13 +1,10 @@
+from app.service_errors import format_error_response
+from flask import jsonify
 from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask_login import login_required
-from app.service_errors import (
-    ServiceValidationError,
-    ServiceAuthenticationError,
-    ServicePermissionError,
-    ServiceNotFoundError,
-)
-
+from app.service_errors import ServiceError
+from app.decorators import with_common_error_responses
 from app.services import task_order_service
 from app.schemas import (
     TaskOrderSchema,
@@ -19,32 +16,16 @@ from app.schemas import (
 
 task_order_bp = Blueprint("TaskOrder", __name__, url_prefix="/task_order", description="タスク並び順")
 
-@task_order_bp.errorhandler(ServiceValidationError)
-def task_order_validation_error(e):
-    abort(400, message=str(e))
-
-@task_order_bp.errorhandler(ServiceAuthenticationError)
-def task_order_auth_error(e):
-    abort(401, message=str(e))
-
-@task_order_bp.errorhandler(ServicePermissionError)
-def task_order_permission_error(e):
-    abort(403, message=str(e))
-
-@task_order_bp.errorhandler(ServiceNotFoundError)
-def task_order_not_found_error(e):
-    abort(404, message=str(e))
+@task_order_bp.errorhandler(ServiceError)
+def handle_service_error(e: ServiceError):
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
 @task_order_bp.route('/<int:user_id>')
 class TaskOrderResource(MethodView):
     @login_required
     @task_order_bp.response(200, TaskOrderSchema(many=True))
-    @task_order_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(task_order_bp)
     def get(self, user_id):
         """タスク並び順取得"""
         resp = task_order_service.get_task_order(user_id)
@@ -53,11 +34,7 @@ class TaskOrderResource(MethodView):
     @login_required
     @task_order_bp.arguments(TaskOrderInputSchema)
     @task_order_bp.response(200, MessageSchema)
-    @task_order_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(task_order_bp)
     def post(self, data, user_id):
         """タスク並び順保存"""
         resp = task_order_service.save_task_order(user_id, data)

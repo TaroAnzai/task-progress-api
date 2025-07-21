@@ -1,6 +1,6 @@
 # services/user_service.py
 
-from flask import current_app, jsonify
+from flask import current_app
 import re
 from sqlalchemy.orm import joinedload
 from ..models import db, User, Organization, AccessScope
@@ -10,6 +10,11 @@ from ..utils import (
     check_org_access,
 )
 from ..constants import OrgRoleEnum
+from ..service_errors import (
+    ServiceValidationError,
+    ServicePermissionError,
+    ServiceNotFoundError,
+)
 
 import re
 
@@ -21,10 +26,10 @@ def create_user(data, current_user):
     #組織の項目のチェック
     org_id = data.get('organization_id')
     if not org_id:
-        return {'error': 'organization_idは必須です'}, 400
+        raise ServiceValidationError('organization_idは必須です')
     # 組織管理権限チェック
     if not check_org_access(current_user, data.get('organization_id'), OrgRoleEnum.ORG_ADMIN):
-        return {'error': '権限がありません'}, 403
+        raise ServicePermissionError('権限がありません')
 
     wp_user_id = data.get('wp_user_id')
     name = data.get('name')
@@ -33,27 +38,21 @@ def create_user(data, current_user):
     role = data.get('role', OrgRoleEnum.MEMBER)  # ← デフォルトはMEMBER
 
     # 必須項目チェック
-    if not name or not email or not org_id:
-        return {'error': 'name、emailは必須です'}, 400
-
-    if not password:
-        return {'error': 'password は必須です'}, 400
-
     if not is_valid_email(email):
-        return {'error': '無効なメールアドレス形式です'}, 400
+        raise ServiceValidationError('無効なメールアドレス形式です')
 
     if role not in OrgRoleEnum.__members__.values() and role not in OrgRoleEnum.__members__:
-        return {'error': f'指定されたroleが不正です: {role}'}, 400
+        raise ServiceValidationError(f'指定されたroleが不正です: {role}')
 
     if wp_user_id and User.query.filter_by(wp_user_id=wp_user_id).first():
-        return {'error': 'この wp_user_id は既に使用されています'}, 400
+        raise ServiceValidationError('この wp_user_id は既に使用されています')
 
     if User.query.filter_by(email=email).first():
-        return {'error': 'このメールアドレスは既に使用されています'}, 400
+        raise ServiceValidationError('このメールアドレスは既に使用されています')
 
     org = db.session.get(Organization, org_id)
     if not org:
-        return {'error': '指定された組織IDが存在しません'}, 400
+        raise ServiceValidationError('指定された組織IDが存在しません')
 
     # --- ユーザー登録 ---
     user = User(
@@ -76,7 +75,7 @@ def create_user(data, current_user):
 
     db.session.commit()
 
-    return {'message': 'ユーザーを登録しました', 'user': user.to_dict(include_org=True)}, 201
+    return {'message': 'ユーザーを登録しました', 'user': user}
 
 
 
@@ -84,51 +83,68 @@ def create_user(data, current_user):
 def get_user_by_id(user_id, current_user):
     user = db.session.get(User, user_id)
     if not user:
-        return {'error': 'ユーザーが見つかりません'}, 404
+        raise ServiceNotFoundError('ユーザーが見つかりません')
 
     if not check_org_access(current_user, user.organization_id, OrgRoleEnum.ORG_ADMIN):
-        return {'error': '権限がありません'}, 403
+        raise ServicePermissionError('権限がありません')
 
-    return user.to_dict(include_org=True), 200
+    return user
 
 def update_user(user_id, data, current_user):
     user = db.session.get(User, user_id)
     if not user:
-        return {'error': 'ユーザーが見つかりません'}, 404
+        raise ServiceNotFoundError('ユーザーが見つかりません')
 
     if not check_org_access(current_user, user.organization_id, OrgRoleEnum.ORG_ADMIN):
-        return {'error': '権限がありません'}, 403
+        raise ServicePermissionError('権限がありません')
 
     if 'name' in data:
         user.name = data['name']
+
     if 'wp_user_id' in data:
+        # 重複チェック（必要なら追加）
+        if User.query.filter(User.wp_user_id == data['wp_user_id'], User.id != user_id).first():
+            raise ServiceValidationError('この wp_user_id は既に使用されています')
         user.wp_user_id = data['wp_user_id']
+
     if 'email' in data:
+        # メール重複チェック
+        if User.query.filter(User.email == data['email'], User.id != user_id).first():
+            raise ServiceValidationError('このメールアドレスは既に使用されています')
         user.email = data['email']
+
     if 'organization_id' in data:
+        org = db.session.get(Organization, data['organization_id'])
+        if not org:
+            raise ServiceValidationError('指定された組織IDが存在しません')
         user.organization_id = data['organization_id']
 
+    if 'password' in data and data['password']:
+        # 空文字は無視、パスワードがあれば更新
+        user.set_password(data['password'])
+
     db.session.commit()
-    return user.to_dict(include_org=True), 200
+    return user
+
 
 def delete_user(user_id, current_user):
     user = db.session.get(User, user_id)
     if not user:
-        return {'error': 'ユーザーが見つかりません'}, 404
+        raise ServiceNotFoundError('ユーザーが見つかりません')
 
     if not check_org_access(current_user, user.organization_id, OrgRoleEnum.ORG_ADMIN):
-        return {'error': '権限がありません'}, 403
+        raise ServicePermissionError('権限がありません')
 
     from ..models import AccessScope
     try:
         AccessScope.query.filter_by(user_id=user.id).delete()
         db.session.delete(user)
         db.session.commit()
-        return {'message': 'ユーザーと関連スコープを削除しました'}, 200
+        return {'message': 'ユーザーと関連スコープを削除しました'}
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"delete_user error: {e}")
-        return {'error': '削除に失敗しました', 'details': str(e)}, 500
+        raise ServiceValidationError(f'削除に失敗しました: {e}')
 
 def get_users(requesting_user_id, organization_id=None):
     requester = db.session.get(User, requesting_user_id)
@@ -136,13 +152,13 @@ def get_users(requesting_user_id, organization_id=None):
         return []
 
     if not check_org_access(requester, organization_id or requester.organization_id, OrgRoleEnum.ORG_ADMIN):
-        return {'error': '権限がありません'}, 403
+        raise ServicePermissionError('権限がありません')
 
     all_orgs = Organization.query.all()
     base_org_id = organization_id or requester.organization_id
     base_org = db.session.get(Organization, base_org_id)
     if not base_org:
-        return {'error': '組織が見つかりません'}, 404
+        raise ServiceNotFoundError('組織が見つかりません')
 
     descendants = get_descendant_organizations(base_org.id, all_orgs)
     org_ids = [org.id for org in descendants]
@@ -154,35 +170,35 @@ def get_users(requesting_user_id, organization_id=None):
         .all()
     )
 
-    return [u.to_dict(include_org=True) for u in users], 200
+    return users
 
 def get_user_by_email(email, current_user):
     user = User.query.filter_by(email=email).first()
     if not user:
-        return {'error': 'ユーザーが見つかりません'}, 404
+        raise ServiceNotFoundError('ユーザーが見つかりません')
 
     if not check_org_access(current_user, user.organization_id, OrgRoleEnum.ORG_ADMIN):
-        return {'error': '権限がありません'}, 403
+        raise ServicePermissionError('権限がありません')
 
-    return user.to_dict(include_org=True), 200
+    return user
 
 def get_user_by_wp_user_id(wp_user_id, current_user):
     user = User.query.filter_by(wp_user_id=wp_user_id).first()
     if not user:
-        return {'error': 'ユーザーが見つかりません'}, 404
+        raise ServiceNotFoundError('ユーザーが見つかりません')
 
     if not check_org_access(current_user, user.organization_id, OrgRoleEnum.ORG_ADMIN):
-        return {'error': '権限がありません'}, 403
+        raise ServicePermissionError('権限がありません')
 
-    return user.to_dict(include_org=True), 200
+    return user
 
 def get_users_by_org_tree(org_id, current_user):
     if not check_org_access(current_user, org_id, OrgRoleEnum.ORG_ADMIN):
-        return {'error': '権限がありません'}, 403
+        raise ServicePermissionError('権限がありません')
 
     try:
         org_ids = get_all_child_organizations(org_id)
         users = User.query.filter(User.organization_id.in_(org_ids)).all()
-        return [u.to_dict() for u in users], 200
+        return users
     except Exception as e:
-        return {'error': str(e)}, 500
+        raise ServiceValidationError(str(e))

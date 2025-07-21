@@ -1,18 +1,16 @@
+from app.service_errors import format_error_response
+from flask import jsonify
 from flask_smorest import Blueprint
 from flask.views import MethodView
 from flask import request
 from flask_login import login_required, current_user
-from app.service_errors import (
-    ServiceValidationError,
-    ServiceAuthenticationError,
-    ServicePermissionError,
-    ServiceNotFoundError,
-)
-
+from app.service_errors import ServiceError
+from app.decorators import with_common_error_responses
 from app.services import user_service
 from app.schemas import (
     UserSchema,
     UserInputSchema,
+    UserUpdateSchema,
     UserCreateResponseSchema,
     MessageSchema,
     ErrorResponseSchema,
@@ -20,21 +18,9 @@ from app.schemas import (
 
 user_bp = Blueprint("Users", __name__, description="ユーザー管理")
 
-@user_bp.errorhandler(ServiceValidationError)
-def user_validation_error(e):
-    abort(400, message=str(e))
-
-@user_bp.errorhandler(ServiceAuthenticationError)
-def user_auth_error(e):
-    abort(401, message=str(e))
-
-@user_bp.errorhandler(ServicePermissionError)
-def user_permission_error(e):
-    abort(403, message=str(e))
-
-@user_bp.errorhandler(ServiceNotFoundError)
-def user_not_found_error(e):
-    abort(404, message=str(e))
+@user_bp.errorhandler(ServiceError)
+def handle_service_error(e: ServiceError):
+    return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
 @user_bp.route("/users")
@@ -42,16 +28,7 @@ class UsersResource(MethodView):
     @login_required
     @user_bp.arguments(UserInputSchema)
     @user_bp.response(201, UserCreateResponseSchema)
-    @user_bp.alt_response(400, {
-        "description": "Bad Request",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @user_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(user_bp)
     def post(self, data):
         """ユーザー作成"""
         result = user_service.create_user(data, current_user)
@@ -59,16 +36,7 @@ class UsersResource(MethodView):
 
     @login_required
     @user_bp.response(200, UserSchema(many=True))
-    @user_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @user_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(user_bp)
     def get(self):
         """ユーザー一覧取得"""
         user_id = request.args.get("user_id", type=int)
@@ -80,34 +48,16 @@ class UsersResource(MethodView):
 class UserResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)
-    @user_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @user_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(user_bp)
     def get(self, user_id):
         """ユーザー取得"""
         result = user_service.get_user_by_id(user_id, current_user)
         return result
 
     @login_required
-    @user_bp.arguments(UserInputSchema)
+    @user_bp.arguments(UserUpdateSchema)
     @user_bp.response(200, UserSchema)
-    @user_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @user_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(user_bp)
     def put(self, data, user_id):
         """ユーザー更新"""
         result = user_service.update_user(user_id, data, current_user)
@@ -115,16 +65,7 @@ class UserResource(MethodView):
 
     @login_required
     @user_bp.response(200, MessageSchema)
-    @user_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @user_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(user_bp)
     def delete(self, user_id):
         """ユーザー削除"""
         result = user_service.delete_user(user_id, current_user)
@@ -134,16 +75,7 @@ class UserResource(MethodView):
 class UserByEmailResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)
-    @user_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @user_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(user_bp)
     def get(self):
         """メールアドレスでユーザー取得"""
         email = request.args.get("email")
@@ -154,16 +86,7 @@ class UserByEmailResource(MethodView):
 class UserByWPIDResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema)
-    @user_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
-    @user_bp.alt_response(404, {
-        "description": "Not Found",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(user_bp)
     def get(self):
         """WordPress IDでユーザー取得"""
         wp_user_id = request.args.get("wp_user_id", type=int)
@@ -174,11 +97,7 @@ class UserByWPIDResource(MethodView):
 class UsersByOrgTreeResource(MethodView):
     @login_required
     @user_bp.response(200, UserSchema(many=True))
-    @user_bp.alt_response(403, {
-        "description": "Forbidden",
-        "schema": ErrorResponseSchema,
-        "content_type": "application/json"
-    })
+    @with_common_error_responses(user_bp)
     def get(self, org_id):
         """組織ツリーでユーザー一覧取得"""
         result = user_service.get_users_by_org_tree(org_id, current_user)

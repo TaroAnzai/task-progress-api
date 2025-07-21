@@ -1,5 +1,8 @@
+from typing import Any, Dict
+
 import pytest
-from typing import Dict, Any
+
+from tests.utils import check_response_message
 
 # --- Constants ---
 VALID_USER_DATA = {
@@ -24,13 +27,6 @@ def assert_user_created(response, expected_name: str = None):
         assert user['name'] == expected_name
     return user
 
-def assert_error_response(response, expected_status: int, expected_message: str = None):
-    """エラーレスポンスの共通アサーション"""
-    assert response.status_code == expected_status
-    error_data = response.get_json()
-    if expected_message:
-        assert expected_message in error_data.get('error', '')
-    return error_data
 
 # --- Fixtures ---
 
@@ -62,7 +58,10 @@ class TestUserCreation:
         client = login_as_user(system_admin['email'], system_admin['password'])
         """必須フィールド不足でユーザー作成失敗"""
         res = client.post('/users', json={'email': 'incomplete@example.com'})
-        assert_error_response(res, 400)
+        assert res.status_code == 422
+        data = res.get_json()
+        for field in ['name', 'password', 'organization_id']:
+            assert check_response_message('Missing data for required field.', data, field)
     
     def test_create_user_duplicate_email(self, login_as_user, system_related_users, root_org):
         system_admin = system_related_users['system_admin']
@@ -84,7 +83,8 @@ class TestUserCreation:
             email='duplicate@example.com'  # 重複メール
         )
         res = client.post('/users', json=second_payload)
-        assert_error_response(res, 400, '既に使用されています')
+        assert res.status_code == 400
+        assert check_response_message('既に使用されています', res.get_json())
 
 class TestUserRetrieval:
     """ユーザー取得に関するテスト"""
@@ -195,8 +195,9 @@ class TestUserCreationParameterized:
         del payload[missing_field]
         
         res = client.post('/users', json=payload)
-        error_data = assert_error_response(res, 400)
-        assert missing_field in error_data['error']
+        assert res.status_code == 422
+        data = res.get_json()
+        assert check_response_message('Missing data for required field.', data, missing_field)
     
     @pytest.mark.parametrize("invalid_email", [
         'invalid-email',
@@ -210,4 +211,5 @@ class TestUserCreationParameterized:
         """無効なメールアドレス形式のテスト"""
         payload = create_user_payload(root_org['id'], email=invalid_email)
         res = client.post('/users', json=payload)
-        assert_error_response(res, 400)
+        assert res.status_code == 400
+        assert check_response_message('無効なメールアドレス形式です', res.get_json())

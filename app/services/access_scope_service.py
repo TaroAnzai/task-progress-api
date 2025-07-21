@@ -2,55 +2,53 @@
 
 from ..models import db, User, AccessScope, Organization
 from ..constants import OrgRoleEnum
+from ..service_errors import (
+    ServiceValidationError,
+    ServicePermissionError,
+    ServiceNotFoundError,
+)
 
 def get_user_scopes(user_id):
     user = db.session.get(User, user_id)
     if not user:
-        return {'error': 'ユーザーが見つかりません'}, 404
+        raise ServiceNotFoundError('ユーザーが見つかりません')
 
-    scopes = [
-        {
-            'id': scope.id,
-            'organization_id': scope.organization_id,
-            'role': scope.role.value
-        } for scope in user.access_scopes
-    ]
-    return scopes, 200
+    return list(user.access_scopes)
 
 def add_access_scope_to_user(user_id, data):
     user = db.session.get(User, user_id)
     if not user:
-        return {'error': 'ユーザーが見つかりません'}, 404
+        raise ServiceNotFoundError('ユーザーが見つかりません')
 
     org_id = data.get('organization_id')
     role = data.get('role')
 
     if not org_id or not role:
-        return {'error': 'organization_id と role は必須です'}, 400
+        raise ServiceValidationError('organization_id と role は必須です')
 
     existing_scope = AccessScope.query.filter_by(user_id=user.id, organization_id=org_id).first()
     if existing_scope:
         if existing_scope.role != OrgRoleEnum(role):
             existing_scope.role = OrgRoleEnum(role)
             db.session.commit()
-            return {'message': 'アクセススコープを更新しました'}, 200
-        return {'message': 'すでにこのアクセススコープは登録されています'}, 200
+            return {'message': 'アクセススコープを更新しました'}
+        return {'message': 'すでにこのアクセススコープは登録されています'}
 
     try:
         role_enum = OrgRoleEnum(role)
     except ValueError:
-        return {'error': '無効な role です'}, 400
+        raise ServiceValidationError('無効な role です')
 
     new_scope = AccessScope(user_id=user.id, organization_id=org_id, role=role_enum)
     db.session.add(new_scope)
     db.session.commit()
-    return {'message': 'アクセススコープを追加しました'}, 201
+    return {'message': 'アクセススコープを追加しました'}
 
 def delete_access_scope(scope_id):
     scope = db.session.get(AccessScope, scope_id)
     if not scope:
-        return {'error': 'スコープが見つかりません'}, 404
+        raise ServiceNotFoundError('スコープが見つかりません')
 
     db.session.delete(scope)
     db.session.commit()
-    return {'message': 'アクセススコープを削除しました'}, 200
+    return {'message': 'アクセススコープを削除しました'}
