@@ -1,9 +1,11 @@
 # tests/test_task_core_route.py
 
+from datetime import date, datetime
+
 import pytest
-from datetime import datetime, date
-from app.models import Task, Objective, Status
+
 from app.constants import StatusEnum
+from app.models import Objective, Status, Task
 from tests.utils import check_response_message
 
 @pytest.fixture(scope="function")

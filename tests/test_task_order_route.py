@@ -1,5 +1,7 @@
-import pytest
 import uuid
+
+import pytest
+
 from tests.utils import check_response_message
 
 @pytest.fixture(scope="function")
