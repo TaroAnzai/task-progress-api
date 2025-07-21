@@ -24,7 +24,7 @@ def handle_service_error(e: ServiceError):
     return jsonify(format_error_response(e.code, e.name, e.description)), e.code
 
 
-@objectives_bp.route('/')
+@objectives_bp.route('')
 class ObjectiveListResource(MethodView):
     @login_required
     @objectives_bp.arguments(ObjectiveInputSchema)

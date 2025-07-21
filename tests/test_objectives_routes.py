@@ -50,7 +50,7 @@ class TestObjectivesAPI:
         user = self.users['view']
         client = self.login_as_user(user['email'], user['password'])
         resp = client.get(
-            f"/progressobjectives/tasks/{self.task['id']}"
+            f"/progress/objectives/tasks/{self.task['id']}"
         )
         assert resp.status_code == 200
 
@@ -58,75 +58,75 @@ class TestObjectivesAPI:
         user = self.users['full']
         client = self.login_as_user(user['email'], user['password'])
         data = self.make_objective_data()
-        resp = client.post("/progressobjectives", json=data)
+        resp = client.post("/progress/objectives", json=data)
         assert resp.status_code == 201
 
     def test_create_objective_edit(self):
         user = self.users['edit']
         client = self.login_as_user(user['email'], user['password'])
         data = self.make_objective_data()
-        resp = client.post("/progressobjectives", json=data)
+        resp = client.post("/progress/objectives", json=data)
         assert resp.status_code == 201
 
     def test_create_objective_view(self):
         user = self.users['view']
         client = self.login_as_user(user['email'], user['password'])
         data = self.make_objective_data()
-        resp = client.post("/progressobjectives", json=data)
+        resp = client.post("/progress/objectives", json=data)
         assert resp.status_code == 403
 
     def test_update_objective_full(self, created_objective):
         user = self.users['full']
         client = self.login_as_user(user['email'], user['password'])
-        resp = client.put(f"/progressobjectives/{created_objective['id']}", json={"title": "updated"})
+        resp = client.put(f"/progress/objectives/{created_objective['id']}", json={"title": "updated"})
         assert resp.status_code == 200
 
     def test_update_objective_edit(self, created_objective):
         user = self.users['edit']
         client = self.login_as_user(user['email'], user['password'])
-        resp = client.put(f"/progressobjectives/{created_objective['id']}", json={"title": "updated"})
+        resp = client.put(f"/progress/objectives/{created_objective['id']}", json={"title": "updated"})
         assert resp.status_code == 200
 
     def test_update_objective_view(self, created_objective):
         user = self.users['view']
         client = self.login_as_user(user['email'], user['password'])
-        resp = client.put(f"/progressobjectives/{created_objective['id']}", json={"title": "updated"})
+        resp = client.put(f"/progress/objectives/{created_objective['id']}", json={"title": "updated"})
         assert resp.status_code == 403
 
     def test_delete_objective_full(self, created_objective):
         user = self.users['full']
         client = self.login_as_user(user['email'], user['password'])
-        resp = client.delete(f"/progressobjectives/{created_objective['id']}")
+        resp = client.delete(f"/progress/objectives/{created_objective['id']}")
         assert resp.status_code == 200
 
     def test_delete_objective_edit(self, created_objective):
         user = self.users['edit']
         client = self.login_as_user(user['email'], user['password'])
-        resp = client.delete(f"/progressobjectives/{created_objective['id']}")
+        resp = client.delete(f"/progress/objectives/{created_objective['id']}")
         assert resp.status_code == 200
 
     def test_delete_objective_view(self, created_objective):
         user = self.users['view']
         client = self.login_as_user(user['email'], user['password'])
-        resp = client.delete(f"/progressobjectives/{created_objective['id']}")
+        resp = client.delete(f"/progress/objectives/{created_objective['id']}")
         assert resp.status_code == 403
 
     def test_get_objective_detail_view(self, created_objective):
         user = self.users['view']
         client = self.login_as_user(user['email'], user['password'])
-        resp = client.get(f"/progressobjectives/{created_objective['id']}")
+        resp = client.get(f"/progress/objectives/{created_objective['id']}")
         assert resp.status_code == 200
 
     def test_get_objective_detail_edit(self, created_objective):
         user = self.users['edit']
         client = self.login_as_user(user['email'], user['password'])
-        resp = client.get(f"/progressobjectives/{created_objective['id']}")
+        resp = client.get(f"/progress/objectives/{created_objective['id']}")
         assert resp.status_code == 200
 
     def test_get_objective_detail_full(self, created_objective):
         user = self.users['full']
         client = self.login_as_user(user['email'], user['password'])
-        resp = client.get(f"/progressobjectives/{created_objective['id']}")
+        resp = client.get(f"/progress/objectives/{created_objective['id']}")
         assert resp.status_code == 200
 
 @pytest.fixture
@@ -135,7 +135,7 @@ def created_objective(client, login_as_user, task_access_users, make_objective_d
     user = task_access_users['full']
     client = login_as_user(user['email'], user['password'])
     data = make_objective_data()
-    resp = client.post("/progressobjectives", json=data)
+    resp = client.post("/progress/objectives", json=data)
     assert resp.status_code == 201
     obj_id = resp.get_json()['objective']["id"]
     return {"id": obj_id}

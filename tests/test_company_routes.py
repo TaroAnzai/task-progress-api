@@ -53,11 +53,11 @@ def test_delete_and_restore_company(superuser_login):
     assert get_response.status_code == 404
 
     # 削除済も含む取得で確認
-    with_deleted = superuser_login.get(f"/progress/companies/with_deleted/{company_id}")
+    with_deleted = superuser_login.get(f"/progress/companies/{company_id}?with_deleted=true")
     assert with_deleted.status_code == 200
 
     # 復元
-    restore = superuser_login.post(f"/progress/companies/restore/{company_id}")
+    restore = superuser_login.post(f"/progress/companies/{company_id}/restore")
     assert restore.status_code == 200
 
     # 復元後は通常取得で見える
@@ -70,7 +70,7 @@ def test_permanent_delete_company(superuser_login):
     company_id = post_response.json["id"]
 
     # 物理削除
-    response = superuser_login.delete(f"/progress/companies/permanent/{company_id}")
+    response = superuser_login.delete(f"/progress/companies/{company_id}?force=true")
     assert response.status_code == 200
 
     # with_deleted でも見えない

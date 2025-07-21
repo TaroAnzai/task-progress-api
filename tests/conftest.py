@@ -114,7 +114,7 @@ def task_access_users(client, systemadmin_user, root_org):
 
         # ★タスクアクセス権限の付与エンドポイント（例）
         client.post(
-            "/progress/tasks/1/scope/access_levels",
+            "/progress/tasks/1/access_levels",
             json={
                 "user_access": [{"user_id": user_data['user']["id"], "access_level": level}],
                 "organization_access": [],
@@ -193,7 +193,7 @@ def setup_task_access(system_admin_client, task_access_users):
         org_access = []  # 必要に応じて組織アクセスも設定可能
 
         res = system_admin_client.put(
-            f"/progress/tasks/{task_id}/scope/access_levels",
+            f"/progress/tasks/{task_id}/access_levels",
             json={"user_access": user_access, "organization_access": org_access}
         )
         assert res.status_code == 200

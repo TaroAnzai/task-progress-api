@@ -6,11 +6,12 @@ from tests.utils import check_response_message
 def test_create_organization(login_as_user, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
     client = login_as_user(system_admin['email'], system_admin['password'])
-    res = client.post('/progress/companies', json={
+    res = client.post('/progress/organizations', json={
         'name': '営業部',
         'org_code': 'sales',
         'parent_id': root_org['id']
     })
+    print(res.get_json())
     assert res.status_code == 201
     data = res.get_json()
     assert data['name'] == '営業部'
@@ -22,7 +23,7 @@ def test_create_root_organization_twice(login_as_user, superuser):
     assert company_res.status_code == 201
     company_res = company_res.get_json()
     # 最初のルート組織作成
-    res1 = client.post('/progress/companies', json={
+    res1 = client.post('/progress/organizations', json={
         'name': 'root',
         'org_code': 'code',
         'company_id': company_res['id'],
@@ -30,7 +31,7 @@ def test_create_root_organization_twice(login_as_user, superuser):
     assert res1.status_code == 201
 
     # 2つ目はエラー
-    res2 = client.post('/progress/companies', json={
+    res2 = client.post('/progress/organizations', json={
         'name': 'AnotherRoot',
         'org_code': 'root2',
         'company_id': company_res['id']
@@ -41,7 +42,7 @@ def test_create_root_organization_twice(login_as_user, superuser):
 def test_get_organizations(login_as_user, test_company, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
     client = login_as_user(system_admin['email'], system_admin['password'])
-    res = client.get(f'/progress/companies?company_id={test_company['id']}')
+    res = client.get(f'/progress/organizations?company_id={test_company['id']}')
     assert res.status_code == 200
     data = res.get_json()
     assert isinstance(data, list)
@@ -50,14 +51,14 @@ def test_get_organizations(login_as_user, test_company, root_org, system_related
 def test_get_organization_by_id(login_as_user, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
     client = login_as_user(system_admin['email'], system_admin['password'])
-    res = client.get(f'/progress/companies/{root_org['id']}')
+    res = client.get(f'/progress/organizations/{root_org['id']}')
     assert res.status_code == 200
     assert res.get_json()['name'] == root_org['name']
 
 def test_update_organization(login_as_user, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
     client = login_as_user(system_admin['email'], system_admin['password'])
-    res = client.put(f'/progress/companies/{root_org['id']}', json={
+    res = client.put(f'/progress/organizations/{root_org['id']}', json={
         'name': '新しい名前',
         'parent_id': None
     })
@@ -71,7 +72,7 @@ def test_delete_organization_with_children(login_as_user, root_org, system_relat
     company_id = root_org['company_id']
 
     # 1. 子組織を作成
-    res_create_child = client.post('/progress/companies', json={
+    res_create_child = client.post('/progress/organizations', json={
         'name': '子組織',
         'org_code': 'child01',
         'parent_id': parent_id
@@ -81,16 +82,16 @@ def test_delete_organization_with_children(login_as_user, root_org, system_relat
     child_id = child_org['id']
 
     # 2. ルート組織の削除（失敗するはず）
-    res_delete_root = client.delete(f'/progress/companies/{parent_id}')
+    res_delete_root = client.delete(f'/progress/organizations/{parent_id}')
     assert res_delete_root.status_code == 400
     assert check_response_message('削除できません', res_delete_root.get_json())
 
     # 3. 子組織を削除（成功するはず）
-    res_delete_child = client.delete(f'/progress/companies/{child_id}')
+    res_delete_child = client.delete(f'/progress/organizations/{child_id}')
     assert res_delete_child.status_code == 200
 
     # 4. 子組織が削除されたか確認（/children）
-    res_check_children = client.get(f'/progress/companies/children?parent_id={parent_id}')
+    res_check_children = client.get(f'/progress/organizations/{parent_id}/children')
     assert res_check_children.status_code == 200
     children = res_check_children.get_json()
     assert all(c['id'] != child_id for c in children)
@@ -98,7 +99,7 @@ def test_delete_organization_with_children(login_as_user, root_org, system_relat
 def test_get_organization_tree(login_as_user, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
     client = login_as_user(system_admin['email'], system_admin['password'])
-    res = client.get(f'/progress/companies/tree?company_id={root_org['company_id']}')
+    res = client.get(f'/progress/organizations/tree?company_id={root_org['company_id']}')
     assert res.status_code == 200
     assert isinstance(res.get_json(), list)
 
@@ -114,7 +115,7 @@ def test_get_children(login_as_user, root_org, system_related_users):
     db.session.add(child)
     db.session.commit()
 
-    res = client.get(f'/progress/companies/children?parent_id={root_org['id']}')
+    res = client.get(f'/progress/organizations/{root_org['id']}/children')
     assert res.status_code == 200
     data = res.get_json()
     assert isinstance(data, list)
