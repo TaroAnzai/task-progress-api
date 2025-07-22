@@ -32,7 +32,7 @@ class AccessLevelResource(MethodView):
         resp = task_access_service.update_access_level(task_id, data, current_user)
         return resp
 
-@task_access_bp.route('/users')
+@task_access_bp.route('/authorized_users')
 class TaskUsersResource(MethodView):
     @login_required
     @task_access_bp.response(200, AccessUserSchema(many=True))

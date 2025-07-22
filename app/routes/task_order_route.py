@@ -35,13 +35,11 @@ class TaskOrderResource(MethodView):
         return resp
 
 # POST用：保存（特定ユーザーのタスク並び順を保存する）
-@task_order_bp.route("/<int:user_id>")
-class TaskOrderResource(MethodView):
     @login_required
     @task_order_bp.arguments(TaskOrderInputSchema)
     @task_order_bp.response(200, MessageSchema)
     @with_common_error_responses(task_order_bp)
-    def post(self, data, user_id):
+    def post(self, data):
         """タスク並び順保存"""
-        resp = task_order_service.save_task_order(user_id, data)
+        resp = task_order_service.save_task_order(data.get('user_id'), data)
         return resp

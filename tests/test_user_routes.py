@@ -106,7 +106,7 @@ class TestUserRetrieval:
         client.post('/progress/users', json=payload)
         
         # メールアドレスでユーザー取得
-        res = client.get(f'/progress/users/email?email={email}')
+        res = client.get(f'/progress/users/email/{email}')
         assert res.status_code == 200
         responce_data = res.get_json()
         assert responce_data['email'] == email
@@ -124,7 +124,7 @@ class TestUserRetrieval:
         )
         client.post('/progress/users', json=payload)
         
-        res = client.get(f'/progress/users/wp?wp_user_id={wp_user_id}')
+        res = client.get(f'/progress/users/wp/{wp_user_id}')
         assert res.status_code == 200
         responce_data= res.get_json()
         assert responce_data['wp_user_id'] == wp_user_id

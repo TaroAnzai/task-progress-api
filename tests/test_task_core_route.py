@@ -219,7 +219,7 @@ class TestTaskList:
     
     def test_get_tasks_without_login(self, client):
         """ログインなしでタスク一覧取得（エラー）"""
-        client.post("/progress/sessions/current")  # ログアウト
+        client.delete("/progress/sessions/current")  # ログアウト
         
         res = client.get("/progress/tasks")
         assert res.status_code == 401

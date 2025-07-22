@@ -161,18 +161,18 @@ def superuser_login(client, superuser):
     })
     assert res.status_code == 200
     yield client
-    client.post("/progress/sessions/current")
+    client.delete("/progress/sessions/current")
 
 @pytest.fixture(scope="function")
 def login_as_user(client):
     """任意ユーザーでログインするためのヘルパー"""
     def _login(email, password):
-        client.post("/progress/sessions/current")  # 念のためログアウト
+        client.delete("/progress/sessions/current")  # 念のためログアウト
         res = client.post("/progress/sessions", json={"email": email, "password": password})
         assert res.status_code == 200
         return client
     yield _login
-    client.post("/progress/sessions/current")
+    client.delete("/progress/sessions/current")
 
 @pytest.fixture(scope="function")
 def system_admin_client(systemadmin_user, login_as_user):

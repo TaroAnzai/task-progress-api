@@ -132,7 +132,7 @@ class TestTaskAccessList:
     """アクセス情報取得のテスト"""
 
     def test_get_task_users(self, system_admin_client, setup_task_access):
-        res = system_admin_client.get(f"/progress/tasks/{setup_task_access}/users")
+        res = system_admin_client.get(f"/progress/tasks/{setup_task_access}/authorized_users")
         assert res.status_code == 200
         data = res.get_json()
         assert any(u for u in data if u["name"].startswith("TaskUser_"))

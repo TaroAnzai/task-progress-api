@@ -49,7 +49,7 @@ class TestTaskOrderRoutes:
     def test_save_task_order_and_get(self, order_user_client, order_user_tasks, order_user):
         user_id = order_user["id"]
         new_order = [t["id"] for t in order_user_tasks]
-        res = order_user_client.post(f"/progress/task_orders/{user_id}", json={"task_ids": new_order})
+        res = order_user_client.post(f"/progress/task_orders", json={"task_ids": new_order, "user_id": user_id})
         assert res.status_code == 200
         assert res.get_json()["message"] == "タスクの並び順を保存しました"
         res = order_user_client.get(f"/progress/task_orders?user_id={user_id}")
@@ -59,18 +59,18 @@ class TestTaskOrderRoutes:
 
     def test_save_task_order_invalid(self, order_user_client, order_user):
         user_id = order_user["id"]
-        res = order_user_client.post(f"/progress/task_orders/{user_id}", json={"task_ids": "invalid"})
+        res = order_user_client.post(f"/progress/task_orders", json={"task_ids": "invalid", "user_id": user_id})
         assert res.status_code == 422
         assert check_response_message("Not a valid list.", res.get_json(), "task_ids")
 
     def test_task_order_requires_login(self, client, order_user):
-        client.post("/progress/sessions/current")
+        client.delete("/progress/sessions/current")
         res = client.get(f"/progress/task_orders?user_id={order_user['id']}")
         assert res.status_code == 401
 
     def test_save_task_order_post_requires_login(self, client, order_user, order_user_tasks):
-        client.post("/progress/sessions/current")
+        client.delete("/progress/sessions/current")
         user_id = order_user["id"]
-        res = client.post(f"/progress/task_orders/{user_id}", json={"task_ids": [t["id"] for t in order_user_tasks]})
+        res = client.post(f"/progress/task_orders", json={"task_ids": [t["id"] for t in order_user_tasks], "user_id": user_id})
         assert res.status_code == 401
 

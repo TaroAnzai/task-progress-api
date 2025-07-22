@@ -130,7 +130,7 @@ def test_get_current_user_authenticated(client, system_related_users, role):
     assert login_response.status_code == 200
 
     # 現在のユーザー情報を取得
-    response = client.get("/progress/sessions/current_user")
+    response = client.get("/progress/sessions/current")
     assert response.status_code == 200
     data = response.get_json()
     assert data["email"] == user["email"]
@@ -141,10 +141,10 @@ def test_get_current_user_authenticated(client, system_related_users, role):
 def test_get_current_user_unauthenticated(client):
     """未認証状態での現在のユーザー情報取得テスト"""
     # 念のためログアウトしてセッションを初期化
-    client.post("/progress/sessions/current")
+    client.delete("/progress/sessions/current")
     """未認証状態での現在のユーザー情報取得テスト"""
 
-    response = client.get("/progress/sessions/current_user")
+    response = client.get("/progress/sessions/current")
     assert response.status_code == 401
     data = response.get_json()
     assert check_response_message("ログインが必要です", data)
@@ -162,18 +162,18 @@ def test_logout_authenticated(client, system_related_users, role):
     assert login_response.status_code == 200
 
     # ログアウト
-    response = client.post("/progress/sessions/current")
+    response = client.delete("/progress/sessions/current")
     assert response.status_code == 200
     data = response.get_json()
     assert "ログアウト" in data["message"]
 
     # ログアウト後は現在のユーザー情報が取得できない
-    response = client.get("/progress/sessions/current_user")
+    response = client.get("/progress/sessions/current")
     assert response.status_code == 401
 
 def test_logout_unauthenticated(client):
     """未認証状態でのログアウトテスト"""
-    response = client.post("/progress/sessions/current")
+    response = client.delete("/progress/sessions/current")
     assert response.status_code == 401
     data = response.get_json()
     assert check_response_message("ログインが必要", data)
@@ -191,17 +191,17 @@ def test_login_logout_flow(client,  system_related_users, role):
     assert login_response.status_code == 200
 
     # 2. 現在のユーザー情報取得
-    current_user_response = client.get("/progress/sessions/current_user")
+    current_user_response = client.get("/progress/sessions/current")
     assert current_user_response.status_code == 200
     user_data = current_user_response.get_json()
     assert user_data["email"] == user["email"]
 
     # 3. ログアウト
-    logout_response = client.post("/progress/sessions/current")
+    logout_response = client.delete("/progress/sessions/current")
     assert logout_response.status_code == 200
 
     # 4. ログアウト後は認証が必要なエンドポイントにアクセスできない
-    current_user_response = client.get("/progress/sessions/current_user")
+    current_user_response = client.get("/progress/sessions/current")
     assert current_user_response.status_code == 401
 
 @pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
@@ -231,7 +231,7 @@ def test_login_with_different_methods(client, created_wp_user_data2, wp_user_dat
     assert wp_response.status_code == 200
 
     # ログアウト
-    logout_response = client.post("/progress/sessions/current")
+    logout_response = client.delete("/progress/sessions/current")
     assert logout_response.status_code == 200
 
     # 今度はメールアドレスでログイン

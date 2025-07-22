@@ -58,3 +58,4 @@ class TaskOrderSchema(Schema):
 
 class TaskOrderInputSchema(Schema):
     task_ids = fields.List(fields.Int(), required=True)
+    user_id = fields.Int(required=True)

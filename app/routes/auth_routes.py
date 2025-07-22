@@ -48,12 +48,12 @@ class LogoutResource(MethodView):
     @login_required
     @auth_bp.response(200, MessageSchema)
     @with_common_error_responses(auth_bp)
-    def post(self):
+    def delete(self):
         """ログアウト"""
         message = auth_service.logout_user_session()
         return message
 
-@auth_bp.route("/current_user")
+@auth_bp.route("/current")
 class CurrentUserResource(MethodView):
     @login_required
     @auth_bp.response(200, UserSchema)

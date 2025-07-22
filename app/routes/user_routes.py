@@ -72,27 +72,23 @@ class UserResource(MethodView):
         result = user_service.delete_user(user_id, current_user)
         return result
 
-@user_bp.route("/email")
+@user_bp.route("/email/<string:email>")
 class UserByEmailResource(MethodView):
     @login_required
-    @user_bp.arguments(UserByEmailQuerySchema, location="query")
     @user_bp.response(200, UserSchema)
     @with_common_error_responses(user_bp)
-    def get(self, args):
+    def get(self, email):
         """メールアドレスでユーザー取得"""
-        email = args["email"]
         result = user_service.get_user_by_email(email, current_user)
         return result
 
-@user_bp.route("/wp")
+@user_bp.route("/wp/<int:wp_user_id>")
 class UserByWPIDResource(MethodView):
     @login_required
-    @user_bp.arguments(UserByWPIDQuerySchema, location="query")
     @user_bp.response(200, UserSchema)
     @with_common_error_responses(user_bp)
-    def get(self, args):
+    def get(self, wp_user_id):
         """WordPress IDでユーザー取得"""
-        wp_user_id = args["wp_user_id"]
         result = user_service.get_user_by_wp_user_id(wp_user_id, current_user)
         return result
 
