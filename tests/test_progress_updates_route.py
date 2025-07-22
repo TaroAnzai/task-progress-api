@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture(scope="function")
 def valid_status_id(client):
-    res = client.get("/progress/objectives/statuses")
+    res = client.get("/progress/tasks/statuses")
     assert res.status_code == 200
     return res.get_json()[0]["id"]
 

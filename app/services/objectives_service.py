@@ -147,14 +147,3 @@ def delete_objective(objective_id, user):
 
     return {'message': 'オブジェクティブを削除し、順序を更新しました'}
 
-
-def get_statuses():
-    statuses = Status.query.all()
-    result = []
-    for s in statuses:
-        try:
-            enum = StatusEnum(s.name)
-        except ValueError:
-            continue
-        result.append({'id': s.id, 'label': STATUS_LABELS[enum]})
-    return result

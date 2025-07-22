@@ -41,6 +41,4 @@ class ObjectiveResponseSchema(Schema):
 class ObjectivesListSchema(Schema):
     objectives = fields.List(fields.Nested(ObjectiveSchema))
 
-class StatusSchema(Schema):
-    id = fields.Int()
-    label = fields.Str()
+

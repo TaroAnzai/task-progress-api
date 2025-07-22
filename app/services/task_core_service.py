@@ -1,8 +1,8 @@
 from flask import current_app
 from datetime import datetime
-from app.models import db, Task, Objective, UserTaskOrder, TaskAccessUser, TaskAccessOrganization
+from app.models import db, Task, Objective, UserTaskOrder, TaskAccessUser, TaskAccessOrganization, Status
 from app.utils import check_task_access, is_valid_status_id
-from app.constants import TaskAccessLevelEnum
+from app.constants import TaskAccessLevelEnum, StatusEnum, STATUS_LABELS
 from app.service_errors import (
     ServiceValidationError,
     ServicePermissionError,
@@ -12,8 +12,13 @@ from app.service_errors import (
 from sqlalchemy import and_, or_
 
 
-def get_task_by_id(task_id):
-    return Task.query.filter_by(id=task_id, is_deleted=False).first()
+def get_task_by_id(task_id, user):
+    task =Task.query.filter_by(id=task_id, is_deleted=False).first()
+    if not task:
+        raise ServiceNotFoundError('タスクが見つかりません')
+    if not check_task_access(user, task, TaskAccessLevelEnum.VIEW):
+        raise ServicePermissionError('このタスクを閲覧する権限がありません')
+    return task
 
 
 def get_task_by_id_with_deleted(task_id):
@@ -52,7 +57,7 @@ def create_task(data, user):
 
 
 def update_task(task_id, data, user):
-    task = get_task_by_id(task_id)
+    task = get_task_by_id(task_id, user)
     if not task:
         raise ServiceNotFoundError('タスクが見つかりません')
     if not check_task_access(user, task, TaskAccessLevelEnum.FULL):
@@ -78,7 +83,7 @@ def update_task(task_id, data, user):
     return task
 
 def delete_task(task_id, user):
-    task = get_task_by_id(task_id)
+    task = get_task_by_id(task_id, user)
     if not task:
         raise ServiceNotFoundError('タスクが見つかりません')
     if not check_task_access(user, task, TaskAccessLevelEnum.FULL):
@@ -181,3 +186,14 @@ def update_objective_order(task_id, data):
 
     db.session.commit()
     return {'message': '表示順を更新しました'}
+
+def get_statuses():
+    statuses = Status.query.all()
+    result = []
+    for s in statuses:
+        try:
+            enum = StatusEnum(s.name)
+        except ValueError:
+            continue
+        result.append({'id': s.id, 'label': STATUS_LABELS[enum]})
+    return result

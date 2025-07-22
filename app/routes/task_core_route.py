@@ -14,6 +14,7 @@ from app.schemas import (
     TaskListResponseSchema,
     OrderSchema,
     MessageSchema,
+    StatusSchema,
     ErrorResponseSchema,
 )
 
@@ -61,6 +62,14 @@ class TaskResource(MethodView):
         """タスク削除"""
         task_core_service.delete_task(task_id, current_user)
         return {'message':'タスクを削除しました'}
+    
+    @login_required
+    @task_core_bp.response(200, TaskSchema)
+    @with_common_error_responses(task_core_bp)
+    def get(self, task_id):
+        """タスク取得"""
+        task = task_core_service.get_task_by_id(task_id, current_user)
+        return task
 
 @task_core_bp.route("/<int:task_id>/objectives/order")
 class ObjectiveOrderResource(MethodView):
@@ -73,3 +82,11 @@ class ObjectiveOrderResource(MethodView):
         resp = task_core_service.update_objective_order(task_id, data)
         return resp
 
+@task_core_bp.route('/statuses')
+class StatusListResource(MethodView):
+    @task_core_bp.response(200, StatusSchema(many=True))
+    @with_common_error_responses(task_core_bp)
+    def get(self):
+        """ステータス一覧"""
+        result = task_core_service.get_statuses()
+        return result

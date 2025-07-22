@@ -114,7 +114,31 @@ class TestTaskCreation:
         res = client.post("/progress/tasks", json=test_task_data)
         assert res.status_code == 401
 
+class TestTaskGet:
+    """タスク取得のテスト"""
 
+    def test_get_task_success(self, client, created_task):
+        """正常なタスク取得"""
+        res = client.get(f"/progress/tasks/{created_task['id']}")
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data['id'] == created_task['id']
+    
+    def test_get_nonexistent_task(self, system_admin_client):
+        client = system_admin_client
+        """存在しないタスクの取得（エラー）"""
+        res = client.get("/progress/tasks/999")
+        assert res.status_code == 404
+        
+        data = res.get_json()
+        assert check_response_message("タスクが見つかりません", data)
+    
+    def test_get_task_without_login(self, client, created_task):
+        """ログインなしでタスク取得（エラー）"""
+        client.delete("/progress/sessions/current")  # ログアウト
+        
+        res = client.get(f"/progress/tasks/{created_task['id']}")
+        assert res.status_code == 401
 class TestTaskUpdate:
     """タスク更新のテスト"""
     
@@ -134,7 +158,7 @@ class TestTaskUpdate:
     def test_update_task_status(self, client, created_task):
         """タスクのステータス更新"""
         # ステータス一覧を取得
-        status_res = client.get("/progress/objectives/statuses")
+        status_res = client.get("/progress/tasks/statuses")
         assert status_res.status_code == 200
         statuses = status_res.get_json()
         

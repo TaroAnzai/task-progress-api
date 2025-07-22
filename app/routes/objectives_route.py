@@ -12,7 +12,6 @@ from app.schemas import (
     ObjectiveUpdateSchema,
     ObjectiveResponseSchema,
     ObjectivesListSchema,
-    StatusSchema,
     MessageSchema,
     ErrorResponseSchema,
 )
@@ -72,12 +71,5 @@ class TaskObjectivesResource(MethodView):
         objectives = objectives_service.get_objectives_for_task(task_id, current_user)
         return objectives
 
-@objectives_bp.route('/statuses')
-class StatusListResource(MethodView):
-    @objectives_bp.response(200, StatusSchema(many=True))
-    @with_common_error_responses(objectives_bp)
-    def get(self):
-        """ステータス一覧"""
-        result = objectives_service.get_statuses()
-        return result
+
 
