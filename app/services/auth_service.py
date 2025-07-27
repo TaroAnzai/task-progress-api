@@ -42,6 +42,12 @@ def logout_user_session():
 
 def get_current_user_info():
     if not current_user.is_authenticated:
-        raise ServiceAuthenticationError('未認証です')
-
+        return User(
+            id=None,
+            wp_user_id=None,
+            name="",
+            email="",
+            is_superuser=False,
+            organization=None  # organizationは必ずNoneを明示
+        )
     return current_user
