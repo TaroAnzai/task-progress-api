@@ -221,3 +221,4 @@ migrations/versions/
 *.csv
 *.xlsx
 
+make_passrord_hash.py

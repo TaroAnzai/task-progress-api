@@ -55,7 +55,6 @@ class LogoutResource(MethodView):
 
 @auth_bp.route("/current")
 class CurrentUserResource(MethodView):
-    @login_required
     @auth_bp.response(200, UserSchema)
     @with_common_error_responses(auth_bp)
     def get(self):
