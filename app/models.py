@@ -38,7 +38,7 @@ class SoftDeleteMixin:
 class Company(db.Model, SoftDeleteMixin):
     __tablename__ = 'company'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False, unique=True)
+    name = db.Column(db.String(255), nullable=False) 
 
     organizations = db.relationship('Organization', backref='company', cascade="all, delete-orphan")
 

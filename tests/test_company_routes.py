@@ -76,3 +76,38 @@ def test_permanent_delete_company(superuser_login):
     # with_deleted でも見えない
     get_response = superuser_login.get(f"/progress/companies/with_deleted/{company_id}")
     assert get_response.status_code == 404
+def test_company_duplicate_and_restore_logic(superuser_login):
+    # 1. 会社名を登録
+    create_resp = superuser_login.post("/progress/companies", json={"name": "LogicTest"})
+    assert create_resp.status_code == 201
+    company_id_1 = create_resp.json["id"]
+
+    # 2. 会社を論理削除
+    delete_resp = superuser_login.delete(f"/progress/companies/{company_id_1}")
+    assert delete_resp.status_code == 200
+
+    # 3. 同じ会社名を登録（成功）
+    create_resp_2 = superuser_login.post("/progress/companies", json={"name": "LogicTest"})
+    assert create_resp_2.status_code == 201
+    company_id_2 = create_resp_2.json["id"]
+
+    # 4. 先に論理削除した会社を復活（不成功：同名の現役会社が存在するため）
+    restore_resp_fail = superuser_login.post(f"/progress/companies/{company_id_1}/restore")
+    data = restore_resp_fail.get_json()
+    assert restore_resp_fail.status_code == 400
+    message = data['errors']['json'].get("message", "")
+    print(message)
+    assert any("already exists" in m for m in message)
+
+    # 5. 同じ会社を論理削除（company_id_2を削除）
+    delete_resp_2 = superuser_login.delete(f"/progress/companies/{company_id_2}")
+    assert delete_resp_2.status_code == 200
+
+    # 6. 先に論理削除した会社を復活（成功）
+    restore_resp_success = superuser_login.post(f"/progress/companies/{company_id_1}/restore")
+    assert restore_resp_success.status_code == 200
+
+    # 復活後、通常取得できる
+    restored_get = superuser_login.get(f"/progress/companies/{company_id_1}")
+    assert restored_get.status_code == 200
+    assert restored_get.json["name"] == "LogicTest"

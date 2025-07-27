@@ -8,10 +8,12 @@ from app.service_errors import (
 )
 
 # Create
-def create_company(name):
+def create_company(name: str):
+    # 論理削除されていないデータとのみ重複チェック
     existing = Company.query.filter_by(name=name, is_deleted=False).first()
     if existing:
         raise ServiceValidationError("Company with the same name already exists.")
+
     company = Company(name=name)
     db.session.add(company)
     try:
@@ -19,6 +21,7 @@ def create_company(name):
     except IntegrityError:
         db.session.rollback()
         raise ServiceValidationError("Failed to create company due to DB constraint.")
+
     return company
 
 
@@ -73,14 +76,24 @@ def delete_company(company_id):
 
 
 # 論理削除から復元
-def restore_company(company_id):
+def restore_company(company_id: int):
     company = get_company_by_id_with_deleted(company_id)
     if not company:
         raise ServiceNotFoundError("Company not found")
 
+    # 同じ名前で論理削除されていない別レコードが存在する場合、復元禁止
+    duplicate = Company.query.filter(
+        Company.name == company.name,
+        Company.is_deleted == False,
+        Company.id != company.id
+    ).first()
+    if duplicate:
+        raise ServiceValidationError("Cannot restore company: same name already exists.")
+
     company.restore()
     db.session.commit()
     return True
+
 
 
 # （任意）物理削除

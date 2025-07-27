@@ -139,15 +139,19 @@ def test_get_current_user_authenticated(client, system_related_users, role):
     assert "organization_name" in data
 
 def test_get_current_user_unauthenticated(client):
-    """未認証状態での現在のユーザー情報取得テスト"""
+    """未認証状態での現在のユーザー情報取得テスト ログインしていなくても取得は可能だがだが
+    からデータが返る"""
     # 念のためログアウトしてセッションを初期化
     client.delete("/progress/sessions/current")
     """未認証状態での現在のユーザー情報取得テスト"""
 
     response = client.get("/progress/sessions/current")
-    assert response.status_code == 401
+    assert response.status_code == 200
     data = response.get_json()
-    assert check_response_message("ログインが必要です", data)
+    assert data["email"] == ''
+    assert data["name"] == ''
+    assert data["organization_id"] == None
+    assert data["organization_name"] == None
 
 @pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
 def test_logout_authenticated(client, system_related_users, role):
@@ -169,7 +173,12 @@ def test_logout_authenticated(client, system_related_users, role):
 
     # ログアウト後は現在のユーザー情報が取得できない
     response = client.get("/progress/sessions/current")
-    assert response.status_code == 401
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["email"] == ''
+    assert data["name"] == ''
+    assert data["organization_id"] == None
+    assert data["organization_name"] == None
 
 def test_logout_unauthenticated(client):
     """未認証状態でのログアウトテスト"""
@@ -202,7 +211,12 @@ def test_login_logout_flow(client,  system_related_users, role):
 
     # 4. ログアウト後は認証が必要なエンドポイントにアクセスできない
     current_user_response = client.get("/progress/sessions/current")
-    assert current_user_response.status_code == 401
+    assert current_user_response.status_code == 200
+    data = current_user_response.get_json()
+    assert data["email"] == ''
+    assert data["name"] == ''
+    assert data["organization_id"] == None
+    assert data["organization_name"] == None
 
 @pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
 def test_multiple_login_attempts(client,  system_related_users, role):
