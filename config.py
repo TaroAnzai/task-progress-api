@@ -7,6 +7,11 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-secret')
 
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*').split(',')
+    CORS_SUPPORTS_CREDENTIALS = True
+    SESSION_COOKIE_SAMESITE=os.getenv("SESSION_COOKIE_SAMESITE", "None")
+    SESSION_COOKIE_SECURE= os.getenv("SESSION_COOKIE_SECURE") == 'True'
+
+    
 
         # OpenAPI/Swagger 設定
     API_TITLE = os.getenv("API_TITLE", "Task Progress API")
