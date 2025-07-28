@@ -55,8 +55,8 @@ class OrganizationListResource(MethodView):
     @with_common_error_responses(organization_bp)
     def get(self, args):
         """組織一覧取得(会社指定)"""
-        resolved_company_id = resolve_company_id(args["company_id"])
-        orgs =organization_service.get_organizations(current_user, resolved_company_id)
+        company_id = args["company_id"]
+        orgs =organization_service.get_organizations(current_user, company_id)
         return orgs
 
 
@@ -98,8 +98,7 @@ class OrganizationTreeResource(MethodView):
     def get(self,args):
         """組織ツリー取得"""
         company_id = args["company_id"]
-        resolved_company_id = resolve_company_id(company_id)
-        tree = organization_service.get_organization_tree(current_user, resolved_company_id)
+        tree = organization_service.get_organization_tree(current_user, company_id)
         return tree
 
 @organization_bp.route("<int:parent_id>/children")

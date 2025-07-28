@@ -47,6 +47,9 @@ def test_get_organizations(login_as_user, test_company, root_org, system_related
     data = res.get_json()
     assert isinstance(data, list)
     assert any(org['name'] == root_org['name'] for org in data)
+    # company_idがない場合はエラー
+    res = client.get('/progress/organizations')
+    assert res.status_code == 422
 
 def test_get_organization_by_id(login_as_user, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
@@ -102,6 +105,10 @@ def test_get_organization_tree(login_as_user, root_org, system_related_users):
     res = client.get(f'/progress/organizations/tree?company_id={root_org['company_id']}')
     assert res.status_code == 200
     assert isinstance(res.get_json(), list)
+    #company_idない場合はエラー
+    res = client.get(f'/progress/organizations/tree')
+    assert res.status_code == 422
+
 
 def test_get_children(login_as_user, root_org, system_related_users):
     system_admin = system_related_users['system_admin']
