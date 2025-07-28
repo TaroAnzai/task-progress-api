@@ -35,3 +35,6 @@ class OrganizationTreeSchema(Schema):
     parent_id = fields.Int(allow_none=True)
     level = fields.Int()
     children = fields.List(fields.Nested(lambda: OrganizationTreeSchema()))
+
+class OrganizationQuerySchema(Schema):
+    company_id = fields.Int(required=False, metadata={"description": "会社ID"})

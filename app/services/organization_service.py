@@ -1,4 +1,5 @@
 from app.models import db, Organization
+from flask import jsonify, g
 from sqlalchemy.exc import IntegrityError
 from app.service_errors import (
     ServiceValidationError,
@@ -6,6 +7,8 @@ from app.service_errors import (
     ServicePermissionError,
     ServiceNotFoundError,
 )
+from app.utils import check_org_access, get_descendant_organizations
+from app.constants import OrgRoleEnum
 
 
 def can_create_root_organization(company_id):
@@ -59,11 +62,23 @@ def get_organization_by_id(org_id):
     return org if org else None
 
 
-def get_organizations(company_id=None):
+def get_organizations(current_user, company_id=None):
+    """
+    ユーザーの権限に基づいてアクセス可能な組織一覧を返す
+    """
+
+    # ベースクエリ作成
     query = Organization.query
     if company_id:
         query = query.filter_by(company_id=company_id)
-    return [org for org in query.all()]
+    
+    # 全組織データ取得
+    all_orgs = query.all()
+    
+    # ユーザーがアクセス可能な組織をフィルタリング
+    accessible_orgs = _filter_organizations_by_access(current_user, all_orgs)
+    
+    return accessible_orgs
 
 
 def update_organization(org_id, name=None, parent_id=None):
@@ -102,18 +117,28 @@ def delete_organization(org_id):
     return True, "削除成功"
 
 
-def get_organization_tree(company_id=None):
+def get_organization_tree(current_user, company_id=None):
     """
     Organization.to_dict() を使ってツリー構造を再帰的に構築する
+    ユーザーの権限と所属組織に基づいてフィルタリングを行う
     """
+    # ベースクエリ作成
     orgs = Organization.query
     if company_id:
         orgs = orgs.filter_by(company_id=company_id)
-    orgs = orgs.all()
-
+    
+    # 全組織データ取得
+    all_orgs = orgs.all()
+    
+    # ユーザーがアクセス可能な組織をフィルタリング
+    accessible_orgs = _filter_organizations_by_access(current_user, all_orgs)
+    
+    if not accessible_orgs:
+        return jsonify([])
+    
     # 各 org を dict に変換し、children を追加
     org_map = {}
-    for org in orgs:
+    for org in accessible_orgs:
         org_dict = org.to_dict()
         org_dict['children'] = []
         org_map[org.id] = org_dict
@@ -127,7 +152,7 @@ def get_organization_tree(company_id=None):
         else:
             root_nodes.append(org)
 
-    return root_nodes
+    return jsonify(root_nodes)
 
 
 def get_children(parent_id):
@@ -136,3 +161,92 @@ def get_children(parent_id):
     """
     children = Organization.query.filter_by(parent_id=parent_id).all()
     return children
+
+
+def _filter_organizations_by_access(user, all_orgs):
+    """
+    ユーザーの権限に基づいてアクセス可能な組織をフィルタリング
+    """
+    accessible_orgs = []
+    
+    # スーパーユーザーは全組織にアクセス可能
+    if getattr(user, 'is_superuser', False):
+        return all_orgs
+    
+    # SYSTEM_ADMIN権限をチェック
+    system_admin_companies = _get_system_admin_companies(user)
+    if system_admin_companies:
+        # SYSTEM_ADMINの場合、同一会社の全組織にアクセス可能
+        for org in all_orgs:
+            if org.company_id in system_admin_companies:
+                accessible_orgs.append(org)
+        return accessible_orgs
+    
+    # ORG_ADMIN権限をチェック
+    org_admin_orgs = _get_org_admin_accessible_orgs(user, all_orgs)
+    if org_admin_orgs:
+        accessible_orgs.extend(org_admin_orgs)
+    
+    # MEMBER権限：自組織のみ
+    if user.organization_id:
+        member_accessible = _get_member_accessible_orgs(user, all_orgs)
+        accessible_orgs.extend(member_accessible)
+    
+    # 重複を除去
+    return list(set(accessible_orgs))
+
+def _get_system_admin_companies(user):
+    """
+    SYSTEM_ADMIN権限を持つ会社のIDリストを取得
+    """
+    company_ids = set()
+    
+    for scope in user.access_scopes:
+        if scope.role == OrgRoleEnum.SYSTEM_ADMIN:
+            # scope.organizationまたはscope.organization_idから会社IDを取得
+            if scope.organization:
+                company_ids.add(scope.organization.company_id)
+            elif scope.organization_id:
+                org = Organization.query.get(scope.organization_id)
+                if org:
+                    company_ids.add(org.company_id)
+    
+    return list(company_ids)
+
+def _get_org_admin_accessible_orgs(user, all_orgs):
+    """
+    ORG_ADMIN権限でアクセス可能な組織リストを取得
+    """
+    accessible_orgs = []
+    
+    for scope in user.access_scopes:
+        if scope.role == OrgRoleEnum.ORG_ADMIN:
+            # 管理対象の組織IDを取得
+            base_org_id = scope.organization_id or user.organization_id
+            if base_org_id:
+                # 自組織＋下位組織を取得
+                descendant_orgs = get_descendant_organizations(base_org_id, all_orgs)
+                accessible_orgs.extend(descendant_orgs)
+    
+    return accessible_orgs
+
+def _get_member_accessible_orgs(user, all_orgs):
+    """
+    MEMBER権限でアクセス可能な組織リストを取得
+    """
+    accessible_orgs = []
+    
+    # 明示的にMEMBER権限が付与されている組織
+    for scope in user.access_scopes:
+        if scope.role == OrgRoleEnum.MEMBER and scope.organization_id:
+            org = next((o for o in all_orgs if o.id == scope.organization_id), None)
+            if org:
+                accessible_orgs.append(org)
+    
+    # 所属組織（デフォルトのMEMBER権限）
+    if user.organization_id:
+        user_org = next((o for o in all_orgs if o.id == user.organization_id), None)
+        if user_org:
+            accessible_orgs.append(user_org)
+    
+    return accessible_orgs

@@ -13,6 +13,7 @@ from app.schemas import (
     OrganizationUpdateSchema,
     OrganizationTreeSchema,
     MessageSchema,
+    OrganizationQuerySchema,
     ErrorResponseSchema,
 )
 
@@ -49,12 +50,13 @@ class OrganizationListResource(MethodView):
         return org
 
     @login_required
+    @organization_bp.arguments(OrganizationQuerySchema, location="query")
     @organization_bp.response(200, OrganizationSchema(many=True))
     @with_common_error_responses(organization_bp)
-    def get(self):
-        """組織一覧取得"""
-        resolved_company_id = resolve_company_id(request.args.get("company_id", type=int))
-        orgs =organization_service.get_organizations(resolved_company_id)
+    def get(self, args):
+        """組織一覧取得(会社指定)"""
+        resolved_company_id = resolve_company_id(args["company_id"])
+        orgs =organization_service.get_organizations(current_user, resolved_company_id)
         return orgs
 
 
@@ -90,14 +92,14 @@ class OrganizationResource(MethodView):
 @organization_bp.route("/tree")
 class OrganizationTreeResource(MethodView):
     @login_required
-    #@organization_bp.response(200, fields.List(fields.Nested(OrganizationSchema)))
+    @organization_bp.arguments(OrganizationQuerySchema, location="query")
     @organization_bp.response(200, OrganizationTreeSchema(many=True))
     @with_common_error_responses(organization_bp)
-    def get(self):
+    def get(self,args):
         """組織ツリー取得"""
-        company_id = request.args.get("company_id", type=int)
+        company_id = args["company_id"]
         resolved_company_id = resolve_company_id(company_id)
-        tree = organization_service.get_organization_tree(resolved_company_id)
+        tree = organization_service.get_organization_tree(current_user, resolved_company_id)
         return tree
 
 @organization_bp.route("<int:parent_id>/children")
