@@ -105,7 +105,7 @@ def get_task_access_users(task_id):
         "id": u.id,
         "name": u.name,
         "email": u.email,
-        "access_level": u.access_level.value
+        "access_level": u.access_level
     } for u in entries]
 
     return result
@@ -120,7 +120,7 @@ def get_task_access_organizations(task_id):
     result = [{
         "organization_id": o.id,
         "name": o.name,
-        "access_level": o.access_level.value
+        "access_level": o.access_level
     } for o in entries]
 
     return result

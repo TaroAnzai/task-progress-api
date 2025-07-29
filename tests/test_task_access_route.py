@@ -33,7 +33,7 @@ def setup_task_access(system_admin_client, task_access_users, created_task_for_a
         {"user_id": task_access_users[level]["id"], "access_level": level}
         for level in ["view", "edit", "full", "owner"]
     ]
-    org_access = []  # 必要に応じて組織アクセスも設定可能
+    org_access = [] # 必要に応じて組織アクセスも設定可能
 
     res = system_admin_client.put(
         f"/progress/tasks/{task_id}/access_levels",
@@ -41,6 +41,34 @@ def setup_task_access(system_admin_client, task_access_users, created_task_for_a
     )
     assert res.status_code == 200
     return task_id
+
+@pytest.fixture(scope="function")
+def setup_task_access_for_get_levels(system_admin_client, task_access_users):
+    """タスクに対して各ユーザーのアクセス権限を設定し、タスクIDを返す"""
+    """アクセス権限テスト用にタスクを作成"""
+    res = system_admin_client.post("/progress/tasks", json={
+        "title": "Test Task",
+        "description": "This is a test task",
+        "due_date": "2024-12-31"
+    })
+    assert res.status_code == 201
+    task_id = res.get_json()["task"]["id"]
+
+    user_access = [
+        {"user_id": task_access_users[level]["id"], "access_level": level}
+        for level in ["view", "edit", "full", "owner"]
+    ]
+    org_access = [
+        {"organization_id": task_access_users[level]["organization_id"], "access_level": level}
+        for level in ["view", "edit", "full", "owner"]
+    ] 
+    res = system_admin_client.put(
+        f"/progress/tasks/{task_id}/access_levels",
+        json={"user_access": user_access, "organization_access": org_access}
+    )
+    assert res.status_code == 200
+    return task_id
+
 
 
 class TestTaskAccessLevelUpdate:
@@ -137,13 +165,34 @@ class TestTaskAccessList:
         data = res.get_json()
         assert any(u for u in data if u["name"].startswith("TaskUser_"))
 
-    def test_get_task_access_users(self, system_admin_client, setup_task_access):
-        res = system_admin_client.get(f"/progress/tasks/{setup_task_access}/access_users")
+    def test_get_task_access_users(self, system_admin_client, setup_task_access_for_get_levels):
+
+
+
+        res = system_admin_client.get(f"/progress/tasks/{setup_task_access_for_get_levels}/access_users")
         assert res.status_code == 200
         data = res.get_json()
-        assert all("access_level" in u for u in data)
+        assert isinstance(data, list)
+        assert len(data) > 0
 
-    def test_get_task_access_organizations(self, system_admin_client, setup_task_access):
-        res = system_admin_client.get(f"/progress/tasks/{setup_task_access}/access_organizations")
+        for item in data:
+            assert "access_level" in item
+            # Enumに変換可能な文字列であることを確認
+            try:
+                enum_value = TaskAccessLevelEnum(item["access_level"])
+            except ValueError:
+                assert False, f"Invalid access_level value: {item['access_level']}"
+
+    def test_get_task_access_organizations(self, system_admin_client, setup_task_access_for_get_levels):
+        res = system_admin_client.get(f"/progress/tasks/{setup_task_access_for_get_levels}/access_organizations")
         assert res.status_code == 200
-        assert isinstance(res.get_json(), list)
+        data = res.get_json()
+        assert isinstance(data, list)
+        assert len(data) > 0
+        for item in data:
+            assert "access_level" in item
+            # Enumに変換可能な文字列であることを確認
+            try:
+                enum_value = TaskAccessLevelEnum(item["access_level"])
+            except ValueError:
+                assert False, f"Invalid access_level value: {item['access_level']}"

@@ -1,6 +1,8 @@
 from marshmallow import Schema, fields
+from marshmallow_enum import EnumField
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from app.models import User
+from app.constants import OrgRoleEnum
 
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -23,7 +25,7 @@ class UserInputSchema(SQLAlchemyAutoSchema):
     name = fields.Str(required=True)
     email = fields.Str(required=True)
     password = fields.Str(required=True, load_only=True)
-    role = fields.Str()
+    role = EnumField(OrgRoleEnum, by_value=True)
     organization_id=fields.Int(required=True)
 
 class UserUpdateSchema(SQLAlchemyAutoSchema):
@@ -37,7 +39,7 @@ class UserUpdateSchema(SQLAlchemyAutoSchema):
     name = fields.Str(required=False)
     email = fields.Email(required=False)
     password = fields.Str(required=False, load_only=True)
-    role = fields.Str(required=False)
+    role = EnumField(OrgRoleEnum, by_value=True, required=False)
     organization_id=fields.Int(required=False)
 
 class UserCreateResponseSchema(Schema):
