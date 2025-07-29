@@ -7,7 +7,7 @@ class OrganizationSchema(SQLAlchemyAutoSchema):
         model = Organization
         load_instance = True
         include_fk = True
-
+    id = fields.Integer(required=True, dump_only=True, allow_none=False)
     level = fields.Int()
 
 class OrganizationInputSchema(SQLAlchemyAutoSchema):
@@ -27,11 +27,11 @@ class OrganizationUpdateSchema(Schema):
     parent_id = fields.Int(allow_none=True)
 
 class OrganizationTreeSchema(Schema):
-    id = fields.Int()
-    name = fields.Str()
-    org_code = fields.Str()
-    company_id = fields.Int()
-    company_name = fields.Str()
+    id = fields.Int(required=True)
+    name = fields.Str(required=True)
+    org_code = fields.Str(required=True)
+    company_id = fields.Int(required=True)
+    company_name = fields.Str(required=True)
     parent_id = fields.Int(allow_none=True)
     level = fields.Int()
     children = fields.List(fields.Nested(lambda: OrganizationTreeSchema()))

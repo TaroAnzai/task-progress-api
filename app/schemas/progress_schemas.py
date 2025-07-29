@@ -6,7 +6,7 @@ class ProgressInputSchema(Schema):
     report_date = fields.Str(required=True)
 
 class ProgressSchema(Schema):
-    id = fields.Int()
+    id = fields.Integer(required=True, dump_only=True, allow_none=False)
     status = fields.Str()
     detail = fields.Str()
     report_date = fields.Str()

@@ -3,7 +3,7 @@ from marshmallow_enum import EnumField
 from app.constants import TaskAccessLevelEnum
 
 class AccessUserSchema(Schema):
-    id = fields.Int()
+    id = fields.Integer(required=True, dump_only=True, allow_none=False)
     name = fields.Str()
     email = fields.Str()
     access_level = EnumField(TaskAccessLevelEnum, by_value=True,

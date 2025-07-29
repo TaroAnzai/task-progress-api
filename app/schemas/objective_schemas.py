@@ -9,6 +9,8 @@ class ObjectiveSchema(SQLAlchemyAutoSchema):
         include_fk = True
         exclude = ("is_deleted",)
 
+    id = fields.Integer(required=True, dump_only=True, allow_none=False)
+
 class ObjectiveInputSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Objective

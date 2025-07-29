@@ -14,7 +14,7 @@ class TaskSchema(SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         exclude = ("is_deleted",)
-
+    id = fields.Integer(required=True, dump_only=True, allow_none=False)
     user_access_level = fields.Str()
     status = EnumField(StatusEnum, by_value=True, dump_only=True)
     label = fields.Method("get_status_label", dump_only=True)

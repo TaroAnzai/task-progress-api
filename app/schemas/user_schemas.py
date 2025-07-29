@@ -10,6 +10,7 @@ class UserSchema(SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         exclude = ("password_hash",)
+    id = fields.Integer(required=True, dump_only=True, allow_none=False)
     organization_name = fields.Method("get_org_name", dump_only=True, allow_none=True, metadata={"type": "string"})
 
     def get_org_name(self, obj):
