@@ -57,7 +57,8 @@ class TaskUpdateSchema(SQLAlchemyAutoSchema):
     title = fields.Str(required=False)
     description = fields.Str()
     due_date = fields.Str()
-    status = EnumField(StatusEnum, by_value=True)
+    status = EnumField(StatusEnum, by_value=True,
+                       metadata={"type": "string", "enum": [e.value for e in StatusEnum]})
     display_order = fields.Int()
 
     @validates_schema
