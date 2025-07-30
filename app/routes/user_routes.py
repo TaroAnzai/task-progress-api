@@ -13,6 +13,7 @@ from app.schemas import (
     UserUpdateSchema,
     UserCreateResponseSchema,
     MessageSchema,
+    UserWithScopesSchema,
     UserByEmailQuerySchema,
     UserByWPIDQuerySchema,
 )
@@ -36,7 +37,7 @@ class UsersResource(MethodView):
         return result
 
     @login_required
-    @user_bp.response(200, UserSchema(many=True))
+    @user_bp.response(200, UserWithScopesSchema(many=True))
     @with_common_error_responses(user_bp)
     def get(self):
         """ユーザー一覧取得"""
@@ -47,7 +48,7 @@ class UsersResource(MethodView):
 @user_bp.route("/<int:user_id>")
 class UserResource(MethodView):
     @login_required
-    @user_bp.response(200, UserSchema)
+    @user_bp.response(200, UserWithScopesSchema)
     @with_common_error_responses(user_bp)
     def get(self, user_id):
         """ユーザー取得"""
@@ -74,7 +75,7 @@ class UserResource(MethodView):
 @user_bp.route("/email/<string:email>")
 class UserByEmailResource(MethodView):
     @login_required
-    @user_bp.response(200, UserSchema)
+    @user_bp.response(200, UserWithScopesSchema)
     @with_common_error_responses(user_bp)
     def get(self, email):
         """メールアドレスでユーザー取得"""
@@ -84,7 +85,7 @@ class UserByEmailResource(MethodView):
 @user_bp.route("/wp/<int:wp_user_id>")
 class UserByWPIDResource(MethodView):
     @login_required
-    @user_bp.response(200, UserSchema)
+    @user_bp.response(200, UserWithScopesSchema)
     @with_common_error_responses(user_bp)
     def get(self, wp_user_id):
         """WordPress IDでユーザー取得"""
@@ -94,7 +95,7 @@ class UserByWPIDResource(MethodView):
 @user_bp.route("/by-org-tree/<int:org_id>")
 class UsersByOrgTreeResource(MethodView):
     @login_required
-    @user_bp.response(200, UserSchema(many=True))
+    @user_bp.response(200, UserWithScopesSchema(many=True))
     @with_common_error_responses(user_bp)
     def get(self, org_id):
         """組織ツリーでユーザー一覧取得"""

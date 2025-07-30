@@ -86,6 +86,8 @@ class User(db.Model, UserMixin):
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     organization = db.relationship('Organization', backref='users')
 
+    access_scopes = db.relationship('AccessScope', lazy='select', overlaps='user')
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -117,8 +119,8 @@ class AccessScope(db.Model):
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=False)
     role = db.Column(db.Enum(OrgRoleEnum), nullable=False)
 
-    user = db.relationship('User', backref='access_scopes')
-    organization = db.relationship('Organization', backref='access_scopes')
+    user = db.relationship('User', overlaps='access_scopes')
+    organization = db.relationship('Organization', overlaps='access_scopes')
 
     def to_dict(self):
         return {

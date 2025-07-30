@@ -3,6 +3,7 @@ from marshmallow_enum import EnumField
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from app.models import User
 from app.constants import OrgRoleEnum
+from app.schemas.access_scope_schemas import AccessScopeSchema
 
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -16,6 +17,9 @@ class UserSchema(SQLAlchemyAutoSchema):
 
     def get_org_name(self, obj):
         return obj.organization.name if obj.organization else None
+    
+class UserWithScopesSchema(UserSchema):
+    access_scopes = fields.Nested(AccessScopeSchema, many=True, dump_only=True, allow_none=True)
 
 class UserInputSchema(SQLAlchemyAutoSchema):
     class Meta:
