@@ -40,9 +40,8 @@ class UsersResource(MethodView):
     @with_common_error_responses(user_bp)
     def get(self):
         """ユーザー一覧取得"""
-        user_id = request.args.get("user_id", type=int)
-        org_id = request.args.get("organization_id", type=int)
-        result = user_service.get_users(user_id, org_id)
+        user_id = current_user.id
+        result = user_service.get_users(user_id)
         return result
 
 @user_bp.route("/<int:user_id>")

@@ -3,7 +3,7 @@
 from flask import current_app
 import re
 from sqlalchemy.orm import joinedload
-from ..models import db, User, Organization, AccessScope
+from ..models import db, User, Organization, AccessScope, Company
 from ..utils import (
     get_all_child_organizations,
     get_descendant_organizations,
@@ -15,8 +15,8 @@ from ..service_errors import (
     ServicePermissionError,
     ServiceNotFoundError,
 )
-
 import re
+from app.constants import OrgRoleEnum  # enum 定義を利用
 
 def is_valid_email(email):
     # シンプルな正規表現（RFC全準拠ではなく一般的な形式の検出）
@@ -151,6 +151,30 @@ def get_users(requesting_user_id, organization_id=None):
     if not requester:
         return []
 
+    # スーパーユーザーなら全ユーザーを返す
+    if requester.is_superuser:
+        return User.query.options(joinedload(User.organization)).all()
+
+    # system-admin ロールのチェック
+    system_admin_scope = next(
+        (s for s in requester.access_scopes if s.role == OrgRoleEnum.SYSTEM_ADMIN), None
+    )
+    if system_admin_scope:
+        company_id = system_admin_scope.organization.company_id
+        orgs = (
+            Organization.query
+            .filter_by(company_id=company_id)
+            .all()
+        )
+        org_ids = [org.id for org in orgs]
+        return (
+            User.query
+            .options(joinedload(User.organization))
+            .filter(User.organization_id.in_(org_ids))
+            .all()
+        )
+
+    # 通常の組織管理者（ORG_ADMIN）なら所属組織＋子組織のみ
     if not check_org_access(requester, organization_id or requester.organization_id, OrgRoleEnum.ORG_ADMIN):
         raise ServicePermissionError('権限がありません')
 
@@ -171,6 +195,7 @@ def get_users(requesting_user_id, organization_id=None):
     )
 
     return users
+
 
 def get_user_by_email(email, current_user):
     user = User.query.filter_by(email=email).first()
