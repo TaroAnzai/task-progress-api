@@ -11,7 +11,8 @@ class UserSchema(SQLAlchemyAutoSchema):
         include_fk = True
         exclude = ("password_hash",)
     id = fields.Integer(required=True, dump_only=True, allow_none=False)
-    organization_name = fields.Method("get_org_name", dump_only=True, allow_none=True, metadata={"type": "string"})
+    organization_id = fields.Integer(required=True, allow_none=False)
+    organization_name = fields.Method("get_org_name", required=True, dump_only=True, allow_none=False, metadata={"type": "string"})
 
     def get_org_name(self, obj):
         return obj.organization.name if obj.organization else None
@@ -49,7 +50,7 @@ class UserUpdateSchema(SQLAlchemyAutoSchema):
 
 class UserCreateResponseSchema(Schema):
     message = fields.Str()
-    user = fields.Nested(UserSchema)
+    user = fields.Nested(UserSchema, required=True, allow_none=False)
 
 class LoginResponseSchema(Schema):
     message = fields.Str()

@@ -89,8 +89,11 @@ def update_organization(org_id, name=None, parent_id=None):
     if name:
         org.name = name
 
+    if parent_id == 0:
+        parent_id = None
+
     if parent_id != org.parent_id:
-        if parent_id:
+        if parent_id is not None:
             parent = db.session.get(Organization, parent_id)
             if not parent:
                 raise ServiceNotFoundError("指定された親組織が存在しません。")
