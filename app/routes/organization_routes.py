@@ -54,8 +54,8 @@ class OrganizationListResource(MethodView):
     @organization_bp.response(200, OrganizationSchema(many=True))
     @with_common_error_responses(organization_bp)
     def get(self, args):
-        """組織一覧取得(会社指定)"""
-        company_id = args["company_id"]
+        """組織一覧取得(会社指定が無い場合は所属会社、または全組織)"""
+        company_id = args.get("company_id")
         orgs =organization_service.get_organizations(current_user, company_id)
         return orgs
 
@@ -96,8 +96,8 @@ class OrganizationTreeResource(MethodView):
     @organization_bp.response(200, OrganizationTreeSchema(many=True))
     @with_common_error_responses(organization_bp)
     def get(self,args):
-        """組織ツリー取得"""
-        company_id = args["company_id"]
+        """組織ツリー取得(会社指定が無い場合は所属会社、または全組織)"""
+        company_id = args.get("company_id")
         tree = organization_service.get_organization_tree(current_user, company_id)
         return tree
 
