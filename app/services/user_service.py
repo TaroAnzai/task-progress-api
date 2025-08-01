@@ -18,6 +18,21 @@ from ..service_errors import (
 import re
 from app.constants import OrgRoleEnum  # enum 定義を利用
 
+def validate_unique_email_within_company(email: str, company_id: int, user_id: int = None):
+
+
+    query = db.session.query(User).join(Organization).filter(
+        Organization.company_id == company_id,
+        User.email == email
+    )
+
+    if user_id:
+        query = query.filter(User.id != user_id)  # ← 自分自身を除外
+
+    if query.first():
+        raise ServiceValidationError("同じ会社内に同じメールアドレスのユーザーが既に存在します。")
+
+
 def is_valid_email(email):
     # シンプルな正規表現（RFC全準拠ではなく一般的な形式の検出）
     return re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email)
@@ -46,13 +61,13 @@ def create_user(data, current_user):
 
     if wp_user_id and User.query.filter_by(wp_user_id=wp_user_id).first():
         raise ServiceValidationError('この wp_user_id は既に使用されています')
-
-    if User.query.filter_by(email=email).first():
-        raise ServiceValidationError('このメールアドレスは既に使用されています')
-
+    
     org = db.session.get(Organization, org_id)
     if not org:
         raise ServiceValidationError('指定された組織IDが存在しません')
+
+    company_id = org.company_id
+    validate_unique_email_within_company(email, company_id)
 
     # --- ユーザー登録 ---
     user = User(
@@ -102,29 +117,29 @@ def update_user(user_id, data, current_user):
         user.name = data['name']
 
     if 'wp_user_id' in data:
-        # 重複チェック（必要なら追加）
         if User.query.filter(User.wp_user_id == data['wp_user_id'], User.id != user_id).first():
             raise ServiceValidationError('この wp_user_id は既に使用されています')
         user.wp_user_id = data['wp_user_id']
 
+    # organization_id の変更後の値を取得しておく
+    new_org_id = data.get('organization_id', user.organization_id)
+    new_org = db.session.get(Organization, new_org_id)
+    if not new_org:
+        raise ServiceValidationError('指定された組織IDが存在しません')
+
     if 'email' in data:
-        # メール重複チェック
-        if User.query.filter(User.email == data['email'], User.id != user_id).first():
-            raise ServiceValidationError('このメールアドレスは既に使用されています')
+        validate_unique_email_within_company(data['email'], new_org.id, user_id)
         user.email = data['email']
 
     if 'organization_id' in data:
-        org = db.session.get(Organization, data['organization_id'])
-        if not org:
-            raise ServiceValidationError('指定された組織IDが存在しません')
-        user.organization_id = data['organization_id']
+        user.organization_id = new_org_id
 
     if 'password' in data and data['password']:
-        # 空文字は無視、パスワードがあれば更新
         user.set_password(data['password'])
 
     db.session.commit()
     return user
+
 
 
 def delete_user(user_id, current_user):
@@ -210,7 +225,7 @@ def get_user_by_email(email, current_user):
 
     if not check_org_access(current_user, user.organization_id, OrgRoleEnum.ORG_ADMIN):
         raise ServicePermissionError('権限がありません')
-
+    print(f"get_user_by_email: {email}, user: {vars(user)}" )
     return user
 
 def get_user_by_wp_user_id(wp_user_id, current_user):

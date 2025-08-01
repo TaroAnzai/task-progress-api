@@ -1,13 +1,16 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import event, Column, Boolean, UniqueConstraint
+from sqlalchemy import event, Column, Boolean, UniqueConstraint, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.hybrid import hybrid_property
 from datetime import datetime, UTC
 import sqlite3
 from app import db
 from .constants import OrgRoleEnum, TaskAccessLevelEnum
+
+
 
 
 # SQLite: enforce foreign key constraint
@@ -79,7 +82,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     wp_user_id = db.Column(db.Integer, unique=True, nullable=True)
     name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(255), unique=True, nullable=False)
+    email = db.Column(db.String(255), unique=False, nullable=False)
     password_hash = db.Column(db.String(255), nullable=True)
     is_superuser = db.Column(db.Boolean, default=False)
 
@@ -88,6 +91,14 @@ class User(db.Model, UserMixin):
 
     access_scopes = db.relationship('AccessScope', lazy='select', overlaps='user')
 
+    @hybrid_property
+    def company_id(self):
+        return self.organization.company_id if self.organization else None
+
+    @company_id.expression
+    def company_id(cls):
+        return select(Organization.company_id).where(Organization.id == cls.organization_id).scalar_subquery()
+    
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 

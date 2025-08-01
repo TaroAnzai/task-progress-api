@@ -67,6 +67,15 @@ def test_company(client, superuser):
     assert res.status_code == 201
     return res.get_json()
 
+@pytest.fixture(scope="session")
+def test_other_company(client, superuser):
+    # スーパーユーザーでログイン
+    res = client.post("/progress/sessions", json={"email": superuser["email"], "password": superuser["password"]})
+    assert res.status_code == 200
+    res = client.post("/progress/companies", json={"name": "OtherCompany"})
+    assert res.status_code == 201
+    return res.get_json()
+
 # 3. テスト用ルート組織の登録（エンドポイント）
 @pytest.fixture(scope="session")
 def root_org(client, test_company):
@@ -74,6 +83,15 @@ def root_org(client, test_company):
         "name": "RootOrg",
         "org_code": "root",
         "company_id": test_company["id"]
+    })
+    assert res.status_code == 201
+    return res.get_json()
+@pytest.fixture(scope="session")
+def other_root_org(client, test_other_company):
+    res = client.post("/progress/organizations", json={
+        "name": "OtherRootOrg",
+        "org_code": "otherRoot",
+        "company_id": test_other_company["id"]
     })
     assert res.status_code == 201
     return res.get_json()

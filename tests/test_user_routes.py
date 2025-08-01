@@ -12,6 +12,7 @@ VALID_USER_DATA = {
     'role': 'member'
 }
 
+
 # --- Helper Functions ---
 def create_user_payload(org_id: int, **overrides) -> Dict[str, Any]:
     """ユーザー作成用のペイロードを生成"""
@@ -41,6 +42,8 @@ def sample_user(system_related_users, login_as_user, root_org_data):
     )
     res = client.post('/progress/users', json=payload)
     return assert_user_created(res)
+
+
 
 # --- Test Classes ---
 class TestUserCreation:
@@ -84,7 +87,7 @@ class TestUserCreation:
         )
         res = client.post('/progress/users', json=second_payload)
         assert res.status_code == 400
-        assert check_response_message('既に使用されています', res.get_json())
+        assert check_response_message('同じ会社内に同じメールアドレスのユーザーが既に存在します。', res.get_json())
 
 class TestUserRetrieval:
     """ユーザー取得に関するテスト"""
@@ -213,3 +216,75 @@ class TestUserCreationParameterized:
         res = client.post('/progress/users', json=payload)
         assert res.status_code == 400
         assert check_response_message('無効なメールアドレス形式です', res.get_json())
+    
+
+
+EXPECTED_USER_KEYS = {
+    "id",
+    "wp_user_id",
+    "name",
+    "email",
+    "is_superuser",
+    "organization_id",
+    "organization_name",
+    "company_id",
+    "access_scopes"
+}
+
+def test_user_fields_in_response(login_as_user, root_org, system_related_users):
+    system_admin = system_related_users['system_admin']
+    client = login_as_user(system_admin['email'], system_admin['password'])
+
+    # ユーザー作成
+    email = 'data_item_lookup@example.com'
+    payload = create_user_payload(root_org['id'], email=email)
+    res = client.post('/progress/users', json=payload)
+    assert res.status_code == 201
+
+    # ユーザー取得
+    res = client.get(f'/progress/users/email/{email}')
+    assert res.status_code == 200
+
+    user_data = res.json
+    assert isinstance(user_data, dict), "Response is not a dictionary"
+
+    missing_keys = EXPECTED_USER_KEYS - user_data.keys()
+    extra_keys = user_data.keys() - EXPECTED_USER_KEYS
+
+    assert not missing_keys, f"Missing keys in user data: {missing_keys}"
+    assert not extra_keys, f"Unexpected extra keys in user data: {extra_keys}"
+
+def test_create_user_duplicate_email_other_company(superuser_login, root_org,other_root_org):
+    client = superuser_login
+    """別の会社で重複メールアドレスでユーザー作成成功"""
+    # まず最初のユーザーを作成
+    first_payload = create_user_payload(
+        root_org['id'],
+        name='FirstUser',
+        email='OtherCompany@example.com'
+    )
+    first_res = client.post('/progress/users', json=first_payload)
+    assert_user_created(first_res)
+    
+    # 同じメールアドレスで2回目の登録を試行
+    second_payload = create_user_payload(
+        root_org['id'],
+        name='SecondUser',
+        email='OtherCompany@example.com'  # 重複メール
+    )
+    res = client.post('/progress/users', json=second_payload)
+    assert res.status_code == 400
+    assert check_response_message('同じ会社内に同じメールアドレスのユーザーが既に存在します。', res.get_json())
+
+    # 同じメールアドレスで別の会社で登録を試行
+    second_payload = create_user_payload(
+        other_root_org['id'],
+        name='SecondUser',
+        email='OtherCompany@example.com'  # 重複メール
+    )
+    res = client.post('/progress/users', json=second_payload)
+    assert res.status_code == 201
+
+
+
+
