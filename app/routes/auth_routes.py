@@ -8,6 +8,7 @@ from app.schemas import (
     LoginSchema,
     WPLoginSchema,
     UserSchema,
+    UserWithScopesSchema,
     UserCreateResponseSchema,
     LoginResponseSchema,
     MessageSchema,
@@ -55,7 +56,7 @@ class LogoutResource(MethodView):
 
 @auth_bp.route("/current")
 class CurrentUserResource(MethodView):
-    @auth_bp.response(200, UserSchema)
+    @auth_bp.response(200, UserWithScopesSchema)
     @with_common_error_responses(auth_bp)
     def get(self):
         """現在のユーザー取得"""
