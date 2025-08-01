@@ -146,14 +146,20 @@ def delete_user(user_id, current_user):
         current_app.logger.error(f"delete_user error: {e}")
         raise ServiceValidationError(f'削除に失敗しました: {e}')
 
-def get_users(requesting_user_id, organization_id=None):
+def get_users(user, query_args):
+    requesting_user_id = user.id
+    company_id = query_args.get('company_id')
+    organization_id = user.organization_id
     requester = db.session.get(User, requesting_user_id)
     if not requester:
         return []
 
     # スーパーユーザーなら全ユーザーを返す
     if requester.is_superuser:
-        return User.query.options(joinedload(User.organization)).all()
+        query = db.session.query(User).options(joinedload(User.organization))
+        if company_id:
+            query = query.join(Organization).filter(Organization.company_id == company_id)
+        return query.all()
 
     # system-admin ロールのチェック
     system_admin_scope = next(

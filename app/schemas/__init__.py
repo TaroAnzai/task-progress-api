@@ -22,6 +22,7 @@ from .user_schemas import (
     WPLoginSchema,
     UserByEmailQuerySchema,
     UserByWPIDQuerySchema,
+    UserQuerySchema,
 )
 from .company_schemas import (
     CompanySchema,
@@ -58,7 +59,7 @@ __all__ = [
     'OrderSchema', 'TaskOrderSchema', 'TaskOrderInputSchema',
     'TaskOrderQuerySchema',
     'UserSchema', 'UserWithScopesSchema', 'UserInputSchema', 'UserUpdateSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
-    'UserByEmailQuerySchema', 'UserByWPIDQuerySchema',
+    'UserByEmailQuerySchema', 'UserByWPIDQuerySchema','UserQuerySchema',
     'CompanySchema', 'CompanyInputSchema','DeleteCompanyQuerySchema', 'CompanyQuerySchema',
     'OrganizationSchema', 'OrganizationInputSchema', 'OrganizationUpdateSchema','OrganizationTreeSchema','OrganizationQuerySchema'
     'ObjectiveSchema', 'ObjectiveInputSchema', 'ObjectiveResponseSchema', 'ObjectivesListSchema',

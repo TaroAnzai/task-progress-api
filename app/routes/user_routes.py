@@ -14,6 +14,7 @@ from app.schemas import (
     UserCreateResponseSchema,
     MessageSchema,
     UserWithScopesSchema,
+    UserQuerySchema,
     UserByEmailQuerySchema,
     UserByWPIDQuerySchema,
 )
@@ -37,12 +38,12 @@ class UsersResource(MethodView):
         return result
 
     @login_required
+    @user_bp.arguments(UserQuerySchema, location="query")
     @user_bp.response(200, UserWithScopesSchema(many=True))
     @with_common_error_responses(user_bp)
-    def get(self):
+    def get(self,query_args):
         """ユーザー一覧取得"""
-        user_id = current_user.id
-        result = user_service.get_users(user_id)
+        result = user_service.get_users(current_user, query_args)
         return result
 
 @user_bp.route("/<int:user_id>")

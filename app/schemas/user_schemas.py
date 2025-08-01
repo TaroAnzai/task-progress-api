@@ -78,3 +78,6 @@ class UserByWPIDQuerySchema(Schema):
         required=True,
         metadata={"description": "取得対象のユーザーのWordPressユーザーID"}
     )
+
+class UserQuerySchema(Schema):
+    company_id = fields.Int(required=False, metadata={"description": "対象の会社ID（スーパーユーザーのみ）"})
