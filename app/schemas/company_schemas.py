@@ -8,6 +8,7 @@ class CompanySchema(SQLAlchemyAutoSchema):
         include_fk = True
         load_instance = True
         exclude = ("is_deleted",)
+    id = fields.Integer(required=True, dump_only=True, allow_none=False)
 
 class CompanyInputSchema(SQLAlchemyAutoSchema):
     class Meta:

@@ -50,9 +50,9 @@ class CompanyResource(MethodView):
     @with_common_error_responses(company_bp)
     def get(self, args, company_id):
         """会社詳細取得"""
-        require_superuser(current_user)
         with_delete = args['with_deleted']
         if with_delete:
+            require_superuser(current_user)
             company = company_service.get_company_by_id_with_deleted(company_id)
         else:
             company = company_service.get_company_by_id(company_id)

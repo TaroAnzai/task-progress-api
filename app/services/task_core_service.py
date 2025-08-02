@@ -9,7 +9,7 @@ from app.service_errors import (
     ServiceAuthenticationError,
     ServiceNotFoundError,
 )
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, case
 
 
 def get_task_by_id(task_id, user):
@@ -146,9 +146,10 @@ def get_tasks(user):
             )
         )
         .order_by(
-            UserTaskOrder.display_order.is_(None),
-            UserTaskOrder.display_order.asc().nullslast(),
-            Task.display_order.asc().nullslast()
+            case((UserTaskOrder.display_order == None, 1), else_=0),  # NULLは後ろへ
+            UserTaskOrder.display_order.asc(),
+            case((Task.display_order == None, 1), else_=0),
+            Task.display_order.asc()
         )
         .all()
     )
