@@ -8,12 +8,21 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from datetime import datetime, UTC
 import sqlite3
 from app import db
-from .constants import OrgRoleEnum, TaskAccessLevelEnum
+from .constants import OrgRoleEnum, TaskAccessLevelEnum, StatusEnum
 
+class IntEnumType(db.TypeDecorator):
+    impl = db.Integer
 
+    def __init__(self, enumtype, *args, **kwargs):
+        self._enumtype = enumtype
+        super().__init__(*args, **kwargs)
 
+    def process_bind_param(self, value, dialect):
+        return value.value if isinstance(value, self._enumtype) else value
 
-# SQLite: enforce foreign key constraint
+    def process_result_value(self, value, dialect):
+        return self._enumtype(value) if value is not None else None
+
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     if isinstance(dbapi_connection, sqlite3.Connection):
@@ -21,35 +30,24 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
 
-
-# 論理削除対応
 class SoftDeleteMixin:
-    """Mixin providing an ``is_deleted`` flag and helper methods."""
-
     is_deleted = Column(Boolean, default=False, nullable=False, server_default='0')
 
     def soft_delete(self):
-        """Mark the instance as logically deleted."""
         self.is_deleted = True
 
     def restore(self):
-        """Restore a logically deleted instance."""
         self.is_deleted = False
 
-
-# 会社
 class Company(db.Model, SoftDeleteMixin):
     __tablename__ = 'company'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False) 
-
     organizations = db.relationship('Organization', backref='company', cascade="all, delete-orphan")
 
     def to_dict(self):
         return {'id': self.id, 'name': self.name}
 
-
-# 組織
 class Organization(db.Model):
     __tablename__ = 'organization'
     __table_args__ = (
@@ -75,8 +73,6 @@ class Organization(db.Model):
             'level': self.level
         }
 
-
-# ユーザー
 class User(db.Model, UserMixin):
     __table_args__ = {'sqlite_autoincrement': True}
     id = db.Column(db.Integer, primary_key=True)
@@ -85,10 +81,8 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(255), unique=False, nullable=False)
     password_hash = db.Column(db.String(255), nullable=True)
     is_superuser = db.Column(db.Boolean, default=False)
-
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=True)
     organization = db.relationship('Organization', backref='users')
-
     access_scopes = db.relationship('AccessScope', lazy='select', overlaps='user')
 
     @hybrid_property
@@ -98,7 +92,7 @@ class User(db.Model, UserMixin):
     @company_id.expression
     def company_id(cls):
         return select(Organization.company_id).where(Organization.id == cls.organization_id).scalar_subquery()
-    
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -113,23 +107,18 @@ class User(db.Model, UserMixin):
             'email': self.email,
             'is_superuser': self.is_superuser,
         }
-
         if include_org:
             user_dict.update({
                 'organization_id': self.organization_id,
                 'organization_name': self.organization.name if self.organization else None
             })
-
         return user_dict
 
-
-# アクセススコープ
 class AccessScope(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=False)
-    role = db.Column(db.Enum(OrgRoleEnum), nullable=False)
-
+    role = db.Column(IntEnumType(OrgRoleEnum), nullable=False)
     user = db.relationship('User', overlaps='access_scopes')
     organization = db.relationship('Organization', overlaps='access_scopes')
 
@@ -138,16 +127,14 @@ class AccessScope(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'organization_id': self.organization_id,
-            'role': self.role.value
+            'role': self.role.name
         }
 
-
-# タスク
 class Task(db.Model, SoftDeleteMixin):
     __tablename__ = 'task'
     __table_args__ = {'sqlite_autoincrement': True}
     id = db.Column(db.Integer, primary_key=True)
-    status_id = db.Column(db.Integer, db.ForeignKey('status.id'), nullable=True)
+    status = db.Column(IntEnumType(StatusEnum), nullable=False, default=StatusEnum.UNDEFINED)
     title = db.Column(db.String(255))
     description = db.Column(db.Text)
     due_date = db.Column(db.Date)
@@ -156,13 +143,12 @@ class Task(db.Model, SoftDeleteMixin):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC)) 
     display_order = db.Column(db.Integer, nullable=True)
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'))
-
     creator = db.relationship('User', foreign_keys=[created_by], backref='created_tasks')
 
     def to_dict(self):
         return {
             'id': self.id,
-            'status_id': self.status_id,
+            'status': self.status.name,
             'title': self.title,
             'description': self.description,
             'due_date': self.due_date.isoformat() if self.due_date else None,
@@ -173,8 +159,6 @@ class Task(db.Model, SoftDeleteMixin):
             'organization_id': self.organization_id
         }
 
-
-# オブジェクティブ
 class Objective(db.Model, SoftDeleteMixin):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'))
@@ -182,7 +166,7 @@ class Objective(db.Model, SoftDeleteMixin):
     due_date = db.Column(db.Date)
     assigned_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     display_order = db.Column(db.Integer, default=0)
-    status_id = db.Column(db.Integer, db.ForeignKey('status.id'), default=1)
+    status = db.Column(IntEnumType(StatusEnum), default=StatusEnum.NOT_STARTED)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
@@ -193,38 +177,15 @@ class Objective(db.Model, SoftDeleteMixin):
             'title': self.title,
             'due_date': self.due_date.isoformat() if self.due_date else None,
             'assigned_user_id': self.assigned_user_id,
-            'status_id': self.status_id,
+            'status': self.status.name,
             'created_by': self.created_by,
             'created_at': self.created_at.isoformat()
         }
 
-
-# ステータス
-class Status(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
-
-    def to_dict(self):
-        return {'id': self.id, 'name': self.name}
-
-
-@event.listens_for(Status.__table__, "after_create")
-def insert_default_statuses(*args, **kwargs):
-    """Seed default statuses after the table is created."""
-    from .constants import StatusEnum
-
-    db.session.add_all(
-        [Status(id=idx, name=status_enum.value)
-         for idx, status_enum in enumerate(StatusEnum, start=1)]
-    )
-    db.session.commit()
-
-
-# 進捗
 class ProgressUpdate(db.Model, SoftDeleteMixin):
     id = db.Column(db.Integer, primary_key=True)
     objective_id = db.Column(db.Integer, db.ForeignKey('objective.id'))
-    status_id = db.Column(db.Integer, db.ForeignKey('status.id'))
+    status = db.Column(IntEnumType(StatusEnum), nullable=False)
     detail = db.Column(db.Text)
     report_date = db.Column(db.Date)
     updated_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -234,22 +195,19 @@ class ProgressUpdate(db.Model, SoftDeleteMixin):
         return {
             'id': self.id,
             'objective_id': self.objective_id,
-            'status_id': self.status_id,
+            'status': self.status.name,
             'detail': self.detail,
             'report_date': self.report_date.isoformat() if self.report_date else None,
             'updated_by': self.updated_by,
             'created_at': self.created_at.isoformat()
         }
 
-
-# タスクアクセス（ユーザー単位）
 class TaskAccessUser(db.Model):
     __tablename__ = 'task_access_user'
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
-    access_level = db.Column(db.Enum(TaskAccessLevelEnum), nullable=False, default=TaskAccessLevelEnum.VIEW)
-
+    access_level = db.Column(IntEnumType(TaskAccessLevelEnum), nullable=False, default=TaskAccessLevelEnum.VIEW)
     task = db.relationship('Task', backref='user_access')
     user = db.relationship('User', backref='task_access')
 
@@ -258,18 +216,15 @@ class TaskAccessUser(db.Model):
             'id': self.id,
             'task_id': self.task_id,
             'user_id': self.user_id,
-            'access_level': self.access_level.value
+            'access_level': self.access_level.name
         }
 
-
-# タスクアクセス（組織単位）
 class TaskAccessOrganization(db.Model):
     __tablename__ = 'task_access_organization'
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=False)
-    access_level = db.Column(db.Enum(TaskAccessLevelEnum), nullable=False, default=TaskAccessLevelEnum.VIEW)
-
+    access_level = db.Column(IntEnumType(TaskAccessLevelEnum), nullable=False, default=TaskAccessLevelEnum.VIEW)
     task = db.relationship('Task', backref='org_access')
     organization = db.relationship('Organization', backref='task_access')
 
@@ -278,21 +233,17 @@ class TaskAccessOrganization(db.Model):
             'id': self.id,
             'task_id': self.task_id,
             'organization_id': self.organization_id,
-            'access_level': self.access_level.value
+            'access_level': self.access_level.name
         }
 
-
-# タスク並び順
 class UserTaskOrder(db.Model):
     __tablename__ = 'user_task_order'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
     display_order = db.Column(db.Integer, nullable=False)
-
     task = db.relationship('Task', backref='user_orders')
     user = db.relationship('User', backref='task_orders')
-
     __table_args__ = (
         db.UniqueConstraint('user_id', 'task_id', name='uix_user_task'),
     )

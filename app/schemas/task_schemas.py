@@ -17,7 +17,7 @@ class TaskSchema(SQLAlchemyAutoSchema):
         exclude = ("is_deleted",)
     id = fields.Integer(required=True, dump_only=True, allow_none=False)
     user_access_level = fields.Str()
-    status = EnumField(StatusEnum, by_value=True, dump_only=True ,
+    status = EnumField(StatusEnum, by_value=False, dump_only=True ,
                        metadata={"type": "string", "enum": [e.value for e in StatusEnum]})
 
     label = fields.Method("get_status_label", dump_only=True)
@@ -39,7 +39,7 @@ class TaskInputSchema(SQLAlchemyAutoSchema):
     title = fields.Str(required=True)
     description = fields.Str(load_default="")
     due_date = fields.Str(load_default=None)
-    status = EnumField(StatusEnum, by_value=True, load_default=StatusEnum.NOT_STARTED,
+    status = EnumField(StatusEnum, by_value=False, load_default=StatusEnum.NOT_STARTED,
                        metadata={"type": "string", "enum": [e.value for e in StatusEnum]})
     display_order = fields.Int(load_default=None)
 
@@ -61,7 +61,7 @@ class TaskUpdateSchema(SQLAlchemyAutoSchema):
     title = fields.Str(required=False)
     description = fields.Str()
     due_date = fields.Str()
-    status = EnumField(StatusEnum, by_value=True,
+    status = EnumField(StatusEnum, by_value=False,
                        metadata={"type": "string", "enum": [e.value for e in StatusEnum]})
     display_order = fields.Int()
 

@@ -10,8 +10,8 @@ class AccessScopeSchema(SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
 
-    role = EnumField(OrgRoleEnum, by_value=True, required=True,
-                    metadata={"type": "string", "enum": [e.value for e in OrgRoleEnum]}
+    role = EnumField(OrgRoleEnum, required=True,
+        metadata={"type": "string", "enum": [e.name for e in OrgRoleEnum]}
     )
 
 class AccessScopeInputSchema(SQLAlchemyAutoSchema):
@@ -22,6 +22,6 @@ class AccessScopeInputSchema(SQLAlchemyAutoSchema):
         exclude = ("id",)
 
     organization_id = fields.Int(required=True)
-    role = EnumField(OrgRoleEnum, by_value=True, required=True,
-                    metadata={"type": "string", "enum": [e.value for e in OrgRoleEnum]}
+    role = EnumField(OrgRoleEnum, required=True,
+        metadata={"type": "string", "enum": [e.name for e in OrgRoleEnum]}
     )

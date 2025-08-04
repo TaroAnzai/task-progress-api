@@ -1,42 +1,40 @@
-from enum import Enum
+from enum import IntEnum
 
-class OrgRoleEnum(str, Enum):
-    MEMBER = "member"
-    ORG_ADMIN = "org_admin"
-    SYSTEM_ADMIN = "system_admin"
+class OrgRoleEnum(IntEnum):
+    MEMBER = 1
+    ORG_ADMIN = 2
+    SYSTEM_ADMIN = 3
 
-ORG_ROLE_PRIORITY = {
-    OrgRoleEnum.MEMBER: 1,
-    OrgRoleEnum.ORG_ADMIN: 2,
-    OrgRoleEnum.SYSTEM_ADMIN: 3,
+ORG_ROLE_LABELS = {
+    OrgRoleEnum.MEMBER: "member",
+    OrgRoleEnum.ORG_ADMIN: "org_admin",
+    OrgRoleEnum.SYSTEM_ADMIN: "system_admin",
 }
 
-class TaskAccessLevelEnum(str, Enum):
-    VIEW = "view"
-    EDIT = "edit"
-    FULL = "full"
-    OWNER = "owner"
+class TaskAccessLevelEnum(IntEnum):
+    VIEW = 1
+    EDIT = 2
+    FULL = 3
+    OWNER = 4
 
-TASK_ACCESS_PRIORITY = {
-    TaskAccessLevelEnum.VIEW: 1,
-    TaskAccessLevelEnum.EDIT: 2,
-    TaskAccessLevelEnum.FULL: 3,
-    TaskAccessLevelEnum.OWNER: 4,
+TASK_ACCESS_LABELS = {
+    TaskAccessLevelEnum.VIEW: "view",
+    TaskAccessLevelEnum.EDIT: "edit",
+    TaskAccessLevelEnum.FULL: "full",
+    TaskAccessLevelEnum.OWNER: "owner",
 }
 
-
-class StatusEnum(str, Enum):
-    UNDEFINED = "undefined"
-    NOT_STARTED = "not_started"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    SAVED = "saved"
-
+class StatusEnum(IntEnum):
+    UNDEFINED = 0
+    NOT_STARTED = 1
+    IN_PROGRESS = 2
+    COMPLETED = 3
+    SAVED = 4
 
 STATUS_LABELS = {
-    StatusEnum.UNDEFINED: "未定義",
-    StatusEnum.NOT_STARTED: "未着手",
-    StatusEnum.IN_PROGRESS: "進行中",
-    StatusEnum.COMPLETED: "完了",
-    StatusEnum.SAVED: "保存",
+    StatusEnum.UNDEFINED: "undefined",
+    StatusEnum.NOT_STARTED: "not_started",
+    StatusEnum.IN_PROGRESS: "in_progress",
+    StatusEnum.COMPLETED: "completed",
+    StatusEnum.SAVED: "saved",
 }
