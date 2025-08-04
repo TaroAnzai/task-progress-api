@@ -10,7 +10,7 @@ def wp_user_data(root_org):
         'name': 'ValidUser',
         'email': 'wp_valid@example.com',
         'password': 'password123',
-        'role': 'member',
+        'role': 'MEMBER',
         'wp_user_id':1234,
         'organization_id':root_org['id']
     }
@@ -20,7 +20,7 @@ def wp_user_data2(root_org):
         'name': 'ValidUser',
         'email': 'valid2@example.com',
         'password': 'password123',
-        'role': 'member',
+        'role': 'MEMBER',
         'wp_user_id':2222,
         'organization_id':root_org['id']
     }

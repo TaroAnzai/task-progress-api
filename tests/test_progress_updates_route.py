@@ -5,7 +5,7 @@ import pytest
 def valid_status_id(client):
     res = client.get("/progress/tasks/statuses")
     assert res.status_code == 200
-    return res.get_json()[0]["enum"]
+    return res.get_json()[0]["enum"].upper()
 
 
 @pytest.fixture(scope="function")

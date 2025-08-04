@@ -12,7 +12,7 @@ def order_user(system_admin_client, root_org):
         "email": email,
         "password": "testpass",
         "organization_id": root_org["id"],
-        "role": "member"
+        "role": "MEMBER"
     }
     res = system_admin_client.post("/progress/users", json=payload)
     assert res.status_code == 201
