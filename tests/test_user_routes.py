@@ -9,7 +9,7 @@ VALID_USER_DATA = {
     'name': 'ValidUser',
     'email': 'valid@example.com',
     'password': 'password123',
-    'role': 'member'
+    'role': 'MEMBER'
 }
 
 

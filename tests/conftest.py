@@ -107,7 +107,7 @@ def systemadmin_user(client, root_org, superuser):
         "email": "systemadmin@example.com",
         "password": "adminpass",
         "organization_id": root_org["id"],
-        "role": "system_admin"
+        "role": "SYSTEM_ADMIN"
     })
     assert res.status_code == 201
     return res.get_json()
@@ -125,7 +125,7 @@ def task_access_users(client, systemadmin_user, root_org):
             "email": f"taskuser_{level}@example.com",
             "password": "testpass",
             "organization_id": root_org["id"],
-            "role": "member"  # 組織上の役割はmemberでもOK、タスクアクセスレベルは別テーブルで管理
+            "role": "MEMBER"  # 組織上の役割はmemberでもOK、タスクアクセスレベルは別テーブルで管理
         })
         assert res.status_code == 201
         user_data = res.get_json()
@@ -134,7 +134,7 @@ def task_access_users(client, systemadmin_user, root_org):
         client.post(
             "/progress/tasks/1/access_levels",
             json={
-                "user_access": [{"user_id": user_data['user']["id"], "access_level": level}],
+                "user_access": [{"user_id": user_data['user']["id"], "access_level": level.upper()}],
                 "organization_access": [],
             },
         )
@@ -160,7 +160,7 @@ def system_related_users(client, root_org):
             "email": f"systemuser_{role}@example.com",
             "password": "testpass",
             "organization_id": root_org["id"],
-            "role": role
+            "role": role.upper()
         })
         assert res.status_code == 201
         user_data = res.get_json().get("user", res.get_json())  # userキーがあれば抽出
@@ -205,7 +205,7 @@ def setup_task_access(system_admin_client, task_access_users):
         task_id = task["id"]
 
         user_access = [
-            {"user_id": task_access_users[level]["id"], "access_level": level}
+            {"user_id": task_access_users[level]["id"], "access_level": level.upper()}
             for level in ["view", "edit", "full", "owner"]
         ]
         org_access = []  # 必要に応じて組織アクセスも設定可能

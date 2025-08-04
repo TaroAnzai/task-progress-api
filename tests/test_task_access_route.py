@@ -30,7 +30,7 @@ def setup_task_access(system_admin_client, task_access_users, created_task_for_a
     task_id = created_task_for_access['id']
 
     user_access = [
-        {"user_id": task_access_users[level]["id"], "access_level": level}
+        {"user_id": task_access_users[level]["id"], "access_level": level.upper()}
         for level in ["view", "edit", "full", "owner"]
     ]
     org_access = [] # 必要に応じて組織アクセスも設定可能
@@ -55,13 +55,13 @@ def setup_task_access_for_get_levels(system_admin_client, task_access_users):
     task_id = res.get_json()["task"]["id"]
 
     user_access = [
-        {"user_id": task_access_users[level]["id"], "access_level": level}
+        {"user_id": task_access_users[level]["id"], "access_level": level.upper()}
         for level in ["view", "edit", "full", "owner"]
     ]
     org_access = [
-        {"organization_id": task_access_users[level]["organization_id"], "access_level": level}
+        {"organization_id": task_access_users[level]["organization_id"], "access_level": level.upper()}
         for level in ["view", "edit", "full", "owner"]
-    ] 
+    ]
     res = system_admin_client.put(
         f"/progress/tasks/{task_id}/access_levels",
         json={"user_access": user_access, "organization_access": org_access}
@@ -80,7 +80,7 @@ class TestTaskAccessLevelUpdate:
         res = system_admin_client.put(
             f"/progress/tasks/{task_id}/access_levels",
             json={
-                "user_access": [{"user_id": user["id"], "access_level": "full"}],
+                "user_access": [{"user_id": user["id"], "access_level": "FULL"}],
                 "organization_access": []
             }
         )
@@ -179,8 +179,8 @@ class TestTaskAccessList:
             assert "access_level" in item
             # Enumに変換可能な文字列であることを確認
             try:
-                enum_value = TaskAccessLevelEnum(item["access_level"])
-            except ValueError:
+                enum_value = TaskAccessLevelEnum[item["access_level"]]
+            except KeyError:
                 assert False, f"Invalid access_level value: {item['access_level']}"
 
     def test_get_task_access_organizations(self, system_admin_client, setup_task_access_for_get_levels):
@@ -193,6 +193,6 @@ class TestTaskAccessList:
             assert "access_level" in item
             # Enumに変換可能な文字列であることを確認
             try:
-                enum_value = TaskAccessLevelEnum(item["access_level"])
-            except ValueError:
+                enum_value = TaskAccessLevelEnum[item["access_level"]]
+            except KeyError:
                 assert False, f"Invalid access_level value: {item['access_level']}"

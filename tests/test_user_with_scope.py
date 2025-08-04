@@ -7,7 +7,7 @@ VALID_USER_DATA = {
     'name': 'ValidUser',
     'email': 'valid@example.com',
     'password': 'password123',
-    'role': 'member'
+    'role': 'MEMBER'
 }
 
 # --- Helper Functions ---
@@ -142,7 +142,7 @@ def test_user_with_scopes_role_enum_values(system_admin_client):
     data = response.get_json()
     
     # 有効なロール値を定義
-    valid_roles = ['system_admin', 'org_admin', 'member']  # OrgRoleEnumの値に合わせて調整
+    valid_roles = ['SYSTEM_ADMIN', 'ORG_ADMIN', 'MEMBER']  # OrgRoleEnumの値に合わせて調整
     
     if len(data) > 0:
         for user in data:
