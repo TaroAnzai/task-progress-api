@@ -171,19 +171,6 @@ def require_superuser(user):
         abort(403, description="This action requires superuser privileges.")
 
 
-def is_valid_status_id(status_id) -> bool:
-    """Return True if status_id exists and is defined in ``StatusEnum``."""
-    from app.models import Status
-    from .constants import StatusEnum
-
-    status = db.session.get(Status, status_id)
-    if not status:
-        return False
-    try:
-        StatusEnum(status.name)
-        return True
-    except ValueError:
-        return False
 
 
 

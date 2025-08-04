@@ -28,6 +28,7 @@ class ProgressListResource(MethodView):
     @with_common_error_responses(progress_bp)
     def post(self, data, objective_id):
         """進捗追加"""
+        print('route func')
         message = progress_updates_service.add_progress(objective_id, data, current_user)
         return message
 

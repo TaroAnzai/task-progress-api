@@ -1,7 +1,7 @@
 # app/services/progress_updates_service.py
 from datetime import datetime
 from app.models import db, Objective, Task, ProgressUpdate, Status, User
-from app.utils import check_task_access, is_valid_status_id
+from app.utils import check_task_access
 from app.constants import TaskAccessLevelEnum, StatusEnum, STATUS_LABELS
 from app.service_errors import (
     ServiceValidationError,
@@ -35,6 +35,7 @@ def get_progress_by_id_with_deleted(progress_id):
 
 
 def add_progress(objective_id, data, user):
+    print("add progress",data)
     objective = get_objective_by_id(objective_id)
     if not objective:
         raise ServiceNotFoundError('オブジェクティブが見つかりません')
@@ -48,12 +49,9 @@ def add_progress(objective_id, data, user):
     ):
         raise ServicePermissionError('進捗追加の権限がありません')
 
-    if not is_valid_status_id(data['status_id']):
-        raise ServiceValidationError('ステータスIDが不正です')
-
     progress = ProgressUpdate(
         objective_id=objective_id,
-        status_id=data['status_id'],
+        status_id=data['status'],
         detail=data['detail'],
         report_date=datetime.strptime(data['report_date'], '%Y-%m-%d'),
         updated_by=user.id

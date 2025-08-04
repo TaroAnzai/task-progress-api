@@ -1,4 +1,6 @@
 import pytest
+import datetime
+
 
 @pytest.fixture(scope="function")
 def test_task_data():
@@ -128,6 +130,40 @@ class TestObjectivesAPI:
         client = self.login_as_user(user['email'], user['password'])
         resp = client.get(f"/progress/objectives/{created_objective['id']}")
         assert resp.status_code == 200
+
+
+    def test_get_objectives_extended_fields(self):
+        user = self.users['edit']
+        client = self.login_as_user(user['email'], user['password'])
+
+        # Objective 作成（assigned_user_id に viewユーザーを設定）
+        data = self.make_objective_data()
+        resp = client.post("/progress/objectives", json=data)
+        assert resp.status_code == 201
+        obj = resp.get_json()["objective"]
+        obj_id = obj["id"]
+
+        # Progress を1件追加（報告日付き）
+        progress_data = {
+            "detail": "latest progress content",
+            "report_date": datetime.datetime.now().isoformat()
+        }
+        progress_resp = client.post(f"/progress/progress_updates/{obj_id}", json=progress_data)
+        print(progress_resp.get_json())
+        assert progress_resp.status_code == 201
+
+        # 取得して拡張項目を確認
+        get_resp = client.get(f"/progress/objectives/tasks/{self.task['id']}")
+        assert get_resp.status_code == 200
+        objectives = get_resp.get_json()["objectives"]
+        assert len(objectives) == 1
+
+        obj = objectives[0]
+        assert obj["assigned_user_name"] == user["name"]
+        assert obj["latest_progress"] == "latest progress content"
+        assert "latest_report_date" in obj
+        assert obj["latest_report_date"] is not None
+
 
 @pytest.fixture
 def created_objective(client, login_as_user, task_access_users, make_objective_data):

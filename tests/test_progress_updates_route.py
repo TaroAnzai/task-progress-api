@@ -5,7 +5,7 @@ import pytest
 def valid_status_id(client):
     res = client.get("/progress/tasks/statuses")
     assert res.status_code == 200
-    return res.get_json()[0]["id"]
+    return res.get_json()[0]["enum"]
 
 
 @pytest.fixture(scope="function")
@@ -28,7 +28,7 @@ def objective_for_progress(system_admin_client, setup_task_access):
 @pytest.fixture(scope="function")
 def progress_payload(valid_status_id):
     return {
-        "status_id": valid_status_id,
+        "status": valid_status_id,
         "detail": "test progress",
         "report_date": "2024-01-01",
     }
@@ -63,6 +63,7 @@ def test_add_progress_permission(
 ):
     user = task_access_users[level]
     client = login_as_user(user["email"], user["password"])
+    print(progress_payload)
     res = client.post(
         f"/progress/updates/{objective_for_progress['objective_id']}",
         json=progress_payload,
@@ -86,11 +87,11 @@ def test_get_latest_progress(login_as_user, task_access_users, objective_for_pro
     client = login_as_user(user["email"], user["password"])
     client.post(
         f"/progress/updates/{obj_id}",
-        json={"status_id": valid_status_id, "detail": "old", "report_date": "2024-01-01"},
+        json={"status": valid_status_id, "detail": "old", "report_date": "2024-01-01"},
     )
     client.post(
         f"/progress/updates/{obj_id}",
-        json={"status_id": valid_status_id, "detail": "new", "report_date": "2024-02-01"},
+        json={"status": valid_status_id, "detail": "new", "report_date": "2024-02-01"},
     )
     res = client.get(f"/progress/updates/{obj_id}/latest-progress")
     assert res.status_code == 200

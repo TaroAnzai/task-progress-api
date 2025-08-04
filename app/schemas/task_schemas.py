@@ -94,4 +94,5 @@ class TaskOrderInputSchema(Schema):
 
 class StatusSchema(Schema):
     id = fields.Int()
+    enum = fields.Str()
     label = fields.Str()

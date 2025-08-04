@@ -1,13 +1,16 @@
 # app/services/objectives_service.py
 from datetime import datetime
-from app.models import db, Objective, Task, Status
-from app.utils import check_task_access, is_valid_status_id
+from app.models import db, Objective, Task, User, ProgressUpdate
+from app.utils import check_task_access
 from app.constants import TaskAccessLevelEnum, StatusEnum, STATUS_LABELS
 from app.service_errors import (
     ServiceValidationError,
     ServicePermissionError,
     ServiceNotFoundError,
 )
+from sqlalchemy.orm import aliased
+from sqlalchemy import func
+
 
 
 def get_task_by_id(task_id):
@@ -97,20 +100,63 @@ def update_objective(objective_id, data, user):
         'objective': objective
         }
 
-
 def get_objectives_for_task(task_id, user):
     task = get_task_by_id(task_id)
     if not task:
         raise ServiceNotFoundError('タスクが見つかりません')
     if not check_task_access(user, task, TaskAccessLevelEnum.VIEW):
         raise ServicePermissionError('閲覧権限がありません')
-
-    objectives = Objective.query.filter_by(task_id=task_id, is_deleted=False) \
-                                 .order_by(Objective.display_order).all()
     
-    return {'objectives': objectives}
-
-
+    # 最新のProgressUpdateのサブクエリ
+    latest_progress_subquery = db.session.query(
+        ProgressUpdate.objective_id,
+        ProgressUpdate.detail.label('latest_progress'),
+        ProgressUpdate.report_date.label('latest_report_date'),
+        func.row_number().over(
+            partition_by=ProgressUpdate.objective_id,
+            order_by=ProgressUpdate.report_date.desc()
+        ).label('rn')
+    ).filter(
+        ProgressUpdate.is_deleted == False
+    ).subquery()
+    
+    # 最新の1件のみを取得するサブクエリ
+    latest_progress_filtered = db.session.query(
+        latest_progress_subquery.c.objective_id,
+        latest_progress_subquery.c.latest_progress,
+        latest_progress_subquery.c.latest_report_date
+    ).filter(
+        latest_progress_subquery.c.rn == 1
+    ).subquery()
+    
+    # メインクエリ
+    objectives = db.session.query(Objective)\
+        .outerjoin(User, Objective.assigned_user_id == User.id)\
+        .outerjoin(latest_progress_filtered, 
+                  Objective.id == latest_progress_filtered.c.objective_id)\
+        .add_columns(
+            User.name.label('assigned_user_name'),
+            latest_progress_filtered.c.latest_progress,
+            latest_progress_filtered.c.latest_report_date
+        )\
+        .filter(
+            Objective.task_id == task_id,
+            Objective.is_deleted == False
+        )\
+        .order_by(Objective.display_order)\
+        .all()
+    
+    # 結果を整形
+    objective_list = []
+    for obj_data in objectives:
+        objective = obj_data[0]  # Objectiveインスタンス
+        # 追加データを動的に設定
+        objective.assigned_user_name = obj_data[1]
+        objective.latest_progress = obj_data[2]
+        objective.latest_report_date = obj_data[3]
+        objective_list.append(objective)
+    
+    return {'objectives': objective_list}
 def get_objective(objective_id, user):
     objective = get_objective_by_id(objective_id)
     if not objective:

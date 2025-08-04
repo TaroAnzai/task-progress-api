@@ -1,7 +1,7 @@
 from flask import current_app
 from datetime import datetime
 from app.models import db, Task, Objective, UserTaskOrder, TaskAccessUser, TaskAccessOrganization, Status
-from app.utils import check_task_access, is_valid_status_id
+from app.utils import check_task_access
 from app.constants import TaskAccessLevelEnum, StatusEnum, STATUS_LABELS
 from app.service_errors import (
     ServiceValidationError,
@@ -196,5 +196,5 @@ def get_statuses():
             enum = StatusEnum(s.name)
         except ValueError:
             continue
-        result.append({'id': s.id, 'label': STATUS_LABELS[enum]})
+        result.append({'id': s.id, 'enum':s.name, 'label': STATUS_LABELS[enum]})
     return result
