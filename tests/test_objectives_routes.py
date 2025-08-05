@@ -136,8 +136,8 @@ class TestObjectivesAPI:
         user = self.users['edit']
         client = self.login_as_user(user['email'], user['password'])
 
-        # Objective 作成（assigned_user_id に viewユーザーを設定）
-        data = self.make_objective_data()
+        # Objective 作成（assigned_user_id に editユーザーを設定）
+        data = self.make_objective_data(assigned_user_id = user['id'])
         resp = client.post("/progress/objectives", json=data)
         assert resp.status_code == 201
         obj = resp.get_json()["objective"]
@@ -148,8 +148,7 @@ class TestObjectivesAPI:
             "detail": "latest progress content",
             "report_date": datetime.datetime.now().isoformat()
         }
-        progress_resp = client.post(f"/progress/progress_updates/{obj_id}", json=progress_data)
-        print(progress_resp.get_json())
+        progress_resp = client.post(f"/progress/updates/{obj_id}", json=progress_data)
         assert progress_resp.status_code == 201
 
         # 取得して拡張項目を確認
@@ -159,6 +158,7 @@ class TestObjectivesAPI:
         assert len(objectives) == 1
 
         obj = objectives[0]
+        print(obj)
         assert obj["assigned_user_name"] == user["name"]
         assert obj["latest_progress"] == "latest progress content"
         assert "latest_report_date" in obj

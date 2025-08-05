@@ -5,7 +5,7 @@ from datetime import date, datetime
 import pytest
 
 from app.constants import StatusEnum
-from app.models import Objective, Status, Task
+from app.models import Objective, Task
 from tests.utils import check_response_message
 
 @pytest.fixture(scope="function")
@@ -161,11 +161,15 @@ class TestTaskUpdate:
         status_res = client.get("/progress/tasks/statuses")
         assert status_res.status_code == 200
         statuses = status_res.get_json()
+        for status in statuses:
+            assert "id" in status, "Missing 'id' key in status"
+            assert "enum" in status, "Missing 'enum' key in status"
+            assert "label" in status, "Missing 'label' key in status"
         
         # 最初のステータスIDを使用
-        first_status_id = statuses[0]["id"]
+        first_status_enum = statuses[0]["enum"]
         
-        update_data = {"status_id": first_status_id}
+        update_data = {"status": first_status_enum}
         
         res = client.put(f"/progress/tasks/{created_task['id']}", json=update_data)
         assert res.status_code == 200
@@ -177,10 +181,10 @@ class TestTaskUpdate:
         update_data = {"status_id": 999}  # 存在しないステータスID
         
         res = client.put(f"/progress/tasks/{created_task['id']}", json=update_data)
-        assert res.status_code == 400
+        assert res.status_code == 422
         
         data = res.get_json()
-        assert check_response_message("ステータスIDが不正です", data)
+        assert "status_id" in data['errors']['json']
     
     def test_update_task_invalid_date(self, client, created_task):
         """不正な日付でタスク更新（エラー）"""

@@ -1,6 +1,8 @@
 from marshmallow import Schema, fields
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
-from app.models import Objective, Status
+from app.models import Objective
+from marshmallow_enum import EnumField
+from app.constants import StatusEnum
 
 class ObjectiveSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -12,7 +14,7 @@ class ObjectiveSchema(SQLAlchemyAutoSchema):
     id = fields.Integer(required=True, dump_only=True, allow_none=False)
     assigned_user_name = fields.String(dump_only=True)
     latest_progress = fields.String(dump_only=True, allow_none=True)
-    latest_report_date = fields.DateTime(dump_only=True, allow_none=True)
+    latest_report_date = fields.Date(dump_only=True, allow_none=True)
     status = EnumField(StatusEnum, required=True, dump_only=True, metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
 
 class ObjectiveInputSchema(SQLAlchemyAutoSchema):

@@ -12,6 +12,8 @@ from .constants import OrgRoleEnum, TaskAccessLevelEnum, StatusEnum
 
 class IntEnumType(db.TypeDecorator):
     impl = db.Integer
+    cache_ok = True
+
 
     def __init__(self, enumtype, *args, **kwargs):
         self._enumtype = enumtype

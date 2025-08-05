@@ -1,6 +1,6 @@
 # app/services/progress_updates_service.py
 from datetime import datetime
-from app.models import db, Objective, Task, ProgressUpdate, Status, User
+from app.models import db, Objective, Task, ProgressUpdate, User
 from app.utils import check_task_access
 from app.constants import TaskAccessLevelEnum, StatusEnum, STATUS_LABELS
 from app.service_errors import (
@@ -51,9 +51,9 @@ def add_progress(objective_id, data, user):
 
     progress = ProgressUpdate(
         objective_id=objective_id,
-        status_id=data['status'],
+        status=data['status'],
         detail=data['detail'],
-        report_date=datetime.strptime(data['report_date'], '%Y-%m-%d'),
+        report_date=data['report_date'],
         updated_by=user.id
     )
     db.session.add(progress)
@@ -65,6 +65,7 @@ def get_progress_list(objective_id, user):
     objective = get_objective_by_id(objective_id)
     if not objective:
         raise ServiceNotFoundError('オブジェクティブが見つかりません')
+
     task = get_task_by_id(objective.task_id)
     if not task:
         raise ServiceNotFoundError('タスクが見つかりません')
@@ -74,27 +75,34 @@ def get_progress_list(objective_id, user):
 
     progress_list = ProgressUpdate.query.filter_by(objective_id=objective_id, is_deleted=False).all()
     result = []
+
     for p in progress_list:
-        status = db.session.get(Status, p.status_id)
         try:
-            enum = StatusEnum(status.name)
-            label = STATUS_LABELS[enum]
-        except Exception:
-            label = '-'
+            label = StatusEnum(p.status) # 例: "IN_PROGRESS"
+        except ValueError:
+            label = StatusEnum["UNDEFINED"]
+
+        updated_by_user = db.session.get(User, p.updated_by)
+        updated_by = updated_by_user.name if updated_by_user else "不明"
+
         result.append({
             'id': p.id,
             'status': label,
             'detail': p.detail,
-            'report_date': p.report_date.strftime('%Y-%m-%d'),
-            'updated_by': db.session.get(User, p.updated_by).name
+            'report_date': p.report_date,
+            'updated_by': updated_by
         })
+
     return result
+
+
 
 
 def get_latest_progress(objective_id, user):
     objective = get_objective_by_id(objective_id)
     if not objective:
         raise ServiceNotFoundError('オブジェクティブが見つかりません')
+
     task = get_task_by_id(objective.task_id)
     if not task:
         raise ServiceNotFoundError('タスクが見つかりません')
@@ -111,31 +119,27 @@ def get_latest_progress(objective_id, user):
 
     if not progress:
         return {
-            'status': '-',
-            'report_date': '-',
-            'detail': '-',
-            'updated_by': '-'
+            'status': None,
+            'report_date': None,
+            'detail': None,
+            'updated_by': None
         }
 
-    status = db.session.get(Status, progress.status_id)
-    user_name = db.session.get(User, progress.updated_by).name
+    # status は IntEnum型として保存されているのでそのまま使用
+    try:
+        status_label = StatusEnum(progress.status)
+    except ValueError:
+        status_label = StatusEnum["UNDEFINED"]
 
-    if status:
-        try:
-            enum = StatusEnum(status.name)
-            label = STATUS_LABELS[enum]
-        except Exception:
-            label = '-'
-    else:
-        label = '-'
+    updated_by_user = db.session.get(User, progress.updated_by)
+    user_name = updated_by_user.name if updated_by_user else "不明"
 
     return {
-        'status': label,
-        'report_date': progress.report_date.strftime('%Y-%m-%d'),
+        'status': status_label,
+        'report_date': progress.report_date,
         'updated_by': user_name,
         'detail': progress.detail
     }
-
 
 def delete_progress(progress_id, user):
     progress = get_progress_by_id(progress_id)

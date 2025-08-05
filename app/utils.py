@@ -4,8 +4,6 @@ from .models import db, TaskAccessUser, TaskAccessOrganization, Organization
 from .constants import (
     TaskAccessLevelEnum,
     OrgRoleEnum,
-    TASK_ACCESS_PRIORITY,
-    ORG_ROLE_PRIORITY,
 )
 
 def get_all_child_organizations(org_id):
@@ -120,10 +118,7 @@ def access_level_sufficient(user_level, required_level):
     if not isinstance(required_level, TaskAccessLevelEnum):
         required_level = TaskAccessLevelEnum(required_level)
 
-    return (
-        TASK_ACCESS_PRIORITY.get(user_level, 0)
-        >= TASK_ACCESS_PRIORITY.get(required_level, 0)
-    )
+    return user_level >= required_level
 
 def check_org_access(user, organization_id: int, required_role: OrgRoleEnum = OrgRoleEnum.MEMBER) -> bool:
     """Return True if user has required_role for organization_id.
@@ -132,7 +127,6 @@ def check_org_access(user, organization_id: int, required_role: OrgRoleEnum = Or
     ORG_ADMIN: 自組織＋子組織にアクセス可能
     MEMBER: 自組織のみ
     """
-
     if getattr(user, "is_superuser", False):
         return True
 
@@ -140,29 +134,25 @@ def check_org_access(user, organization_id: int, required_role: OrgRoleEnum = Or
     if not target_org:
         return False
 
-    highest_priority = 0
+    highest_role: OrgRoleEnum = OrgRoleEnum.MEMBER  # 最小値（Enum定義に応じて）
 
     for scope in user.access_scopes:
-        # SYSTEM_ADMIN: 同一会社全組織
         if scope.role == OrgRoleEnum.SYSTEM_ADMIN:
             scope_org = scope.organization or db.session.get(Organization, scope.organization_id)
             if scope_org and scope_org.company_id == target_org.company_id:
-                return True  # 早期return
+                return True  # 即時アクセス許可
 
-        # ORG_ADMIN: 自組織＋子組織
         elif scope.role == OrgRoleEnum.ORG_ADMIN:
             base_id = scope.organization_id or user.organization_id
             descendant_ids = get_all_child_organizations(base_id)
-            if base_id not in descendant_ids:
-                descendant_ids.append(base_id)  # 自組織も含める
+            descendant_ids.append(base_id)  # 自組織を含める
             if organization_id in descendant_ids:
-                highest_priority = max(highest_priority, ORG_ROLE_PRIORITY[OrgRoleEnum.ORG_ADMIN])
+                highest_role = max(highest_role, OrgRoleEnum.ORG_ADMIN)
 
-        # MEMBER: 自組織のみ
         elif scope.organization_id == organization_id:
-            highest_priority = max(highest_priority, ORG_ROLE_PRIORITY[OrgRoleEnum.MEMBER])
+            highest_role = max(highest_role, OrgRoleEnum.MEMBER)
 
-    return highest_priority >= ORG_ROLE_PRIORITY.get(required_role, 0)
+    return highest_role >= required_role
 
 
 def require_superuser(user):

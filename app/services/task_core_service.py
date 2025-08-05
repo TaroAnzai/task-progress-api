@@ -1,6 +1,6 @@
 from flask import current_app
 from datetime import datetime
-from app.models import db, Task, Objective, UserTaskOrder, TaskAccessUser, TaskAccessOrganization, Status
+from app.models import db, Task, Objective, UserTaskOrder, TaskAccessUser, TaskAccessOrganization
 from app.utils import check_task_access
 from app.constants import TaskAccessLevelEnum, StatusEnum, STATUS_LABELS
 from app.service_errors import (
@@ -63,10 +63,11 @@ def update_task(task_id, data, user):
     if not check_task_access(user, task, TaskAccessLevelEnum.FULL):
         raise ServicePermissionError('このタスクを編集する権限がありません')
 
-    if 'status_id' in data:
-        if not is_valid_status_id(data['status_id']):
-            raise ServiceValidationError('ステータスIDが不正です')
-        task.status_id = data['status_id']
+    if 'status' in data:
+        try:
+            task.status = StatusEnum[data['status']] if isinstance(data['status'], str) else StatusEnum(data['status'])
+        except (KeyError, ValueError):
+            raise ServiceValidationError('ステータスが不正です')
     if 'title' in data:
         task.title = data['title']
     if 'description' in data:
@@ -189,12 +190,11 @@ def update_objective_order(task_id, data):
     return {'message': '表示順を更新しました'}
 
 def get_statuses():
-    statuses = Status.query.all()
-    result = []
-    for s in statuses:
-        try:
-            enum = StatusEnum(s.name)
-        except ValueError:
-            continue
-        result.append({'id': s.id, 'enum':s.name, 'label': STATUS_LABELS[enum]})
-    return result
+    return [
+        {
+            "id": status.value,         # 数値（例: 1）
+            "enum": status.name,        # Enum名（例: "NOT_STARTED"）
+            "label": STATUS_LABELS.get(status, "-")  # 表示用ラベル（例: "未着手"）
+        }
+        for status in StatusEnum
+    ]

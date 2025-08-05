@@ -9,7 +9,6 @@ from app.models import (
     Task,
     Objective,
     ProgressUpdate,
-    Status,
     User,
     TaskAccessUser,
     TaskAccessOrganization,
@@ -43,6 +42,9 @@ class ProgressFormatter:
         return user.name if user else ""
 
 
+from app.constants import StatusEnum, STATUS_LABELS
+from app.models import Objective, User
+
 class ObjectiveFormatter:
     def __init__(self, db_session):
         self.db = db_session
@@ -60,25 +62,22 @@ class ObjectiveFormatter:
             result.append({
                 "オブジェクティブ名": obj.title,
                 "期限": obj.due_date.strftime("%Y-%m-%d") if obj.due_date else "",
-                "ステータス": self._get_status_name(obj.status_id),
+                "ステータス": self._get_status_label(obj.status),
                 "担当者": self._get_user_name(obj.assigned_user_id),
                 "progresses": self.progress_formatter.list_for_objective(obj.id)
             })
         return result
 
-    def _get_status_name(self, status_id):
-        status = self.db.session.get(Status, status_id)
-        if not status:
-            return ""
+    def _get_status_label(self, status):
         try:
-            enum = StatusEnum(status.name)
-            return STATUS_LABELS[enum]
-        except Exception:
-            return status.name
+            return STATUS_LABELS.get(StatusEnum(status), "")
+        except ValueError:
+            return ""
 
     def _get_user_name(self, user_id):
         user = self.db.session.get(User, user_id)
         return user.name if user else ""
+
 
 
 class TaskDataExporter:

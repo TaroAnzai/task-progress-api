@@ -33,7 +33,7 @@ class UserInputSchema(SQLAlchemyAutoSchema):
     email = fields.Str(required=True)
     password = fields.Str(required=True, load_only=True)
     role = EnumField(OrgRoleEnum, by_value=False,
-                     metadata={"type": "string", "enum": [e.value for e in OrgRoleEnum]}
+                     metadata={"type": "string", "enum": [e.name for e in OrgRoleEnum]}
     )
     organization_id=fields.Int(required=True)
 
@@ -49,7 +49,7 @@ class UserUpdateSchema(SQLAlchemyAutoSchema):
     email = fields.Email(required=False)
     password = fields.Str(required=False, load_only=True)
     role = EnumField(OrgRoleEnum, by_value=False, required=False,
-                     metadata={"type": "string", "enum": [e.value for e in OrgRoleEnum]}
+                     metadata={"type": "string", "enum": [e.name for e in OrgRoleEnum]}
     )
     organization_id=fields.Int(required=False)
 
