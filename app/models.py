@@ -18,7 +18,7 @@ class IntEnumType(db.TypeDecorator):
     def __init__(self, enumtype, *args, **kwargs):
         self._enumtype = enumtype
         super().__init__(*args, **kwargs)
-
+        
     def process_bind_param(self, value, dialect):
         return value.value if isinstance(value, self._enumtype) else value
 

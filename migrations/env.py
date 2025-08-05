@@ -4,6 +4,7 @@ from logging.config import fileConfig
 from flask import current_app
 
 from alembic import context
+from app.models import IntEnumType 
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -44,6 +45,15 @@ target_db = current_app.extensions['migrate'].db
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+def render_item(type_, obj, autogen_context):
+    if type_ == 'type' and isinstance(obj, IntEnumType):
+        enum_class = getattr(obj, '_enumtype', None) or getattr(obj, 'enum_class', None)
+        if enum_class is not None:
+            enum_name = enum_class.__name__
+            autogen_context.imports.add("from app.models import IntEnumType")
+            autogen_context.imports.add(f"from app.constants import {enum_name}")
+            return f"IntEnumType({enum_name})"
+    return False
 
 def get_metadata():
     if hasattr(target_db, 'metadatas'):
@@ -100,6 +110,8 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),
+            user_module_prefix=None,
+            render_item=render_item,
             **conf_args
         )
 
