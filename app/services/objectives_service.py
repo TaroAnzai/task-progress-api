@@ -89,10 +89,8 @@ def update_objective(objective_id, data, user):
             raise ServiceValidationError('日付の形式が正しくありません（YYYY-MM-DD）')
     if 'assigned_user_id' in data:
         objective.assigned_user_id = data['assigned_user_id']
-    if 'status_id' in data:
-        if not is_valid_status_id(data['status_id']):
-            raise ServiceValidationError('ステータスIDが不正です')
-        objective.status_id = data['status_id']
+    if 'status' in data:
+        objective.status_id = data['status']
 
     db.session.commit()
     return {
