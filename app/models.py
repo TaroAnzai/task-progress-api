@@ -168,7 +168,7 @@ class Objective(db.Model, SoftDeleteMixin):
     due_date = db.Column(db.Date)
     assigned_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     display_order = db.Column(db.Integer, default=0)
-    status = db.Column(IntEnumType(StatusEnum), default=StatusEnum.NOT_STARTED)
+    status = db.Column(IntEnumType(StatusEnum), nullable=False, default=StatusEnum.UNDEFINED)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
@@ -187,7 +187,7 @@ class Objective(db.Model, SoftDeleteMixin):
 class ProgressUpdate(db.Model, SoftDeleteMixin):
     id = db.Column(db.Integer, primary_key=True)
     objective_id = db.Column(db.Integer, db.ForeignKey('objective.id'))
-    status = db.Column(IntEnumType(StatusEnum), nullable=False)
+    status = db.Column(IntEnumType(StatusEnum), nullable=False, default=StatusEnum.UNDEFINED)
     detail = db.Column(db.Text)
     report_date = db.Column(db.Date)
     updated_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
