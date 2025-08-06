@@ -58,7 +58,8 @@ def create_objective(data, user):
         title=title,
         due_date=due_date,
         assigned_user_id=data.get('assigned_user_id'),
-        display_order=new_order
+        display_order=new_order,
+        status = data.get('status'),
     )
 
     db.session.add(objective)
@@ -90,7 +91,7 @@ def update_objective(objective_id, data, user):
     if 'assigned_user_id' in data:
         objective.assigned_user_id = data['assigned_user_id']
     if 'status' in data:
-        objective.status_id = data['status']
+        objective.status = data['status']
 
     db.session.commit()
     return {

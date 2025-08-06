@@ -155,7 +155,7 @@ class TaskDataExporter:
             task_entry = {
                 "タスク名": task.title,
                 "期限": task.due_date.strftime("%Y-%m-%d") if task.due_date else "",
-                "ステータス": self._get_status_name(task.status_id),
+                "ステータス": self._get_status_name(task.status),
                 "作成者": self._get_user_name(task.created_by),
                 "objectives": self.objective_formatter.list_for_task(task.id)
             }
