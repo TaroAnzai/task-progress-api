@@ -1,5 +1,4 @@
 from marshmallow import Schema, fields, ValidationError
-from marshmallow_enum import EnumField
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from app.models import Task
 from app.constants import StatusEnum
@@ -13,7 +12,7 @@ class TaskSchema(SQLAlchemyAutoSchema):
         exclude = ("is_deleted",)
     id = fields.Integer(required=True, dump_only=True, allow_none=False)
     user_access_level = fields.Str()
-    status = EnumField(StatusEnum, by_value=False, dump_only=True ,
+    status =  fields.Enum(StatusEnum, by_value=False, dump_only=True ,
                        metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
 
 class TaskInputSchema(SQLAlchemyAutoSchema):
@@ -26,7 +25,7 @@ class TaskInputSchema(SQLAlchemyAutoSchema):
     title = fields.Str(required=True)
     description = fields.Str(load_default="")
     due_date = fields.Str(load_default=None)
-    status = EnumField(StatusEnum, by_value=False, load_default=StatusEnum.NOT_STARTED,
+    status =  fields.Enum(StatusEnum, by_value=False, load_default=StatusEnum.UNDEFINED,
                        metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
     display_order = fields.Int(load_default=None)
 
@@ -42,7 +41,7 @@ class TaskUpdateSchema(SQLAlchemyAutoSchema):
     title = fields.Str(required=False)
     description = fields.Str()
     due_date = fields.Str()
-    status = EnumField(StatusEnum, by_value=False,
+    status =  fields.Enum(StatusEnum, by_value=False,
                        metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
     display_order = fields.Int()
 

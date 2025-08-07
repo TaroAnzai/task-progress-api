@@ -60,13 +60,12 @@ access_level = db.Column(IntEnumType(TaskAccessLevelEnum), nullable=False)
 ### 📥 API入力（POST / PUT）
 
 * `"VIEW"` のような文字列（Enum名）で受け取る
-* バリデーションには `marshmallow_enum.EnumField(by_value=False)` を使用
+* バリデーションには `marshmallow_enum. fields.Enum(by_value=False)` を使用
 
 ```python
-from marshmallow_enum import EnumField
 
 class TaskAccessSchema(Schema):
-    access_level = EnumField(TaskAccessLevelEnum, by_value=False, required=True)
+    access_level =  fields.Enum(TaskAccessLevelEnum, by_value=False, required=True)
 ```
 
 ---

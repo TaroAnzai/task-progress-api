@@ -1,5 +1,4 @@
 from marshmallow import Schema, fields
-from marshmallow_enum import EnumField
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from app.models import AccessScope
 from app.constants import OrgRoleEnum
@@ -10,7 +9,7 @@ class AccessScopeSchema(SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
 
-    role = EnumField(OrgRoleEnum, required=True,
+    role =  fields.Enum(OrgRoleEnum, required=True,
         metadata={"type": "string", "enum": [e.name for e in OrgRoleEnum]}
     )
 
@@ -22,6 +21,6 @@ class AccessScopeInputSchema(SQLAlchemyAutoSchema):
         exclude = ("id",)
 
     organization_id = fields.Int(required=True)
-    role = EnumField(OrgRoleEnum, required=True,
+    role =  fields.Enum(OrgRoleEnum, required=True,
         metadata={"type": "string", "enum": [e.name for e in OrgRoleEnum]}
     )

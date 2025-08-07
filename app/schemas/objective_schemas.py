@@ -1,7 +1,6 @@
 from marshmallow import Schema, fields
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from app.models import Objective
-from marshmallow_enum import EnumField
 from app.constants import StatusEnum
 
 class ObjectiveSchema(SQLAlchemyAutoSchema):
@@ -15,7 +14,7 @@ class ObjectiveSchema(SQLAlchemyAutoSchema):
     assigned_user_name = fields.String(dump_only=True)
     latest_progress = fields.String(dump_only=True, allow_none=True)
     latest_report_date = fields.Date(dump_only=True, allow_none=True)
-    status = EnumField(StatusEnum, required=True, dump_only=True, metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
+    status =  fields.Enum(StatusEnum, required=True, dump_only=True, metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
 
 class ObjectiveInputSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -28,7 +27,7 @@ class ObjectiveInputSchema(SQLAlchemyAutoSchema):
     title = fields.Str(required=True)
     due_date = fields.Str(load_default=None)
     assigned_user_id = fields.Int(load_default=None)
-    status = EnumField(StatusEnum, load_default=None, metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
+    status =  fields.Enum(StatusEnum, load_default=StatusEnum.UNDEFINED, metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
 
 class ObjectiveUpdateSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -41,7 +40,7 @@ class ObjectiveUpdateSchema(SQLAlchemyAutoSchema):
     title = fields.Str()
     due_date = fields.Str()
     assigned_user_id = fields.Int()
-    status = EnumField(StatusEnum, load_default=None, metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
+    status =  fields.Enum(StatusEnum, metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
 
 class ObjectiveResponseSchema(Schema):
     message = fields.Str()
