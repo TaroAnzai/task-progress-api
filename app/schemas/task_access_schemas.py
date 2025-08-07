@@ -2,17 +2,16 @@ from marshmallow import Schema, fields
 from app.constants import TaskAccessLevelEnum
 
 class AccessUserSchema(Schema):
-    id = fields.Integer(required=True, dump_only=True, allow_none=False)
-    name = fields.Str()
-    email = fields.Str()
-    access_level =  fields.Enum(TaskAccessLevelEnum, by_value=False,
+    user_id = fields.Integer(required=True, dump_only=True, allow_none=False)
+    name = fields.Str(required=True, dump_only=True, allow_none=False)
+    access_level =  fields.Enum(TaskAccessLevelEnum, by_value=False,required=True,
                              metadata={"type": "string", "enum": [e.name for e in TaskAccessLevelEnum]}
     )
 
 class OrgAccessSchema(Schema):
-    organization_id = fields.Int()
-    name = fields.Str()
-    access_level =  fields.Enum(TaskAccessLevelEnum, by_value=False,
+    organization_id = fields.Integer(required=True, dump_only=True, allow_none=False)
+    name = fields.Str(required=True, dump_only=True, allow_none=False)
+    access_level =  fields.Enum(TaskAccessLevelEnum, by_value=False,required=True,
                              metadata={"type": "string", "enum": [e.name for e in TaskAccessLevelEnum]}
     )
 

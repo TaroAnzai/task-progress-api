@@ -102,7 +102,7 @@ def get_task_access_users(task_id):
     ).all()
 
     result = [{
-        "id": u.id,
+        "user_id": u.id,
         "name": u.name,
         "email": u.email,
         "access_level": u.access_level
