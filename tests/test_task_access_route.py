@@ -163,7 +163,9 @@ class TestTaskAccessList:
         res = system_admin_client.get(f"/progress/tasks/{setup_task_access}/authorized_users")
         assert res.status_code == 200
         data = res.get_json()
+        print(data)
         assert any(u for u in data if u["name"].startswith("TaskUser_"))
+        assert any(u for u in data if "user_id" in u)
 
     def test_get_task_access_users(self, system_admin_client, setup_task_access_for_get_levels):
 

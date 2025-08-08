@@ -47,6 +47,7 @@ from .objective_schemas import (
 from .progress_schemas import ProgressSchema, ProgressInputSchema
 from .access_scope_schemas import AccessScopeSchema, AccessScopeInputSchema
 from .task_access_schemas import (
+    AuthorizedUserSchema,
     AccessUserSchema,
     OrgAccessSchema,
     AccessLevelInputSchema,
@@ -65,6 +66,6 @@ __all__ = [
     'ObjectiveSchema', 'ObjectiveInputSchema', 'ObjectiveResponseSchema', 'ObjectivesListSchema',
     'ProgressSchema', 'ProgressInputSchema',
     'AccessScopeSchema', 'AccessScopeInputSchema',
-    'AccessUserSchema', 'OrgAccessSchema', 'AccessLevelInputSchema',
+    'AuthorizedUserSchema', 'AccessUserSchema', 'OrgAccessSchema', 'AccessLevelInputSchema',
     'AISuggestInputSchema', 'JobIdSchema', 'AIResultSchema',
 ]
