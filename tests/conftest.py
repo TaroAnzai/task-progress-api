@@ -102,15 +102,16 @@ def systemadmin_user(client, root_org, superuser):
         # スーパーユーザーでログイン
     res = client.post("/progress/sessions", json={"email": superuser["email"], "password": superuser["password"]})
     assert res.status_code == 200
-    res = client.post("/progress/users", json={
+    payload = {
         "name": "SystemAdmin",
         "email": "systemadmin@example.com",
         "password": "adminpass",
         "organization_id": root_org["id"],
         "role": "SYSTEM_ADMIN"
-    })
+    }
+    res = client.post("/progress/users", json = payload)
     assert res.status_code == 201
-    return res.get_json()
+    return {'user':payload}
 
 @pytest.fixture(scope="session")
 def task_access_users(client, systemadmin_user, root_org):
@@ -120,15 +121,18 @@ def task_access_users(client, systemadmin_user, root_org):
     created_users = {}
 
     for level in access_levels:
-        res = client.post("/progress/users", json={
+        payload = {
             "name": f"TaskUser_{level}",
             "email": f"taskuser_{level}@example.com",
             "password": "testpass",
             "organization_id": root_org["id"],
             "role": "MEMBER"  # 組織上の役割はmemberでもOK、タスクアクセスレベルは別テーブルで管理
-        })
+        }
+        res = client.post("/progress/users", json=payload)
         assert res.status_code == 201
-        user_data = res.get_json()
+        responseUser = res.get_json(res)['user']
+        user_data = {'user':payload}
+        user_data['user']['id'] = responseUser['id']
 
         # ★タスクアクセス権限の付与エンドポイント（例）
         client.post(
@@ -155,15 +159,16 @@ def system_related_users(client, root_org):
     created_users = {}
 
     for role in roles:
-        res = client.post("/progress/users", json={
+        payload = {
             "name": f"SystemUser_{role}",
             "email": f"systemuser_{role}@example.com",
             "password": "testpass",
             "organization_id": root_org["id"],
             "role": role.upper()
-        })
+        }
+        res = client.post("/progress/users", json=payload)
         assert res.status_code == 201
-        user_data = res.get_json().get("user", res.get_json())  # userキーがあれば抽出
+        user_data = payload # userキーがあれば抽出
         user_data["password"] = "testpass"  # ログイン用に追加
         created_users[role] = user_data
 

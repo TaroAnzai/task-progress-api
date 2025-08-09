@@ -46,7 +46,7 @@ def test_user_with_scopes_response_structure(system_admin_client):
     
     # JSONレスポンスの取得
     data = response.get_json()
-    
+    print(data)
     # レスポンスがリストであることを確認
     assert isinstance(data, list), "レスポンスはリスト形式である必要があります"
     
@@ -58,7 +58,6 @@ def test_user_with_scopes_response_structure(system_admin_client):
         required_user_fields = [
             'id',
             'name', 
-            'email',
             'organization_id',
             'organization_name'
         ]
@@ -120,7 +119,6 @@ def test_user_with_scopes_field_types(system_admin_client):
         # 各フィールドの型確認
         assert isinstance(user['id'], int), "idは整数である必要があります"
         assert isinstance(user['name'], str), "nameは文字列である必要があります"
-        assert isinstance(user['email'], str), "emailは文字列である必要があります"
         assert isinstance(user['organization_id'], int), "organization_idは整数である必要があります"
         assert isinstance(user['organization_name'], (str, type(None))), "organization_nameは文字列またはNullである必要があります"
         assert isinstance(user['access_scopes'], list), "scopesはリストである必要があります"

@@ -203,9 +203,8 @@ def test_empty_accessuser(system_admin_client,test_task_data):
     res = client.post("/progress/tasks", json=test_task_data)
     assert res.status_code == 201
     task = res.get_json()["task"]
-    print(task)
     res = client.get(f"/progress/tasks/{task['id']}/access_users")
     assert res.status_code == 200
     users = res.get_json()
-    print(users)
+
 

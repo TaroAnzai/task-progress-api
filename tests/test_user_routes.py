@@ -112,7 +112,7 @@ class TestUserRetrieval:
         res = client.get(f'/progress/users/email/{email}')
         assert res.status_code == 200
         responce_data = res.get_json()
-        assert responce_data['email'] == email
+        assert responce_data['name'] == payload['name']
     
     def test_get_user_by_wp_user_id(self, login_as_user, system_related_users, root_org):
         system_admin = system_related_users['system_admin']
@@ -223,7 +223,6 @@ EXPECTED_USER_KEYS = {
     "id",
     "wp_user_id",
     "name",
-    "email",
     "is_superuser",
     "organization_id",
     "organization_name",

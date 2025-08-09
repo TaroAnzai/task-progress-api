@@ -16,8 +16,10 @@ def order_user(system_admin_client, root_org):
     }
     res = system_admin_client.post("/progress/users", json=payload)
     assert res.status_code == 201
-    user = res.get_json()["user"]
+    resUser = res.get_json()["user"]
+    user = payload
     user["password"] = "testpass"
+    user["id"] = resUser["id"]
     return user
 
 @pytest.fixture(scope="function")

@@ -34,6 +34,7 @@ def created_wp_user_data2(client, wp_user_data2, superuser,login_as_user):
 @pytest.mark.parametrize("role", ["member", "org_admin", "system_admin"])
 def test_login_with_email_success(client, system_related_users, role):
     user = system_related_users[role]
+    print(user)
     """メールアドレスでのログイン成功テスト"""
     login_data = {
         "email": user["email"],
@@ -43,7 +44,6 @@ def test_login_with_email_success(client, system_related_users, role):
     assert response.status_code == 200
     data = response.get_json()
     assert data["message"] == "ログイン成功"
-    assert data["user"]["email"] == user["email"]
     assert data["user"]["name"] == user["name"]
 
 def test_login_with_email_invalid_email(client):
@@ -133,7 +133,6 @@ def test_get_current_user_authenticated(client, system_related_users, role):
     response = client.get("/progress/sessions/current")
     assert response.status_code == 200
     data = response.get_json()
-    assert data["email"] == user["email"]
     assert data["name"] == user["name"]
     assert data["organization_id"] == user["organization_id"]
     assert "organization_name" in data
@@ -148,7 +147,6 @@ def test_get_current_user_unauthenticated(client):
     response = client.get("/progress/sessions/current")
     assert response.status_code == 200
     data = response.get_json()
-    assert data["email"] == ''
     assert data["name"] == ''
     assert data["organization_id"] == None
     assert data["organization_name"] == None
@@ -175,7 +173,6 @@ def test_logout_authenticated(client, system_related_users, role):
     response = client.get("/progress/sessions/current")
     assert response.status_code == 200
     data = response.get_json()
-    assert data["email"] == ''
     assert data["name"] == ''
     assert data["organization_id"] == None
     assert data["organization_name"] == None
@@ -203,7 +200,7 @@ def test_login_logout_flow(client,  system_related_users, role):
     current_user_response = client.get("/progress/sessions/current")
     assert current_user_response.status_code == 200
     user_data = current_user_response.get_json()
-    assert user_data["email"] == user["email"]
+    assert user_data["name"] == user["name"]
 
     # 3. ログアウト
     logout_response = client.delete("/progress/sessions/current")
@@ -213,7 +210,6 @@ def test_login_logout_flow(client,  system_related_users, role):
     current_user_response = client.get("/progress/sessions/current")
     assert current_user_response.status_code == 200
     data = current_user_response.get_json()
-    assert data["email"] == ''
     assert data["name"] == ''
     assert data["organization_id"] == None
     assert data["organization_name"] == None

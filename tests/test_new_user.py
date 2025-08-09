@@ -30,5 +30,5 @@ def test_full_user_creation_flow(superuser_login, superuser):
     user_res = superuser_login.post('/progress/users', json=user_payload)
     assert user_res.status_code == 201
     user = user_res.json['user']
-    assert user['email'] == 'testuser1@example.com'
+    assert user['name'] == 'testuser1'
     assert user['organization_id'] == org['id']
