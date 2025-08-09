@@ -198,3 +198,14 @@ class TestTaskAccessList:
                 enum_value = TaskAccessLevelEnum[item["access_level"]]
             except KeyError:
                 assert False, f"Invalid access_level value: {item['access_level']}"
+def test_empty_accessuser(system_admin_client,test_task_data):
+    client = system_admin_client
+    res = client.post("/progress/tasks", json=test_task_data)
+    assert res.status_code == 201
+    task = res.get_json()["task"]
+    print(task)
+    res = client.get(f"/progress/tasks/{task['id']}/access_users")
+    assert res.status_code == 200
+    users = res.get_json()
+    print(users)
+

@@ -2,20 +2,20 @@ from marshmallow import Schema, fields
 from app.constants import TaskAccessLevelEnum
 
 class AuthorizedUserSchema(Schema):
-    user_id = fields.Integer(dump_only=True, allow_none=False)
-    name = fields.Str(dump_only=True, allow_none=False)
+    user_id = fields.Integer(dump_only=True, required=True, allow_none=False)
+    name = fields.Str(dump_only=True, required=True, allow_none=False)
     
 class AccessUserSchema(Schema):
-    user_id = fields.Integer(dump_only=True, allow_none=False)
-    name = fields.Str(dump_only=True, allow_none=False)
-    access_level =  fields.Enum(TaskAccessLevelEnum, by_value=False,
+    user_id = fields.Integer(dump_only=True, required=True, allow_none=False)
+    name = fields.Str(dump_only=True, required=True, allow_none=False)
+    access_level =  fields.Enum(TaskAccessLevelEnum, by_value=False, dump_only=True, required=True,
                              metadata={"type": "string", "enum": [e.name for e in TaskAccessLevelEnum]}
     )
 
 class OrgAccessSchema(Schema):
-    organization_id = fields.Integer(dump_only=True, allow_none=False)
-    name = fields.Str(dump_only=True, allow_none=False)
-    access_level =  fields.Enum(TaskAccessLevelEnum, by_value=False,
+    organization_id = fields.Integer(dump_only=True,required=True, allow_none=False)
+    name = fields.Str(dump_only=True,required=True, allow_none=False)
+    access_level =  fields.Enum(TaskAccessLevelEnum, by_value=False, dump_only=True, required=True,
                              metadata={"type": "string", "enum": [e.name for e in TaskAccessLevelEnum]}
     )
 
