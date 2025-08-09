@@ -284,6 +284,81 @@ def test_create_user_duplicate_email_other_company(superuser_login, root_org,oth
     res = client.post('/progress/users', json=second_payload)
     assert res.status_code == 201
 
+def test_get_user_for_admin( login_as_user, system_related_users, root_org):
+    #Login as system_admin
+    system_admin = system_related_users['system_admin']
+    client = login_as_user(system_admin['email'], system_admin['password'])
+    
+    #Make organizarion under root organizarion
+    res = client.post('/progress/organizations', json={
+        'name': 'Child Organizarion',
+        'org_code': 'child01',
+        'parent_id': root_org['id']
+    })
+    assert res.status_code == 201
+    child_org = res.get_json()
+
+    #Make User at root Org
+    payload = create_user_payload(
+        root_org['id'],
+        name = "Test1",
+        email='sample1@example.com'  # 他のテストと重複しないメール
+    )
+    res = client.post('/progress/users', json=payload)
+    assert res.status_code == 201
+
+    #MAke User at Child Org
+    payload = create_user_payload(
+        child_org['id'],
+        name = 'Test2',
+        email='sample2@example.com'  # 他のテストと重複しないメール
+    )
+    res = client.post('/progress/users', json=payload)
+    assert res.status_code == 201    
+
+    #login as member user
+    system_admin = system_related_users['member']
+    client = login_as_user(system_admin['email'], system_admin['password'])
+
+    #Can not get user by admin endpoint
+    res = client.get(f'/progress/users/admin')
+    assert res.status_code == 403
+
+    #get user by nomal by endpoint
+    res = client.get(f'/progress/users')
+    assert res.status_code == 200
+    data = res.get_json()
 
 
+    # 1. name が Test1 のユーザーデータがあるか
+    assert any(user["name"] == "Test1" for user in data), "Test1 のユーザーが見つかりません"
+
+    # 2. name が Test2 のユーザーデータがあるか
+    assert any(user["name"] == "Test2" for user in data), "Test2 のユーザーが見つかりません"
+
+    # 3. organization_id が root_org['id'] のデータがあるか
+    assert any(user["organization_id"] == root_org["id"] for user in data), \
+        f"organization_id={root_org['id']} のユーザーが見つかりません"
+
+    # 4. organization_id が child_org['id'] のデータがあるか
+    assert any(user["organization_id"] == child_org["id"] for user in data), \
+        f"organization_id={child_org['id']} のユーザーが見つかりません"
+
+    # 5. sample1@example.com のユーザーデータに email キーが無いこと
+    sample_user = next((u for u in data if u.get("name") == "Test1") ,None)
+    assert "email" not in sample_user, "emailキーが存在してはいけません"
+
+    # 6. その他のキーがすべて存在すること（添付データから）
+    expected_keys = {
+        "access_scopes",
+        "company_id",
+        "id",
+        "is_superuser",
+        "name",
+        "organization_id",
+        "organization_name",
+        "wp_user_id"
+    }
+    assert expected_keys.issubset(sample_user.keys()), \
+        f"必要なキーが不足しています。現在のキー: {sample_user.keys()}"
 

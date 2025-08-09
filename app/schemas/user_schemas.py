@@ -21,6 +21,20 @@ class UserSchema(SQLAlchemyAutoSchema):
 class UserWithScopesSchema(UserSchema):
     access_scopes = fields.Nested(AccessScopeSchema, many=True, dump_only=True, allow_none=True)
 
+class UserSchemaForAdmin(SQLAlchemyAutoSchema):
+    class Meta:
+        model = User
+        load_instance = True
+        include_fk = True
+        exclude = ("password_hash",)
+    id = fields.Integer(required=True, dump_only=True, allow_none=False)
+    organization_id = fields.Integer(required=True, allow_none=False)
+    organization_name = fields.Method("get_org_name", required=True, dump_only=True, allow_none=False, metadata={"type": "string"})
+    company_id = fields.Integer(required=True, allow_none=False)
+
+    def get_org_name(self, obj):
+        return obj.organization.name if obj.organization else None
+
 class UserInputSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = User

@@ -9,6 +9,7 @@ from app.decorators import with_common_error_responses
 from app.services import user_service
 from app.schemas import (
     UserSchema,
+    UserSchemaForAdmin,
     UserInputSchema,
     UserUpdateSchema,
     UserCreateResponseSchema,
@@ -38,13 +39,24 @@ class UsersResource(MethodView):
         return result
 
     @login_required
-    @user_bp.arguments(UserQuerySchema, location="query")
     @user_bp.response(200, UserWithScopesSchema(many=True))
     @with_common_error_responses(user_bp)
-    def get(self,query_args):
+    def get(self):
         """ユーザー一覧取得"""
-        result = user_service.get_users(current_user, query_args)
+        result = user_service.get_users(current_user)
         return result
+
+@user_bp.route("/admin")
+class UserResource(MethodView):    
+    @login_required
+    @user_bp.arguments(UserQuerySchema, location="query")
+    @user_bp.response(200, UserSchemaForAdmin(many=True))
+    @with_common_error_responses(user_bp)
+    def get(self,query_args):
+        """ユーザー一覧取得(管理用)"""
+        result = user_service.get_user_for_admin(current_user,query_args)
+        return result
+
 
 @user_bp.route("/<int:user_id>")
 class UserResource(MethodView):

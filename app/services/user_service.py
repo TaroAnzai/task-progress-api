@@ -161,7 +161,66 @@ def delete_user(user_id, current_user):
         current_app.logger.error(f"delete_user error: {e}")
         raise ServiceValidationError(f'削除に失敗しました: {e}')
 
-def get_users(user, query_args):
+def get_users(user):
+    #userが所属しているcompanyの全ユーザーを返す。
+    requesting_user_id = user.id
+    organization_id = user.organization_id
+    organization = db.session.get(Organization,organization_id)
+    company_id = organization.company_id
+    requester = db.session.get(User, requesting_user_id)
+    if not requester:
+        return []
+
+    # スーパーユーザーなら全ユーザーを返す
+    if requester.is_superuser:
+        query = db.session.query(User).options(joinedload(User.organization))
+        if company_id:
+            query = query.join(Organization).filter(Organization.company_id == company_id)
+        return query.all()
+    if not company_id:
+        raise ServiceNotFoundError(f'Not found company.会社が見つかりません')
+    #スーパーユーザー以外ならcompanyのユーザーを返す。
+    query = db.session.query(User).options(joinedload(User.organization))
+    query = query.join(Organization).filter(Organization.company_id == company_id)
+
+    #スコープを追加
+
+    users = query.all()
+    return users
+
+
+def get_user_by_email(email, current_user):
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        raise ServiceNotFoundError('ユーザーが見つかりません')
+
+    if not check_org_access(current_user, user.organization_id, OrgRoleEnum.ORG_ADMIN):
+        raise ServicePermissionError('権限がありません')
+    print(f"get_user_by_email: {email}, user: {vars(user)}" )
+    return user
+
+def get_user_by_wp_user_id(wp_user_id, current_user):
+    user = User.query.filter_by(wp_user_id=wp_user_id).first()
+    if not user:
+        raise ServiceNotFoundError('ユーザーが見つかりません')
+
+    if not check_org_access(current_user, user.organization_id, OrgRoleEnum.ORG_ADMIN):
+        raise ServicePermissionError('権限がありません')
+
+    return user
+
+def get_users_by_org_tree(org_id, current_user):
+    if not check_org_access(current_user, org_id, OrgRoleEnum.ORG_ADMIN):
+        raise ServicePermissionError('権限がありません')
+
+    try:
+        org_ids = get_all_child_organizations(org_id)
+        users = User.query.filter(User.organization_id.in_(org_ids)).all()
+        return users
+    except Exception as e:
+        raise ServiceValidationError(str(e))
+     
+def get_user_for_admin(user, query_args):
     requesting_user_id = user.id
     company_id = query_args.get('company_id')
     organization_id = user.organization_id
@@ -216,35 +275,3 @@ def get_users(user, query_args):
     )
 
     return users
-
-
-def get_user_by_email(email, current_user):
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        raise ServiceNotFoundError('ユーザーが見つかりません')
-
-    if not check_org_access(current_user, user.organization_id, OrgRoleEnum.ORG_ADMIN):
-        raise ServicePermissionError('権限がありません')
-    print(f"get_user_by_email: {email}, user: {vars(user)}" )
-    return user
-
-def get_user_by_wp_user_id(wp_user_id, current_user):
-    user = User.query.filter_by(wp_user_id=wp_user_id).first()
-    if not user:
-        raise ServiceNotFoundError('ユーザーが見つかりません')
-
-    if not check_org_access(current_user, user.organization_id, OrgRoleEnum.ORG_ADMIN):
-        raise ServicePermissionError('権限がありません')
-
-    return user
-
-def get_users_by_org_tree(org_id, current_user):
-    if not check_org_access(current_user, org_id, OrgRoleEnum.ORG_ADMIN):
-        raise ServicePermissionError('権限がありません')
-
-    try:
-        org_ids = get_all_child_organizations(org_id)
-        users = User.query.filter(User.organization_id.in_(org_ids)).all()
-        return users
-    except Exception as e:
-        raise ServiceValidationError(str(e))

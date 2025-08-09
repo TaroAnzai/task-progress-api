@@ -14,6 +14,7 @@ from .task_order_schemas import TaskOrderQuerySchema
 from .user_schemas import (
     UserSchema,
     UserWithScopesSchema,
+    UserSchemaForAdmin,
     UserInputSchema,
     UserUpdateSchema,
     UserCreateResponseSchema,
@@ -59,7 +60,7 @@ __all__ = [
     'TaskSchema', 'TaskInputSchema', 'TaskUpdateSchema', 'TaskCreateResponseSchema', 'TaskListResponseSchema', 'StatusSchema',
     'OrderSchema', 'TaskOrderSchema', 'TaskOrderInputSchema',
     'TaskOrderQuerySchema',
-    'UserSchema', 'UserWithScopesSchema', 'UserInputSchema', 'UserUpdateSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
+    'UserSchema', 'UserWithScopesSchema','UserSchemaForAdmin', 'UserInputSchema', 'UserUpdateSchema', 'UserCreateResponseSchema', 'LoginResponseSchema', 'LoginSchema', 'WPLoginSchema',
     'UserByEmailQuerySchema', 'UserByWPIDQuerySchema','UserQuerySchema',
     'CompanySchema', 'CompanyInputSchema','DeleteCompanyQuerySchema', 'CompanyQuerySchema',
     'OrganizationSchema', 'OrganizationInputSchema', 'OrganizationUpdateSchema','OrganizationTreeSchema','OrganizationQuerySchema'
