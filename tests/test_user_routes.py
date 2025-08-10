@@ -284,7 +284,7 @@ def test_create_user_duplicate_email_other_company(superuser_login, root_org,oth
     res = client.post('/progress/users', json=second_payload)
     assert res.status_code == 201
 
-def test_get_user_for_admin( login_as_user, system_related_users, root_org):
+def test_get_user_deferent_org( login_as_user, system_related_users, root_org):
     #Login as system_admin
     system_admin = system_related_users['system_admin']
     client = login_as_user(system_admin['email'], system_admin['password'])
@@ -362,3 +362,39 @@ def test_get_user_for_admin( login_as_user, system_related_users, root_org):
     assert expected_keys.issubset(sample_user.keys()), \
         f"必要なキーが不足しています。現在のキー: {sample_user.keys()}"
 
+def test_get_user_for_admin( login_as_user, system_related_users, root_org):
+        #Login as system_admin
+    system_admin = system_related_users['system_admin']
+    client = login_as_user(system_admin['email'], system_admin['password'])
+    #Make User at root Org
+    payload = create_user_payload(
+        root_org['id'],
+        name = "AdminTest1",
+        email='Adminsample1@example.com'  # 他のテストと重複しないメール
+    )
+    res = client.post('/progress/users', json=payload)
+    assert res.status_code == 201
+
+    #get user by admin endpoint
+    res = client.get(f'/progress/users/admin')
+    assert res.status_code == 200
+
+    #Check all keys in data
+
+    data = res.get_json()
+
+    assert any(user["name"] == "AdminTest1" for user in data), "AdminTest1 のユーザーが見つかりません"
+    sample_user = next((u for u in data if u.get("name") == "AdminTest1") ,None)
+    expected_keys = {
+        "access_scopes",
+        "company_id",
+        "id",
+        "is_superuser",
+        "name",
+        "organization_id",
+        "organization_name",
+        "wp_user_id",
+        "email"
+    }
+    assert expected_keys.issubset(sample_user.keys()), \
+        f"必要なキーが不足しています。現在のキー: {sample_user.keys()}"
