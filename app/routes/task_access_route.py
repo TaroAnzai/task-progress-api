@@ -7,7 +7,7 @@ from app.service_errors import ServiceError
 from app.decorators import with_common_error_responses
 from app.services import task_access_service
 from app.schemas import (
-    AuthorizedUserSchema,
+    UserWithScopesSchema,
     AccessUserSchema,
     OrgAccessSchema,
     AccessLevelInputSchema,
@@ -36,7 +36,7 @@ class AccessLevelResource(MethodView):
 @task_access_bp.route('/authorized_users')
 class TaskUsersResource(MethodView):
     @login_required
-    @task_access_bp.response(200, AuthorizedUserSchema(many=True))
+    @task_access_bp.response(200, UserWithScopesSchema(many=True))
     @with_common_error_responses(task_access_bp)
     def get(self, task_id):
         """EDIT以上のタスクユーザー取得"""

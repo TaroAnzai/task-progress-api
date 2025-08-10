@@ -165,7 +165,7 @@ class TestTaskAccessList:
         data = res.get_json()
         print(data)
         assert any(u for u in data if u["name"].startswith("TaskUser_"))
-        assert any(u for u in data if "user_id" in u)
+        assert any(u for u in data if "id" in u)
 
     def test_get_task_access_users(self, system_admin_client, setup_task_access_for_get_levels):
 

@@ -88,11 +88,10 @@ def get_task_users(task_id):
     task = get_task_by_id_with_deleted(task_id)
     creator = db.session.get(User, task.created_by) if task else None
 
-    result = [{"user_id": u.id, "name": u.name} for u in users]
-    if creator and creator.id not in [u["user_id"] for u in result]:
-        result.append({"user_id": creator.id, "name": creator.name})
+    if creator and creator.id not in [u.id for u in users]:
+        users.append(creator)
 
-    return result
+    return users
 
 def get_task_access_users(task_id):
     entries = db.session.query(
