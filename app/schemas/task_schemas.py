@@ -14,6 +14,9 @@ class TaskSchema(SQLAlchemyAutoSchema):
     user_access_level = fields.Str()
     status =  fields.Enum(StatusEnum, by_value=False, dump_only=True ,
                        metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
+    create_user_name = fields.Method("get_creator_name", dump_only=True,metadata={"type": "string", "description": "タスク作成者の名前"})
+    def get_creator_name(self, obj):
+        return obj.creator.name if getattr(obj, "creator", None) else None
 
 class TaskInputSchema(SQLAlchemyAutoSchema):
     class Meta:

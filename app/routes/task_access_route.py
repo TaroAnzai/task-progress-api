@@ -39,7 +39,7 @@ class TaskUsersResource(MethodView):
     @task_access_bp.response(200, UserWithScopesSchema(many=True))
     @with_common_error_responses(task_access_bp)
     def get(self, task_id):
-        """EDIT以上のタスクユーザー取得"""
+        """タスクに登録されているユーザー取得"""
         resp = task_access_service.get_task_users(task_id)
         return resp
 

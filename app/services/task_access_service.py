@@ -62,8 +62,8 @@ def update_access_level(task_id, data, user):
     return {'message': 'アクセス設定を更新しました'}
 
 def get_task_users(task_id):
-    # "edit" 以上のアクセスレベルを持つユーザーを返す
-    allowed_levels = [lvl for lvl in ACCESS_LEVELS if access_level_sufficient(lvl, TaskAccessLevelEnum.EDIT)]
+    # タスクのアクセスレベルを持つユーザーを返す
+    allowed_levels = [lvl for lvl in ACCESS_LEVELS if access_level_sufficient(lvl, TaskAccessLevelEnum.VIEW)]
 
     access_user_ids = db.session.query(TaskAccessUser.user_id).filter(
         TaskAccessUser.task_id == task_id,
