@@ -164,12 +164,12 @@ def get_tasks(user):
 
 def _calc_user_access_level(task, user_id, org_id):
     if task.created_by == user_id:
-        return TaskAccessLevelEnum.FULL.value
+        return TaskAccessLevelEnum.FULL
     if (entry := TaskAccessUser.query.filter_by(task_id=task.id, user_id=user_id).first()):
-        return entry.access_level.value
+        return entry.access_level
     if (entry := TaskAccessOrganization.query.filter_by(task_id=task.id, organization_id=org_id).first()):
-        return entry.access_level.value
-    return TaskAccessLevelEnum.VIEW.value
+        return entry.access_level
+    return TaskAccessLevelEnum.VIEW
 
 def update_objective_order(task_id, data):
     new_order = data.get('order')

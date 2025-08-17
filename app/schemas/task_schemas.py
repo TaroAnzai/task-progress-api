@@ -1,7 +1,7 @@
 from marshmallow import Schema, fields, ValidationError
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from app.models import Task
-from app.constants import StatusEnum
+from app.constants import StatusEnum, TaskAccessLevelEnum
 from app import db
 
 class TaskSchema(SQLAlchemyAutoSchema):
@@ -11,7 +11,8 @@ class TaskSchema(SQLAlchemyAutoSchema):
         include_fk = True
         exclude = ("is_deleted",)
     id = fields.Integer(required=True, dump_only=True, allow_none=False)
-    user_access_level = fields.Str()
+    user_access_level = fields.Enum(TaskAccessLevelEnum,by_value=False, dump_only=True,
+                                    metadata={"type":"string", "enum":[e.name for e in TaskAccessLevelEnum], "description":"タスクの権限"})
     status =  fields.Enum(StatusEnum, by_value=False, dump_only=True ,
                        metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
     create_user_name = fields.Method("get_creator_name", dump_only=True,metadata={"type": "string", "description": "タスク作成者の名前"})
