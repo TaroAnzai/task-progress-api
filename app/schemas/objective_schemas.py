@@ -11,6 +11,7 @@ class ObjectiveSchema(SQLAlchemyAutoSchema):
         exclude = ("is_deleted",)
 
     id = fields.Integer(required=True, dump_only=True, allow_none=False)
+    task_id = fields.Integer(required=True,dump_only=True,allow_none=False)
     assigned_user_name = fields.String(dump_only=True)
     latest_progress = fields.String(dump_only=True, allow_none=True)
     latest_report_date = fields.Date(dump_only=True, allow_none=True)
