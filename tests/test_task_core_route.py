@@ -129,15 +129,20 @@ class TestTaskGet:
         res = client.get(f"/progress/tasks/{created_task['id']}")
         assert res.status_code == 200
         data = res.get_json()
+        print(data)
         assert data['id'] == created_task['id']
-        assert 'assigned_user_id' in data.keys()
-        assert 'created_at' in data.keys()
-        assert 'created_by' in data.keys()
-        assert 'due_date' in data.keys()
-        assert 'organization_id' in data.keys()
         assert 'status' in data.keys()
         assert 'title' in data.keys()
+        assert 'description' in data.keys()
+        assert 'due_date' in data.keys()        
+        assert 'assigned_user_id' in data.keys()
+        assert 'created_by' in data.keys()
+        assert 'created_at' in data.keys()
+        assert 'display_order' in data.keys()
+        assert 'organization_id' in data.keys()
         assert 'create_user_name' in data.keys()
+        assert 'user_access_level' in data.keys()
+
 
     def test_get_nonexistent_task(self, system_admin_client):
         client = system_admin_client

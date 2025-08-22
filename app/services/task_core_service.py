@@ -13,11 +13,36 @@ from sqlalchemy import and_, or_, case
 
 
 def get_task_by_id(task_id, user):
-    task =Task.query.filter_by(id=task_id, is_deleted=False).first()
-    if not task:
-        raise ServiceNotFoundError('タスクが見つかりません')
+    # Task と UserTaskOrder を join
+    result = (
+        db.session.query(Task, UserTaskOrder.display_order.label("user_order"))
+        .outerjoin(
+            UserTaskOrder,
+            and_(
+                UserTaskOrder.task_id == Task.id,
+                UserTaskOrder.user_id == user.id
+            )
+        )
+        .filter(Task.id == task_id, Task.is_deleted != True)
+        .first()
+    )
+
+    if not result:
+        raise ServiceNotFoundError("タスクが見つかりません")
+
+    task, user_order = result  # タプルで返ってくるので分解
+
+    # アクセス権チェック
     if not check_task_access(user, task, TaskAccessLevelEnum.VIEW):
-        raise ServicePermissionError('このタスクを閲覧する権限がありません')
+        raise ServicePermissionError("このタスクを閲覧する権限がありません")
+
+    # ユーザーごとの order を Task に反映
+    if user_order is not None:
+        task.display_order = user_order
+
+    # アクセスレベルを計算
+    task.user_access_level = _calc_user_access_level(task, user.id, user.organization_id)
+
     return task
 
 
