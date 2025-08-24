@@ -10,6 +10,7 @@ from app.service_errors import (
     ServiceNotFoundError,
 )
 from sqlalchemy import and_, or_, case
+from sqlalchemy.orm import joinedload
 
 
 def get_task_by_id(task_id, user):
@@ -23,6 +24,7 @@ def get_task_by_id(task_id, user):
                 UserTaskOrder.user_id == user.id
             )
         )
+        .options(joinedload(Task.objectives))
         .filter(Task.id == task_id, Task.is_deleted != True)
         .first()
     )
@@ -165,6 +167,7 @@ def get_tasks(user):
             UserTaskOrder.task_id == Task.id,
             UserTaskOrder.user_id == user_id
         ))
+        .options(joinedload(Task.objectives)) 
         .filter(
             and_(
                 Task.is_deleted != True,

@@ -146,6 +146,7 @@ class Task(db.Model, SoftDeleteMixin):
     display_order = db.Column(db.Integer, nullable=True)
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'))
     creator = db.relationship('User', foreign_keys=[created_by], backref='created_tasks')
+    objectives = db.relationship("Objective", back_populates="task")
 
     def to_dict(self):
         return {
@@ -171,7 +172,8 @@ class Objective(db.Model, SoftDeleteMixin):
     status = db.Column(IntEnumType(StatusEnum), nullable=False, default=StatusEnum.UNDEFINED)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC))
-
+    task = db.relationship("Task", back_populates="objectives")
+    
     def to_dict(self):
         return {
             'id': self.id,
