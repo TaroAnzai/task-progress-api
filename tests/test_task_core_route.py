@@ -142,6 +142,7 @@ class TestTaskGet:
         assert 'organization_id' in data.keys()
         assert 'create_user_name' in data.keys()
         assert 'user_access_level' in data.keys()
+        assert 'is_assigned' in data.keys()
 
 
     def test_get_nonexistent_task(self, system_admin_client):

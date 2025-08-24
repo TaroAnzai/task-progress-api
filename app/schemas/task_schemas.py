@@ -3,6 +3,7 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from app.models import Task
 from app.constants import StatusEnum, TaskAccessLevelEnum
 from app import db
+from flask_login import current_user
 
 class TaskSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -15,7 +16,17 @@ class TaskSchema(SQLAlchemyAutoSchema):
                                     metadata={"type":"string", "enum":[e.name for e in TaskAccessLevelEnum], "description":"タスクの権限"})
     status =  fields.Enum(StatusEnum, by_value=False, dump_only=True ,
                        metadata={"type": "string", "enum": [e.name for e in StatusEnum]})
-    create_user_name = fields.Method("get_creator_name", dump_only=True,metadata={"type": "string", "description": "タスク作成者の名前"})
+    create_user_name = fields.Method("get_creator_name", dump_only=True,metadata={"type": "string", "description": "タスク作成者の名前"})    
+    is_assigned = fields.Method("get_is_assigned", dump_only=True, metadata={"type": "boolean", "description": "タスクにユーザーがアサインされているかどうか"})
+
+    def get_is_assigned(self, obj):
+        if not current_user or not current_user.is_authenticated:
+            return False
+        return any(
+            objv.assigned_user_id == current_user.id
+            for objv in getattr(obj, "objectives", [])
+        )
+
     def get_creator_name(self, obj):
         return obj.creator.name if getattr(obj, "creator", None) else None
 
