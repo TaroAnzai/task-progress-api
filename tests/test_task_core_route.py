@@ -408,3 +408,47 @@ class TestIntegration:
         final_tasks = final_list_res.get_json()['tasks']
         final_task_ids = [task["id"] for task in final_tasks]
         assert task_id not in final_task_ids  # 削除されたタスクは含まれない
+
+def test_isAssigned_field(task_access_users, login_as_user, test_task_data, ):
+    """is_assignedフィールドのテスト"""
+    owner_user = task_access_users['owner']
+    ownew_client = login_as_user(owner_user['email'], owner_user['password'])
+    # タスクを作成
+    res = ownew_client.post("/progress/tasks", json=test_task_data)
+    assert res.status_code == 201
+    created_task = res.get_json()['task']
+    res = ownew_client.get(f"/progress/tasks/{created_task['id']}")
+    assert res.status_code == 200
+    assert res.get_json()['is_assigned'] is False
+    #タスクにviewユーザーの閲覧権限設定
+    view_user = task_access_users['view']
+    pyload = {
+            "user_access": [{"user_id":view_user["id"],"access_level":"VIEW"}],
+            "organization_access": []}
+    res = ownew_client.put(
+        f"/progress/tasks/{created_task['id']}/access_levels",
+        json=pyload)
+    assert res.status_code == 200
+    # 別ユーザーで作成したタスクを取得
+    view_client = login_as_user(view_user['email'], view_user['password'])
+    res = view_client.get(f"/progress/tasks/{created_task['id']}")
+    assert res.status_code == 200
+    assert res.get_json()['is_assigned'] is False
+    #Objectiveにviewユーザーの担当者設定
+    owner_user = task_access_users['owner']
+    ownew_client = login_as_user(owner_user['email'], owner_user['password'])
+    objective_data = {
+        "task_id": created_task["id"],
+        "title": "Test Objective",
+        "due_date": "2024-12-25",
+        "assigned_user_id": view_user["id"]
+    }
+    res = ownew_client.post("/progress/objectives", json=objective_data)
+    assert res.status_code == 201
+     # VIEWユーザーで作成したタスクを取得
+    view_client = login_as_user(view_user['email'], view_user['password'])
+    res = view_client.get(f"/progress/tasks/{created_task['id']}")
+    assert res.status_code == 200
+    assert res.get_json()['is_assigned'] is True
+
+    
